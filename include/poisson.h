@@ -18,12 +18,14 @@ typedef Eigen::Triplet<double> T; //For filling sparse matrices
 class Poisson
 {
     public:
-        Poisson(double m_error, VectorXi dims, MatrixXd dom, VectorFunction fn);
+        Poisson(double m_error, VectorXi dims, MatrixXd dom, VectorFunction fn, Function scalar_fn);
         void set_matrix();
         int get_shift_number(int max_dim);
         int get_under_dim(int dim_number);
         int to_index(VectorXi coords);
-        Vector eval_func(VectorXi coords);
+        VectorXi to_coords(int index);
+        double eval_func(VectorXi coords);
+        VectorXd vectorize_scalar_func();
         SparseMatrix<double> get_diff_matrix() const;
         Vector derivative(Vector u) const;
         Vector solve();
@@ -35,6 +37,7 @@ class Poisson
         SparseMatrix<double> A;
         VectorXd h;
         VectorFunction func;
+        Function scalar_func;
 
 };
 

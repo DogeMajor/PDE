@@ -1,19 +1,17 @@
 #include "../include/poisson.h"
 
 
-
 Vector func(Vector x){
     Vector y = MatrixXd::Zero(x.rows(), 1);
     for(int i = 0; i < x.rows(); i++){
         y(i) = (3*x(i) + pow(x(i),2))*exp(x(i));
         }
     return y;
-    }
+}
 
 double two_D_func(Vector x){
     return -x(0)*x(1) + x(0)*x(0);
 }
-
 
 
 double limit_decimals(double number, uint decimals){
@@ -32,6 +30,7 @@ TEST_CASE( "Test cutting off decimals off doubles" ) {
         REQUIRE( limit_decimals(number, 3) == 1.123d );
         REQUIRE( limit_decimals(number, 2) == 1.12d );
 }
+
 /*
 TEST_CASE( "Poisson: 1-dimensional case" ) {
     double max_error = pow(-12, 10);
@@ -87,38 +86,24 @@ TEST_CASE( "Poisson: 2-dimensional case" ) {
     domain(1,0) = 1.0;
     domain(0,1) = 0.0;
     domain(1,1) = 1.0;
-    Poisson poisson = Poisson(max_error, dims, domain, func);
+    Poisson poisson = Poisson(max_error, dims, domain, func, two_D_func);
     //poisson.show();
     poisson.set_matrix();
     Vector zero_vector = MatrixXd::Zero(dims(0), 1);
     Vector test_vector = MatrixXd::Identity(dims(0), 1);
 
-SECTION( "Test set_matrix" ){
-    SparseMatrix <double> mat(3*2,3*2);
-    mat = poisson.get_diff_matrix();
-    REQUIRE( mat.coeff(1,0) == -16.0 );
-    REQUIRE( mat.coeff(1,1) == 50.0 );
-    REQUIRE( mat.coeff(1,2) == -16.0 );
-    REQUIRE( mat.coeff(1,3) == 0.0 );
-    REQUIRE( limit_decimals(mat.coeff(1,4),1) == -9.0d );
-}
+    SECTION( "Test set_matrix" ){
+        SparseMatrix <double> mat(3*2,3*2);
+        mat = poisson.get_diff_matrix();
+        REQUIRE( mat.coeff(1,0) == -16.0 );
+        REQUIRE( mat.coeff(1,1) == 50.0 );
+        REQUIRE( mat.coeff(1,2) == -16.0 );
+        REQUIRE( mat.coeff(1,3) == 0.0 );
+        REQUIRE( limit_decimals(mat.coeff(1,4),1) == -9.0d );
+    }
 
-SECTION( "Test triplets-based initialization of sparse matrix" ){
-    std::vector<T> tripletList;
-    int dimension = 2;
-    tripletList.reserve(dimension);
-    for(int i=0; i<dimension; i++){
-        tripletList.push_back(T(i,i,i+1));
-        }
-    SparseMatrix <double> mat(dimension,dimension);
-    mat.setFromTriplets(tripletList.begin(), tripletList.end());
-    REQUIRE( mat.coeff(0,0) == 1 );
-    REQUIRE( mat.coeff(1,1) == 2 );
-    REQUIRE( mat.coeff(1,0) == 0 );
-    REQUIRE( mat.coeff(0,1) == 0 );
-}
 
-SECTION( "test get_shift_number" ) {
+    SECTION( "test get_shift_number" ) {
         uint shift_no = poisson.get_shift_number(1);
         REQUIRE( shift_no == 3 );
         shift_no = poisson.get_shift_number(0);
@@ -127,23 +112,62 @@ SECTION( "test get_shift_number" ) {
         }
 
 
-SECTION( "test get_under_dim" ) {
+    SECTION( "test get_under_dim" ) {
         uint under_dim = poisson.get_under_dim(1);
         REQUIRE( under_dim == 2 );
         under_dim = poisson.get_under_dim(2);
         REQUIRE( under_dim == 3 );
         }
 
-SECTION( "test to_index" ) {
+    SECTION( "test to_coords" ) {
+        VectorXi coords = poisson.to_coords(0);
+        REQUIRE( coords(0) == 0 );
+        REQUIRE( coords(1) == 0 );
+
+        coords = poisson.to_coords(4);
+        REQUIRE( coords(0) == 1 );
+        REQUIRE( coords(1) == 1 );
+        coords = poisson.to_coords(7);
+
+        REQUIRE( coords(0) == 1 );
+        REQUIRE( coords(1) == 2 );
+        }
+
+    SECTION( "test to_index" ) {
         VectorXi coords(2);
         coords << 0,0;
         uint index = poisson.to_index(coords);
         REQUIRE( index == 0 );
         coords << 1,2;
-
         index = poisson.to_index(coords);
         REQUIRE( index == 7 );
         }
+
+
+    SECTION( "test eval_func" ) {
+        VectorXi coords(2);
+        coords << 0,0;
+        double result = poisson.eval_func(coords);
+        VectorXd x(2);
+        x << 0.25, 1.0/3.0;
+        double result_1_1 = two_D_func(x);
+        REQUIRE( result == result_1_1 );
+        }
+
+    SECTION( "test vectorize_scalar_func" ) {//not OK
+        VectorXd f;
+        f = poisson.vectorize_scalar_func();
+        REQUIRE( f.rows() == 6 );
+        VectorXd x(2);
+        x << 0.5, 2.0/3.0;
+        double result_2_2 = two_D_func(x);
+        REQUIRE( f.coeff(4) == result_2_2);
+        x << 0.25, 1.0/3.0;
+        double result_1_1 = two_D_func(x);
+        REQUIRE( f.coeff(0) == result_1_1 );
+        }
+
+
 /*
     SECTION( "solve -method works" ) {
         poisson.show();
@@ -156,7 +180,7 @@ SECTION( "test to_index" ) {
         }
 
 
-    SECTION( "Poisson::derivative" ) {
+SECTION( "Poisson::derivative" ) {
         Vector derivative = poisson.derivative(zero_vector);
 
         REQUIRE( derivative.rows() == 5 );
