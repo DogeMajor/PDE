@@ -3,7 +3,7 @@
 using namespace std;
 
 
-Poisson::Poisson(double m_error, VectorXi dims, MatrixXd dom, VectorFunction fn, Function scalar_fn){
+Poisson::Poisson(double m_error, VectorXi dims, MatrixXd dom, Function scalar_fn){
     max_error = m_error;
     dimensions = dims;
     domain = dom;
@@ -11,7 +11,6 @@ Poisson::Poisson(double m_error, VectorXi dims, MatrixXd dom, VectorFunction fn,
     for(int i = 0; i < domain.cols(); i++){
         h(i) = (domain(1,i) - domain(0,i))/(dims(i) + 1);
         }
-    func = fn;
     scalar_func = scalar_fn;
     }
 

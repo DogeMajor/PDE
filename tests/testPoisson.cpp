@@ -1,14 +1,6 @@
 #include "../include/poisson.h"
 
 
-Vector func(Vector x){
-    Vector y = MatrixXd::Zero(x.rows(), 1);
-    for(int i = 0; i < x.rows(); i++){
-        y(i) = (3*x(i) + pow(x(i),2))*exp(x(i));
-        }
-    return y;
-}
-
 double two_D_func(Vector x){
     return -x(0)*x(1) + x(0)*x(0);
 }
@@ -86,7 +78,7 @@ TEST_CASE( "Poisson: 2-dimensional case" ) {
     domain(1,0) = 1.0;
     domain(0,1) = 0.0;
     domain(1,1) = 1.0;
-    Poisson poisson = Poisson(max_error, dims, domain, func, two_D_func);
+    Poisson poisson = Poisson(max_error, dims, domain, two_D_func);
     //poisson.show();
     poisson.set_matrix();
     int all_dims = dims(0)*dims(1);
