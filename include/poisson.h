@@ -10,18 +10,20 @@
 using namespace Eigen;
 
 typedef Eigen::Matrix<double, Dynamic, 1> Vector;
-typedef Vector (* Function)(Vector x);
+typedef Vector (* VectorFunction)(Vector x);
+typedef double (* Function)(Vector x);
 typedef unsigned int uint;
 typedef Eigen::Triplet<double> T; //For filling sparse matrices
 
 class Poisson
 {
     public:
-        Poisson(double m_error, VectorXi dims, MatrixXd dom, Function fn);
+        Poisson(double m_error, VectorXi dims, MatrixXd dom, VectorFunction fn);
         void set_matrix();
         int get_shift_number(int max_dim);
         int get_under_dim(int dim_number);
-        uint to_index(VectorXi coords);
+        int to_index(VectorXi coords);
+        Vector eval_func(VectorXi coords);
         SparseMatrix<double> get_diff_matrix() const;
         Vector derivative(Vector u) const;
         Vector solve();
@@ -32,7 +34,7 @@ class Poisson
         MatrixXd domain;
         SparseMatrix<double> A;
         VectorXd h;
-        Function func;
+        VectorFunction func;
 
 };
 

@@ -3,7 +3,7 @@
 using namespace std;
 
 
-Poisson::Poisson(double m_error, VectorXi dims, MatrixXd dom, Function fn){
+Poisson::Poisson(double m_error, VectorXi dims, MatrixXd dom, VectorFunction fn){
     max_error = m_error;
     dimensions = dims;
     domain = dom;
@@ -12,7 +12,6 @@ Poisson::Poisson(double m_error, VectorXi dims, MatrixXd dom, Function fn){
         h(i) = (domain(1,i) - domain(0,i))/(dims(i) + 1);
         }
     func = fn;
-
     }
 
 void Poisson::set_matrix(){
@@ -62,8 +61,8 @@ int Poisson::get_under_dim(int dim_number){
     return underdim;
 }
 
-uint Poisson::to_index(VectorXi coords){
-    uint index = coords(0);
+int Poisson::to_index(VectorXi coords){
+    int index = coords(0);
     int under_dim = 1;
     for(int i = 1; i < coords.rows(); i++){
         under_dim = get_under_dim(i + 1);
@@ -71,6 +70,15 @@ uint Poisson::to_index(VectorXi coords){
         }
     return index;
 }
+
+Vector Poisson::eval_func(VectorXi coords){
+    Vector x(coords.rows());
+    for(int i=0; i<coords.rows(); i++){
+        x(i) = domain(0,i) + h(i);
+        }
+    return func(x);
+}
+
 
 SparseMatrix<double> Poisson::get_diff_matrix() const{
     return A;

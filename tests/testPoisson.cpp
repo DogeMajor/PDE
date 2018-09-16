@@ -10,6 +10,11 @@ Vector func(Vector x){
     return y;
     }
 
+double two_D_func(Vector x){
+    return -x(0)*x(1) + x(0)*x(0);
+}
+
+
 
 double limit_decimals(double number, uint decimals){
     double N = pow(10, decimals);
