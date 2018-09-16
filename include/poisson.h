@@ -27,8 +27,8 @@ class Poisson
         double eval_func(VectorXi coords);
         VectorXd vectorize_scalar_func();
         SparseMatrix<double> get_diff_matrix() const;
-        Vector derivative(Vector u) const;
-        Vector solve();
+        VectorXd derivative(Vector u) const;
+        VectorXd solve();
         void show() const;
     protected:
         double max_error;

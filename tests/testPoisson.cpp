@@ -89,8 +89,9 @@ TEST_CASE( "Poisson: 2-dimensional case" ) {
     Poisson poisson = Poisson(max_error, dims, domain, func, two_D_func);
     //poisson.show();
     poisson.set_matrix();
-    Vector zero_vector = MatrixXd::Zero(dims(0), 1);
-    Vector test_vector = MatrixXd::Identity(dims(0), 1);
+    int all_dims = dims(0)*dims(1);
+    Vector zero_vector = MatrixXd::Zero(all_dims, 1);
+    Vector test_vector = MatrixXd::Identity(all_dims, 1);
 
     SECTION( "Test set_matrix" ){
         SparseMatrix <double> mat(3*2,3*2);
@@ -168,35 +169,45 @@ TEST_CASE( "Poisson: 2-dimensional case" ) {
         }
 
 
-/*
+
     SECTION( "solve -method works" ) {
         poisson.show();
-        Vector solution = poisson.solve();
-
-        REQUIRE( solution.rows() == 5 );
-        REQUIRE ( limit_decimals(solution(1), 4) == 0.3053d );
-
-        poisson.show();
+        VectorXd solution = poisson.solve();
+        REQUIRE( solution.rows() == 6 );
+        REQUIRE ( limit_decimals(solution(1), 8) == 0.00502398d );
+        VectorXd deriv = poisson.derivative(solution);
+        VectorXd f = poisson.vectorize_scalar_func();
+        //std::cout << deriv << std::endl;
+        //std::cout << f << std::endl;
+        REQUIRE( limit_decimals(deriv(0), 5) == limit_decimals(f(0), 5) );
+        REQUIRE( limit_decimals(deriv(3),5) == limit_decimals(f(3),5) );
         }
 
 
 SECTION( "Poisson::derivative" ) {
-        Vector derivative = poisson.derivative(zero_vector);
-
-        REQUIRE( derivative.rows() == 5 );
+        VectorXd derivative = poisson.derivative(zero_vector);
+        REQUIRE( derivative.rows() == 6 );
         REQUIRE( limit_decimals(derivative(2), 10) == 0.0d );
 
-        Vector u = MatrixXd::Zero(dims(0), 1);
-        double change = 0.1;
-        for(uint i = 0; i < dims(0); i++){
-            u(i) = domain(0) + pow((1+i)*change, 2);
+        VectorXd x(6);
+        x.setZero();
+        VectorXd change(2);
+        change << 0.25, 0.20;
+        VectorXi coeff(2);
+        for(int i = 0; i < 6; i++){//f(x,y) =x^2+y^2
+            coeff = poisson.to_coords(i);
+            for(int j=0; j<coeff.rows(); j++){
+                x(i) += pow((1+j)*change(j), 2);
+                }
             }
-        derivative = poisson.derivative(u);
+        derivative = poisson.derivative(x);
+        //std::cout << derivative << std::endl;
+        REQUIRE( limit_decimals(derivative(0), 2) == 5.56d );
+        REQUIRE( derivative.rows() == 6 );
+        REQUIRE( limit_decimals(derivative(4), 2) == 2.0d);
 
-        REQUIRE( limit_decimals(derivative(0), 2) == -0.72d );
-        REQUIRE( derivative.rows() == 5 );
-        REQUIRE( limit_decimals(derivative(4), 2) == 12.24d);
 
-    }*/
+
+    }
 }
 

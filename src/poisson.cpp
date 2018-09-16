@@ -101,26 +101,22 @@ VectorXd Poisson::vectorize_scalar_func(){
         f(n) = eval_func(coords);
         }
     return f;
-
 }
 
 SparseMatrix<double> Poisson::get_diff_matrix() const{
     return A;
 }
 
-Vector Poisson::derivative(Vector u) const{
-    Vector v = A*u;
-    return v*pow(h(0), -2);
+VectorXd Poisson::derivative(Vector u) const{
+    VectorXd v = A*u;
+    return v;
 }
 
-Vector Poisson::solve(){
-    Vector x = MatrixXd::Zero(dimensions(0), 1);
-    for(int i = 0; i < dimensions(0); i++){
-        x(i) = domain(0) + (1+i)*h(0);
-        }
-    Vector f = func(x);
+VectorXd Poisson::solve(){
 
-    Vector u = MatrixXd::Zero(dimensions(0), 1);
+    VectorXd f = vectorize_scalar_func();
+    int all_dims = dimensions(0)*get_under_dim(1);
+    VectorXd u(all_dims);
     // fill A and b
     ConjugateGradient<SparseMatrix<double>, Lower|Upper> cg;
     cg.compute(A);
@@ -129,7 +125,7 @@ Vector Poisson::solve(){
     cout << "estimated error: " << cg.error()      << endl;
     f = A*u;
     u = cg.solve(f);
-    return pow(h(0),2)*u;
+    return u;
 }
 
 void Poisson::show() const{
