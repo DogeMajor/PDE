@@ -3,7 +3,7 @@
 using namespace std;
 
 
-Poisson::Poisson(double m_error, VectorXi dims, MatrixXd dom, VectorFunction fn){
+Poisson::Poisson(double m_error, VectorXi dims, MatrixXd dom, Function scalar_fn){
     max_error = m_error;
     dimensions = dims;
     domain = dom;
@@ -11,7 +11,7 @@ Poisson::Poisson(double m_error, VectorXi dims, MatrixXd dom, VectorFunction fn)
     for(int i = 0; i < domain.cols(); i++){
         h(i) = (domain(1,i) - domain(0,i))/(dims(i) + 1);
         }
-    func = fn;
+    scalar_func = scalar_fn;
     }
 
 void Poisson::set_matrix(){
@@ -71,32 +71,51 @@ int Poisson::to_index(VectorXi coords){
     return index;
 }
 
-Vector Poisson::eval_func(VectorXi coords){
-    Vector x(coords.rows());
-    for(int i=0; i<coords.rows(); i++){
-        x(i) = domain(0,i) + h(i);
+VectorXi Poisson::to_coords(int index){
+    VectorXi coords(dimensions.rows());
+    int denominator = get_under_dim(dimensions.rows());
+    for(int dim = dimensions.rows()-1; dim >= 0; dim--){
+        coords(dim) = (index/denominator);
+        index = index%denominator;
+        denominator /= dimensions(dim);
         }
-    return func(x);
+    return coords;
 }
 
+double Poisson::eval_func(VectorXi coords){
+    Vector x(coords.rows());
+    for(int i=0; i<coords.rows(); i++){
+        x(i) = domain(0,i) + (1+coords(i))*h(i);
+        }
+    //cout << "x: " << x << endl;
+    return scalar_func(x);
+}
+
+VectorXd Poisson::vectorize_scalar_func(){
+    VectorXi coords(dimensions.rows());
+    int all_dims = dimensions(0)*get_under_dim(1);
+    VectorXd f(all_dims);
+    for(int n=0; n<all_dims; n++){
+        coords = to_coords(n);
+        f(n) = eval_func(coords);
+        }
+    return f;
+}
 
 SparseMatrix<double> Poisson::get_diff_matrix() const{
     return A;
 }
 
-Vector Poisson::derivative(Vector u) const{
-    Vector v = A*u;
-    return v*pow(h(0), -2);
+VectorXd Poisson::derivative(Vector u) const{
+    VectorXd v = A*u;
+    return v;
 }
 
-Vector Poisson::solve(){
-    Vector x = MatrixXd::Zero(dimensions(0), 1);
-    for(int i = 0; i < dimensions(0); i++){
-        x(i) = domain(0) + (1+i)*h(0);
-        }
-    Vector f = func(x);
+VectorXd Poisson::solve(){
 
-    Vector u = MatrixXd::Zero(dimensions(0), 1);
+    VectorXd f = vectorize_scalar_func();
+    int all_dims = dimensions(0)*get_under_dim(1);
+    VectorXd u(all_dims);
     // fill A and b
     ConjugateGradient<SparseMatrix<double>, Lower|Upper> cg;
     cg.compute(A);
@@ -105,7 +124,7 @@ Vector Poisson::solve(){
     cout << "estimated error: " << cg.error()      << endl;
     f = A*u;
     u = cg.solve(f);
-    return pow(h(0),2)*u;
+    return u;
 }
 
 void Poisson::show() const{
