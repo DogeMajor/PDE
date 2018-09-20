@@ -13,15 +13,15 @@ typedef Eigen::Matrix<double, Dynamic, 1> Vector;
 //typedef Vector (* VectorFunction)(Vector x);
 typedef double (* Function)(Vector x);
 typedef unsigned int uint;
-typedef Eigen::Triplet<double> T; //For filling sparse matrices
+typedef Eigen::Triplet<double> T;
 
 class Poisson
 {
     public:
         Poisson(double m_error, VectorXi dims, MatrixXd dom, Function scalar_fn);
         void set_matrix();
+        int get_all_dims();
         int get_shift_number(int max_dim);
-        int get_under_dim(int dim_number);
         int to_index(VectorXi coords);
         VectorXi to_coords(int index);
         double eval_func(VectorXi coords);
