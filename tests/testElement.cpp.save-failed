@@ -17,7 +17,7 @@ double limit_decimals(double number, int decimals){
 #include "../C++ libs/catch/catch.hpp"
 
 
-TEST_CASE( "Test Element template containing Node template initiated with 2-D double vector from Eigen lib" ) {
+TEST_CASE( "Test Node template with 3-D double vector from Eigen lib" ) {
 
     VectorXd location(2);
     location << 0.0, 0.0;
@@ -37,7 +37,7 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D do
         REQUIRE( value == location );
     }
 
-    SECTION( "Test operator []" ){
+    SECTION( "Test operator[]" ){
         Node <VectorXd> node = element[0];
         node.show();
         REQUIRE( element[0] == node1 );
@@ -52,20 +52,13 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D do
         REQUIRE( copyed_element[1] == element[1] );
     }
 
-    SECTION( "Test assignment operator" ){
-        Element <2, VectorXd> assigned_element = element;
-        REQUIRE( assigned_element[0] == element[0] );
-        REQUIRE( assigned_element[1] == element[1] );
-    }
-
-
     SECTION( "Test operators == and !=" ){
         Element <2, VectorXd> new_element(nodes);
         REQUIRE( new_element == element );
-        Node <VectorXd> *reflected_nodes[2];
-        reflected_nodes[0] = &node2;
-        reflected_nodes[1] = &node1;
-        Element <2, VectorXd> reflected_element(reflected_nodes);
+        Node <VectorXd> *new_nodes[2];
+        new_nodes[0] = &node2;
+        new_nodes[1] = &node1;
+        Element <2, VectorXd> reflected_element(nodes);
         REQUIRE( reflected_element != element );
     }
 

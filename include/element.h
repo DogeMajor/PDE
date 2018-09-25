@@ -12,8 +12,12 @@ class Element{
 public:
     Element();
     Element(Node<T>* nod[N]);
+    Element(Element &el);
     ~Element();
     Node<T> operator[](int i) const;
+    Element<N,T>& operator=(const Element &el);
+    bool operator==(const Element &el) const;
+    bool operator!=(const Element &el) const;
     void show() const;
 
 private:
@@ -36,6 +40,13 @@ Element<N,T>::Element(Node<T>* nod[N]){
 }
 
 template <int N, typename T>
+Element<N,T>::Element(Element &el){
+    for(int i=0; i<N; i++){
+        nodes[i] = el.nodes[i];
+    }
+}
+
+template <int N, typename T>
 Element<N,T>::~Element(){
     int neighbours = 0;
     for(int i=0; i<N; i++){
@@ -53,6 +64,31 @@ Node<T> Element<N,T>::operator[](int i) const{
     return *(nodes[i]);
 }
 
+template <int N, typename T>
+Element<N,T>& Element<N,T>::operator=(const Element &el){
+    if(*this != el){
+        for(int i=0; i<N; i++){
+            nodes[i] = el.nodes[i];
+        }
+    }
+    return *this;
+}
+
+
+template <int N, typename T>
+bool Element<N,T>::operator==(const Element &el) const{
+    bool result = true;
+
+    for(int i=0; i<N; i++){
+        result = result && bool(*(nodes[i]) == *(el.nodes[i]));
+        }
+    return result;
+}
+
+template <int N, typename T>
+bool Element<N,T>::operator!=(const Element &el) const{
+    return !(*this == el);
+}
 
 template <int N, typename T>
 void Element<N,T>::show() const{

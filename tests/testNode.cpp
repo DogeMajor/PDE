@@ -73,7 +73,13 @@ TEST_CASE( "Test Node template with 3-D double vector from Eigen lib" ) {
         assigned_node.set_index(666);
         assigned_node = assigned_node;
         REQUIRE( assigned_node.get_index() == 666 );
+    }
 
+    SECTION( "Test copy constructor" ){
+        Node <VectorXd> copyed_node(node);
+        REQUIRE( node.get_index() == copyed_node.get_index() );
+        REQUIRE( node.get_neighbour_amount() == copyed_node.get_neighbour_amount() );
+        REQUIRE( node.get_location() == copyed_node.get_location() );
     }
 
 
