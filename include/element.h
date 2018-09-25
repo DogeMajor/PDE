@@ -31,7 +31,6 @@ Element<N,T>::Element(){
 template <int N, typename T>
 Element<N,T>::Element(Node<T>* nod[N]){
     for(int i=0; i<N; i++){
-        //cout << "index: " << i << endl;
         nodes[i] = nod[i];
     }
 }
@@ -46,7 +45,6 @@ Element<N,T>::~Element(){
             delete nodes[i];
         }
     }
-    //nodes = NULL;
     cout << "Element destroyed!" << endl;
 }
 

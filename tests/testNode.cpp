@@ -22,6 +22,8 @@ TEST_CASE( "Test Node template with 3-D double vector from Eigen lib" ) {
     VectorXd location(3);
     location << 1.0, 2.0, 3.0;
     Node <VectorXd> node(location);
+    location << 1.0, 2.0, 3.0;
+    Node <VectorXd> similar_node(location);
 
     SECTION( "Test get_location" ){
         VectorXd value = node.get_location();
@@ -52,5 +54,27 @@ TEST_CASE( "Test Node template with 3-D double vector from Eigen lib" ) {
         node.set_neighbour_amount(1);
         REQUIRE( node.get_neighbour_amount() == 1 );
     }
+
+    SECTION( "Test == and != operators" ){
+        REQUIRE( node == node );
+        node.set_neighbour_amount(1);
+        REQUIRE( node != similar_node );
+        similar_node.set_neighbour_amount(1);
+        node.set_index(0);
+        REQUIRE( similar_node == node );
+    }
+
+
+    SECTION( "Test assignment operator" ){
+        Node <VectorXd> assigned_node = node;
+        REQUIRE( node.get_index() == assigned_node.get_index() );
+        REQUIRE( node.get_neighbour_amount() == assigned_node.get_neighbour_amount() );
+        REQUIRE( node.get_location() == assigned_node.get_location() );
+        assigned_node.set_index(666);
+        assigned_node = assigned_node;
+        REQUIRE( assigned_node.get_index() == 666 );
+
+    }
+
 
 }

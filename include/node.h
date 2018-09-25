@@ -9,11 +9,13 @@ class Node{
 
 public:
     Node(T &loc);
+    Node(const Node &a);//copy constructor
     void set_index(int ind);
     void set_neighbour_amount(int neighbours);
     T get_location() const;
     int get_index() const;
     int get_neighbour_amount() const;
+    Node<T>& operator=(const Node &a);
     bool operator== (const Node &a) const;
     bool operator!=(const Node &a) const;
     void show() const;
@@ -29,6 +31,13 @@ Node<T>::Node(T &loc){
     location = loc;
     neighbour_amount = 0;
     index = 0;
+}
+
+template <typename T>
+Node<T>::Node(const Node &a){
+    location = a.location;
+    index = a.index;
+    neighbour_amount = a.neighbour_amount;
 }
 
 template <typename T>
@@ -56,6 +65,15 @@ int Node<T>::get_neighbour_amount() const{
     return neighbour_amount;
 }
 
+template <typename T>
+Node<T>& Node<T>::operator=(const Node &a){
+    if(*this!=a){
+        location = a.location;
+        index = a.index;
+        neighbour_amount = a.neighbour_amount;
+    }
+    return *this;
+}
 
 template <typename T>
 bool Node<T>::operator==(const Node &a) const{
