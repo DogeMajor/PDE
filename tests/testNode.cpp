@@ -21,7 +21,7 @@ TEST_CASE( "Test Node template with 3-D double vector from Eigen lib" ) {
 
     VectorXd location(3);
     location << 1.0, 2.0, 3.0;
-    Node <3, VectorXd> node(location);
+    Node <VectorXd> node(location);
 
     SECTION( "Test get_location" ){
         VectorXd value = node.get_location();
@@ -54,4 +54,3 @@ TEST_CASE( "Test Node template with 3-D double vector from Eigen lib" ) {
     }
 
 }
-

@@ -4,7 +4,7 @@
 using namespace std;
 
 
-template <int N, typename T>
+template <typename T>
 class Node{
 
 public:
@@ -14,6 +14,8 @@ public:
     T get_location() const;
     int get_index() const;
     int get_neighbour_amount() const;
+    bool operator== (const Node &a) const;
+    bool operator!=(const Node &a) const;
     void show() const;
 
 private:
@@ -22,41 +24,56 @@ private:
     int neighbour_amount;
 };
 
-template <int N,typename T>
-Node<N,T>::Node(T &loc){
+template <typename T>
+Node<T>::Node(T &loc){
     location = loc;
     neighbour_amount = 0;
     index = 0;
 }
 
-template <int N,typename T>
-void Node<N,T>::set_index(int ind){
+template <typename T>
+void Node<T>::set_index(int ind){
     index = ind;
 }
 
-template <int N,typename T>
-void Node<N,T>::set_neighbour_amount(int neighbours){
+template <typename T>
+void Node<T>::set_neighbour_amount(int neighbours){
     neighbour_amount = neighbours;
 }
 
-template <int N,typename T>
-T Node<N,T>::get_location() const{
+template <typename T>
+T Node<T>::get_location() const{
     return location;
 }
 
-template <int N,typename T>
-int Node<N,T>::get_index() const{
+template <typename T>
+int Node<T>::get_index() const{
     return index;
 }
 
-template <int N,typename T>
-int Node<N,T>::get_neighbour_amount() const{
+template <typename T>
+int Node<T>::get_neighbour_amount() const{
     return neighbour_amount;
 }
 
 
-template <int N,typename T>
-void Node<N,T>::show() const{
+template <typename T>
+bool Node<T>::operator==(const Node &a) const{
+    bool same_location = bool(this->get_location() == a.get_location());
+    bool same_index = bool(this->get_index() == a.get_index());
+    bool same_neighbour_amount = (this->get_neighbour_amount() == a.get_neighbour_amount());
+    return same_location && same_index && same_neighbour_amount;
+
+}
+
+template <typename T>
+bool Node<T>::operator!=(const Node &a) const{
+    return !(*this==a);
+}
+
+
+template <typename T>
+void Node<T>::show() const{
     cout <<"index: " << endl;
     cout << index << endl;
     cout <<"location: " << location << endl;
