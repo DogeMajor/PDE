@@ -52,10 +52,10 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D do
         REQUIRE( copyed_element[1] == element[1] );
     }
 
-    SECTION( "Test set_neighbours" ){
-        element.set_neighbours();
-        REQUIRE( 1 == element[0].get_neighbour_amount() );
-        REQUIRE( 1 == element[1].get_neighbour_amount() );
+    SECTION( "Test set_shared_elements" ){
+        element.set_shared_elements();
+        REQUIRE( 1 == element[0].get_shared_elements() );
+        REQUIRE( 1 == element[1].get_shared_elements() );
     }
 
     SECTION( "Test set_indices" ){

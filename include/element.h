@@ -14,10 +14,10 @@ public:
     Element(Node<Dim,T>* nod[N]);
     Element(Element &el);
     ~Element();
-    void set_neighbours();
+    void set_shared_elements();
     void set_indices();
     Node<Dim,T> operator[](int i);
-    Element<Dim,N,T>& operator=(const Element &el);
+    const Element<Dim,N,T>& operator=(const Element &el);
     bool operator==(const Element &el) const;
     bool operator!=(const Element &el) const;
     void show() const;
@@ -38,8 +38,13 @@ Element<Dim,N,T>::Element(){
 
 template <int Dim, int N, typename T>
 Element<Dim,N,T>::Element(Node<Dim,T>* nod[N]){
-    for(int i=0; i<N; i++){
-        nodes[i] = nod[i];
+    for(int i=0; i<N; i++){//If node has no shared_elements it must be a new one!
+        if((nod[i]->get_shared_elements() <= 0)){
+            nodes[i] = new Node<Dim,T>(*nod[i]);
+        }
+        else{
+            nod[i] = nod[i];
+        }
     }
     dimension = Dim;
 }
@@ -54,11 +59,11 @@ Element<Dim,N,T>::Element(Element &el){
 
 template <int Dim, int N, typename T>
 Element<Dim,N,T>::~Element(){
-    int neighbours = 0;
+    int shared_elements = 0;
     for(int i=0; i<N; i++){
-        neighbours = nodes[i]->get_neighbour_amount();
-        nodes[i]->set_neighbour_amount(neighbours-1);
-        if(neighbours-1 <= 0){
+        shared_elements = nodes[i]->get_shared_elements();
+        nodes[i]->set_shared_elements(shared_elements-1);
+        if(shared_elements-1 <= 0){
             delete nodes[i];
         }
     }
@@ -66,11 +71,11 @@ Element<Dim,N,T>::~Element(){
 }
 
 template <int Dim, int N, typename T>
-void Element<Dim,N,T>::set_neighbours(){
-    int neighbours = 0;
+void Element<Dim,N,T>::set_shared_elements(){
+    int shared_elements = 0;
     for(int i=0; i<N; i++){
-        neighbours = nodes[i]->get_neighbour_amount();
-        nodes[i]->set_neighbour_amount(neighbours+N-1);
+        shared_elements = nodes[i]->get_shared_elements();
+        nodes[i]->set_shared_elements(shared_elements+N-1);
     }
 }
 
@@ -87,8 +92,14 @@ Node<Dim,T> Element<Dim,N,T>::operator[](int i){
 }
 
 template <int Dim, int N, typename T>
-Element<Dim,N,T>& Element<Dim,N,T>::operator=(const Element &el){
+const Element<Dim,N,T>& Element<Dim,N,T>::operator=(const Element &el){
     if(*this != el){
+        for(int i=0; i<N; i++){
+            if(nodes[i]->get_shared_elements() <= 0){
+                delete nodes[i];
+            }
+
+        }
         for(int i=0; i<N; i++){
             nodes[i] = el.nodes[i];
         }
@@ -115,8 +126,8 @@ bool Element<Dim,N,T>::operator!=(const Element &el) const{
 
 template <int Dim, int N, typename T>
 void Element<Dim,N,T>::show() const{
-    int n = N;
-    cout <<"#elements: " << n << endl;
+    //int n = N;
+    cout <<"#elements: " << N << endl;
     for(int i=0; i<N; i++){
         nodes[i]->show();
     }
