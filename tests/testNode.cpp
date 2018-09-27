@@ -21,9 +21,9 @@ TEST_CASE( "Test Node template with 3-D double vector from Eigen lib" ) {
 
     VectorXd location(3);
     location << 1.0, 2.0, 3.0;
-    Node <VectorXd> node(location);
+    Node <3,VectorXd> node(location);
     location << 1.0, 2.0, 3.0;
-    Node <VectorXd> similar_node(location);
+    Node <3,VectorXd> similar_node(location);
 
     SECTION( "Test get_location" ){
         VectorXd value = node.get_location();
@@ -66,7 +66,7 @@ TEST_CASE( "Test Node template with 3-D double vector from Eigen lib" ) {
 
 
     SECTION( "Test assignment operator" ){
-        Node <VectorXd> assigned_node = node;
+        Node <3,VectorXd> assigned_node = node;
         REQUIRE( node.get_index() == assigned_node.get_index() );
         REQUIRE( node.get_neighbour_amount() == assigned_node.get_neighbour_amount() );
         REQUIRE( node.get_location() == assigned_node.get_location() );
@@ -76,7 +76,7 @@ TEST_CASE( "Test Node template with 3-D double vector from Eigen lib" ) {
     }
 
     SECTION( "Test copy constructor" ){
-        Node <VectorXd> copyed_node(node);
+        Node <3,VectorXd> copyed_node(node);
         REQUIRE( node.get_index() == copyed_node.get_index() );
         REQUIRE( node.get_neighbour_amount() == copyed_node.get_neighbour_amount() );
         REQUIRE( node.get_location() == copyed_node.get_location() );
