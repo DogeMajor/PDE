@@ -34,8 +34,8 @@ TEST_CASE( "Test Node template with 3-D double vector from Eigen lib" ) {
         REQUIRE( node.get_index() == 0 );
     }
 
-    SECTION( "Test get_neighbour_amount" ){
-        REQUIRE( node.get_neighbour_amount() == 0 );
+    SECTION( "Test get_shared_elements" ){
+        REQUIRE( node.get_shared_elements() == 0 );
     }
 
 
@@ -50,16 +50,16 @@ TEST_CASE( "Test Node template with 3-D double vector from Eigen lib" ) {
     }
 
     SECTION( "Test set_neighbours_no" ){
-        REQUIRE( node.get_neighbour_amount() == 0 );
-        node.set_neighbour_amount(1);
-        REQUIRE( node.get_neighbour_amount() == 1 );
+        REQUIRE( node.get_shared_elements() == 0 );
+        node.set_shared_elements(1);
+        REQUIRE( node.get_shared_elements() == 1 );
     }
 
     SECTION( "Test == and != operators" ){
         REQUIRE( node == node );
-        node.set_neighbour_amount(1);
+        node.set_shared_elements(2);
         REQUIRE( node != similar_node );
-        similar_node.set_neighbour_amount(1);
+        similar_node.set_shared_elements(2);
         node.set_index(0);
         REQUIRE( similar_node == node );
     }
@@ -68,7 +68,7 @@ TEST_CASE( "Test Node template with 3-D double vector from Eigen lib" ) {
     SECTION( "Test assignment operator" ){
         Node <3,VectorXd> assigned_node = node;
         REQUIRE( node.get_index() == assigned_node.get_index() );
-        REQUIRE( node.get_neighbour_amount() == assigned_node.get_neighbour_amount() );
+        REQUIRE( node.get_shared_elements() == assigned_node.get_shared_elements() );
         REQUIRE( node.get_location() == assigned_node.get_location() );
         assigned_node.set_index(666);
         assigned_node = assigned_node;
@@ -78,7 +78,7 @@ TEST_CASE( "Test Node template with 3-D double vector from Eigen lib" ) {
     SECTION( "Test copy constructor" ){
         Node <3,VectorXd> copyed_node(node);
         REQUIRE( node.get_index() == copyed_node.get_index() );
-        REQUIRE( node.get_neighbour_amount() == copyed_node.get_neighbour_amount() );
+        REQUIRE( node.get_shared_elements() == copyed_node.get_shared_elements() );
         REQUIRE( node.get_location() == copyed_node.get_location() );
     }
 

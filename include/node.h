@@ -8,13 +8,14 @@ template <int Dim, typename T>
 class Node{
 
 public:
+    Node();
     Node(T &loc);
     Node(const Node &a);//copy constructor
     void set_index(int ind);
-    void set_neighbour_amount(int neighbours);
+    void set_shared_elements(int shared_els);
     T get_location() const;
     int get_index() const;
-    int get_neighbour_amount() const;
+    int get_shared_elements() const;
     Node<Dim,T>& operator=(const Node &a);
     bool operator== (const Node &a) const;
     bool operator!=(const Node &a) const;
@@ -23,23 +24,27 @@ public:
 private:
     T location;
     int index;
-    int neighbour_amount;
-    int dimension;
+    int shared_elements;
 };
+
+template <int Dim, typename T>
+Node<Dim, T>::Node(){
+    shared_elements = 0;
+    index = 0;
+}
 
 template <int Dim, typename T>
 Node<Dim, T>::Node(T &loc){
     location = loc;
-    neighbour_amount = 0;
+    shared_elements = 0;
     index = 0;
-    dimension = Dim;
 }
 
 template <int Dim, typename T>
 Node<Dim,T>::Node(const Node &a){
     location = a.location;
     index = a.index;
-    neighbour_amount = a.neighbour_amount;
+    shared_elements = a.shared_elements;
 }
 
 template <int Dim, typename T>
@@ -48,8 +53,8 @@ void Node<Dim,T>::set_index(int ind){
 }
 
 template <int Dim, typename T>
-void Node<Dim,T>::set_neighbour_amount(int neighbours){
-    neighbour_amount = neighbours;
+void Node<Dim,T>::set_shared_elements(int shared_els){
+    shared_elements = shared_els;
 }
 
 template <int Dim, typename T>
@@ -63,8 +68,8 @@ int Node<Dim,T>::get_index() const{
 }
 
 template <int Dim, typename T>
-int Node<Dim,T>::get_neighbour_amount() const{
-    return neighbour_amount;
+int Node<Dim,T>::get_shared_elements() const{
+    return shared_elements;
 }
 
 template <int Dim, typename T>
@@ -72,7 +77,7 @@ Node<Dim,T>& Node<Dim,T>::operator=(const Node &a){
     if(*this!=a){
         location = a.location;
         index = a.index;
-        neighbour_amount = a.neighbour_amount;
+        shared_elements = a.shared_elements;
     }
     return *this;
 }
@@ -81,8 +86,8 @@ template <int Dim, typename T>
 bool Node<Dim,T>::operator==(const Node &a) const{
     bool same_location = bool(this->get_location() == a.get_location());
     bool same_index = bool(this->get_index() == a.get_index());
-    bool same_neighbour_amount = (this->get_neighbour_amount() == a.get_neighbour_amount());
-    return same_location && same_index && same_neighbour_amount;
+    bool same_shared_elements = (this->get_shared_elements() == a.get_shared_elements());
+    return same_location && same_index && same_shared_elements;
 
 }
 
@@ -95,10 +100,9 @@ bool Node<Dim,T>::operator!=(const Node &a) const{
 template <int Dim, typename T>
 void Node<Dim,T>::show() const{
     cout <<"index: " << index << endl;
-    cout <<"dimension: " << dimension << endl;
     cout <<"location: " << endl;
     cout << location << endl;
-    cout <<"Amount of neighbours: " << neighbour_amount << endl;
+    cout <<"Amount of shared elements: " << shared_elements << endl;
 }
 
 #endif
