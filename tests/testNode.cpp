@@ -49,7 +49,7 @@ TEST_CASE( "Test Node template with 3-D double vector from Eigen lib" ) {
         REQUIRE( node.get_index() == 2 );
     }
 
-    SECTION( "Test set_neighbours_no" ){
+    SECTION( "Test set_shared_elements" ){
         REQUIRE( node.get_shared_elements() == 0 );
         node.set_shared_elements(1);
         REQUIRE( node.get_shared_elements() == 1 );

@@ -84,9 +84,9 @@ Node<Dim,T>& Node<Dim,T>::operator=(const Node &a){
 
 template <int Dim, typename T>
 bool Node<Dim,T>::operator==(const Node &a) const{
-    bool same_location = bool(this->get_location() == a.get_location());
-    bool same_index = bool(this->get_index() == a.get_index());
-    bool same_shared_elements = (this->get_shared_elements() == a.get_shared_elements());
+    bool same_location = (location == a.location);
+    bool same_index = (index == a.index);
+    bool same_shared_elements = (shared_elements == a.shared_elements);
     return same_location && same_index && same_shared_elements;
 
 }
