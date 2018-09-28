@@ -43,6 +43,10 @@ TEST_CASE( "Test Node template with 3-D double vector from Eigen lib" ) {
         node.show();
     }
 
+    SECTION( "Test get_node_amount()" ){
+        REQUIRE( 2 == node.get_node_amount() );
+    }
+
     SECTION( "Test set_index" ){
         REQUIRE( node.get_index() == 0 );
         node.set_index(2);
@@ -66,7 +70,9 @@ TEST_CASE( "Test Node template with 3-D double vector from Eigen lib" ) {
 
 
     SECTION( "Test assignment operator" ){
+        int node_no = node.get_node_amount();
         Node <3,VectorXd> assigned_node = node;
+        REQUIRE( node.get_node_amount() == node_no+1 );
         REQUIRE( node.get_index() == assigned_node.get_index() );
         REQUIRE( node.get_shared_elements() == assigned_node.get_shared_elements() );
         REQUIRE( node.get_location() == assigned_node.get_location() );
@@ -76,7 +82,9 @@ TEST_CASE( "Test Node template with 3-D double vector from Eigen lib" ) {
     }
 
     SECTION( "Test copy constructor" ){
+        int node_number = node.get_node_amount();
         Node <3,VectorXd> copyed_node(node);
+        REQUIRE( node.get_node_amount() == node_number+1 );
         REQUIRE( node.get_index() == copyed_node.get_index() );
         REQUIRE( node.get_shared_elements() == copyed_node.get_shared_elements() );
         REQUIRE( node.get_location() == copyed_node.get_location() );

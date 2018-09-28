@@ -11,13 +11,13 @@ class Element{
 
 public:
     Element();
-    Element(Node<Dim,T>* nod[N]);
-    Element(Element &el);
+    Element(Node<Dim,T> (&nod)[N]);
+    Element(const Element &el);//copy constructor
     ~Element();
-    void set_shared_elements();
+    void increase_shared_elements();
     void set_indices();
     Node<Dim,T> operator[](int i);
-    const Element<Dim,N,T>& operator=(const Element &el);
+    Element<Dim,N,T>& operator=(const Element &el);
     bool operator==(const Element &el) const;
     bool operator!=(const Element &el) const;
     void show() const;
@@ -37,23 +37,25 @@ Element<Dim,N,T>::Element(){
 }
 
 template <int Dim, int N, typename T>
-Element<Dim,N,T>::Element(Node<Dim,T>* nod[N]){
+Element<Dim,N,T>::Element(Node<Dim,T> (&nod)[N]){
     for(int i=0; i<N; i++){//If node has no shared_elements it must be a new one!
-        if((nod[i]->get_shared_elements() <= 0)){
-            nodes[i] = new Node<Dim,T>(*nod[i]);
+        if(nod[i].get_shared_elements() <= 0){
+            nodes[i] = new Node<Dim,T>(nod[i]);
         }
         else{
-            nod[i] = nod[i];
+            nodes[i] = &nod[i];
         }
     }
+    increase_shared_elements();
     dimension = Dim;
 }
 
 template <int Dim, int N, typename T>
-Element<Dim,N,T>::Element(Element &el){
+Element<Dim,N,T>::Element(const Element &el){
     for(int i=0; i<N; i++){
         nodes[i] = el.nodes[i];
     }
+    increase_shared_elements();
     dimension = Dim;
 }
 
@@ -71,11 +73,11 @@ Element<Dim,N,T>::~Element(){
 }
 
 template <int Dim, int N, typename T>
-void Element<Dim,N,T>::set_shared_elements(){
+void Element<Dim,N,T>::increase_shared_elements(){
     int shared_elements = 0;
     for(int i=0; i<N; i++){
         shared_elements = nodes[i]->get_shared_elements();
-        nodes[i]->set_shared_elements(shared_elements+N-1);
+        nodes[i]->set_shared_elements(shared_elements+1);
     }
 }
 
@@ -92,7 +94,7 @@ Node<Dim,T> Element<Dim,N,T>::operator[](int i){
 }
 
 template <int Dim, int N, typename T>
-const Element<Dim,N,T>& Element<Dim,N,T>::operator=(const Element &el){
+Element<Dim,N,T>& Element<Dim,N,T>::operator=(const Element &el){
     if(*this != el){
         for(int i=0; i<N; i++){
             if(nodes[i]->get_shared_elements() <= 0){

@@ -11,11 +11,13 @@ public:
     Node();
     Node(T &loc);
     Node(const Node &a);//copy constructor
+    ~Node();
     void set_index(int ind);
     void set_shared_elements(int shared_els);
     T get_location() const;
     int get_index() const;
     int get_shared_elements() const;
+    int get_node_amount() const;
     Node<Dim,T>& operator=(const Node &a);
     bool operator== (const Node &a) const;
     bool operator!=(const Node &a) const;
@@ -25,12 +27,17 @@ private:
     T location;
     int index;
     int shared_elements;
+    static int node_amount;
 };
+
+template <int Dim, typename T>
+int Node<Dim, T>::node_amount=0;
 
 template <int Dim, typename T>
 Node<Dim, T>::Node(){
     shared_elements = 0;
     index = 0;
+    node_amount++;
 }
 
 template <int Dim, typename T>
@@ -38,6 +45,7 @@ Node<Dim, T>::Node(T &loc){
     location = loc;
     shared_elements = 0;
     index = 0;
+    node_amount++;
 }
 
 template <int Dim, typename T>
@@ -45,6 +53,12 @@ Node<Dim,T>::Node(const Node &a){
     location = a.location;
     index = a.index;
     shared_elements = a.shared_elements;
+    node_amount++;
+}
+
+template <int Dim, typename T>
+Node<Dim, T>::~Node(){
+    node_amount--;
 }
 
 template <int Dim, typename T>
@@ -70,6 +84,11 @@ int Node<Dim,T>::get_index() const{
 template <int Dim, typename T>
 int Node<Dim,T>::get_shared_elements() const{
     return shared_elements;
+}
+
+template <int Dim, typename T>
+int Node<Dim,T>::get_node_amount() const{
+    return node_amount;
 }
 
 template <int Dim, typename T>
@@ -103,6 +122,7 @@ void Node<Dim,T>::show() const{
     cout <<"location: " << endl;
     cout << location << endl;
     cout <<"Amount of shared elements: " << shared_elements << endl;
+    cout <<"Amount of all nodes: " << node_amount << endl;
 }
 
 #endif
