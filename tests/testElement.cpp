@@ -27,23 +27,22 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D do
     Node <2,VectorXd> *nodes[2];
     nodes[0] = &node1;
     nodes[1] = &node2;
+    nodes[0]->show();
+    nodes[1]->show();
     Element <2, 2, VectorXd> element(nodes);
 
-    SECTION( "Test get_location" ){
-        VectorXd value = nodes[0]->get_location();
-        REQUIRE( value(0) == 0.0 );
-        REQUIRE( value(1) == 0.0 );
-        value = nodes[1]->get_location();
-        REQUIRE( value == location );
-    }
 
     SECTION( "Test operator []" ){
         Node <2,VectorXd> node = element[0];
-        node.show();
-        REQUIRE( element[0] == node1 );
-        REQUIRE( element[0] != node2 );
-        //Node <VectorXd> node_val = *(nodes[0]);
-        //REQUIRE( element[0] == node_val );
+        REQUIRE( element[0].get_location() == nodes[0]->get_location() );
+        REQUIRE( element[0].get_location() != nodes[1]->get_location() );
+    }
+
+    SECTION( "Test show()" ){
+        cout << "showing element[0]" << endl;
+        element[0].show();
+        cout << "showing node1" << endl;
+        nodes[0]->show();
     }
 
     SECTION( "Test copy constructor" ){
@@ -52,10 +51,10 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D do
         REQUIRE( copyed_element[1] == element[1] );
     }
 
-    SECTION( "Test set_shared_elements" ){
-        element.set_shared_elements();
-        REQUIRE( 1 == element[0].get_shared_elements() );
-        REQUIRE( 1 == element[1].get_shared_elements() );
+    SECTION( "Test increase_shared_elements" ){
+        int shared_els = element[0].get_shared_elements();
+        element.increase_shared_elements();
+        REQUIRE( shared_els+1 == element[0].get_shared_elements() );
     }
 
     SECTION( "Test set_indices" ){
@@ -80,11 +79,6 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D do
         Element <2, 2, VectorXd> reflected_element(reflected_nodes);
         REQUIRE( reflected_element != element );
     }
-
-    /*SECTION( "Test show()" ){
-        nodes[0]->show();
-    }*/
-
 
 }
 

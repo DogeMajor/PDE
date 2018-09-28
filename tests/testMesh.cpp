@@ -1,6 +1,7 @@
 #include "../include/node.h"
 #include "../include/element.h"
 #include "../include/mesh.h"
+//#include<Eigen/StdVector>
 
 #include <math.h>
 
@@ -32,14 +33,17 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D do
     nodes[1] = &node2;
     nodes[2] = &node3;
     Element <2,3, VectorXd> el(nodes);
-    Element <2,3, VectorXd> *top;
-    top = &el;
-    Mesh <2,3, VectorXd> mesh(top);
+    el.show();
+    //vector < Element < 2,3, Vector2d > >* els;
+    //els[0] = el;
+    //els->push_back(&el);
+    //els[0].show();
+    //Mesh <2,3, VectorXd> mesh(el);
     //cout << mesh.weak_form_element(1,1) << endl;
     //mesh.show();
 
 
-
+/*
     SECTION( "Test get_simplex_matrix" ){
         Matrix<double,2,2> mat = mesh.get_simplex_matrix(el);
         cout << mat << endl;
@@ -51,7 +55,7 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D do
         REQUIRE( volume == 1.0 );
     }
 
-
+*/
 }
 
 

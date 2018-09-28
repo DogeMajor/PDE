@@ -1,11 +1,13 @@
 #ifndef NODE_H
 #define NODE_H
 #include <iostream>
+#include "baseNode.h"
 using namespace std;
 
 
+
 template <int Dim, typename T>
-class Node{
+class Node: public BaseNode{
 
 public:
     Node();
@@ -21,7 +23,7 @@ public:
     Node<Dim,T>& operator=(const Node &a);
     bool operator== (const Node &a) const;
     bool operator!=(const Node &a) const;
-    void show() const;
+    virtual void show() const;
 
 private:
     T location;
@@ -34,14 +36,14 @@ template <int Dim, typename T>
 int Node<Dim, T>::node_amount=0;
 
 template <int Dim, typename T>
-Node<Dim, T>::Node(){
+Node<Dim, T>::Node() : BaseNode(){
     shared_elements = 0;
     index = 0;
     node_amount++;
 }
 
 template <int Dim, typename T>
-Node<Dim, T>::Node(T &loc){
+Node<Dim, T>::Node(T &loc) : BaseNode(){
     location = loc;
     shared_elements = 0;
     index = 0;
@@ -49,7 +51,7 @@ Node<Dim, T>::Node(T &loc){
 }
 
 template <int Dim, typename T>
-Node<Dim,T>::Node(const Node &a){
+Node<Dim,T>::Node(const Node &a) : BaseNode(){
     location = a.location;
     index = a.index;
     shared_elements = a.shared_elements;

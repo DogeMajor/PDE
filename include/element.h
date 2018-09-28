@@ -11,7 +11,7 @@ class Element{
 
 public:
     Element();
-    Element(Node<Dim,T> (&nod)[N]);
+    Element(Node<Dim,T> *nod[N]);
     Element(const Element &el);//copy constructor
     ~Element();
     void increase_shared_elements();
@@ -24,7 +24,6 @@ public:
 
 private:
     Node<Dim,T>* nodes[N];
-    int dimension;
 
 };
 
@@ -33,21 +32,19 @@ Element<Dim,N,T>::Element(){
     for(int i=0; i<N; i++){
         nodes[i] = new Node<Dim,T>;
     }
-    dimension = Dim;
 }
 
 template <int Dim, int N, typename T>
-Element<Dim,N,T>::Element(Node<Dim,T> (&nod)[N]){
+Element<Dim,N,T>::Element(Node<Dim,T> *nod[N]){
     for(int i=0; i<N; i++){//If node has no shared_elements it must be a new one!
-        if(nod[i].get_shared_elements() <= 0){
-            nodes[i] = new Node<Dim,T>(nod[i]);
+        if(nod[i]->get_shared_elements() <= 0){
+            nodes[i] = new Node<Dim,T>(*nod[i]);
         }
         else{
-            nodes[i] = &nod[i];
+            nodes[i] = nod[i];
         }
     }
     increase_shared_elements();
-    dimension = Dim;
 }
 
 template <int Dim, int N, typename T>
@@ -56,7 +53,6 @@ Element<Dim,N,T>::Element(const Element &el){
         nodes[i] = el.nodes[i];
     }
     increase_shared_elements();
-    dimension = Dim;
 }
 
 template <int Dim, int N, typename T>
@@ -106,7 +102,6 @@ Element<Dim,N,T>& Element<Dim,N,T>::operator=(const Element &el){
             nodes[i] = el.nodes[i];
         }
     }
-    dimension = el.dimension;
     return *this;
 }
 
