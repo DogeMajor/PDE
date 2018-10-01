@@ -7,11 +7,6 @@
 using namespace std;
 using namespace Eigen;
 
-double limit_decimals(double number, int decimals){
-    double N = pow(10, decimals);
-    return double(int(number * N)) / N;
-}
-
 
 #define CATCH_CONFIG_MAIN  // This tells Catch to provide a main()
 #include "../C++ libs/catch/catch.hpp"
@@ -24,16 +19,16 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D do
     Node <2,VectorXd> node1(location);
     location << 1.0, 0.0;
     Node <2,VectorXd> node2(location);
-    Node <2,VectorXd> *nodes[2];
+    location << 1.0, 1.0;
+    Node <2,VectorXd> node3(location);
+    Node <2,VectorXd> *nodes[3];
     nodes[0] = &node1;
     nodes[1] = &node2;
-    nodes[0]->show();
-    nodes[1]->show();
-    Element <2, 2, VectorXd> element(nodes);
+    nodes[2] = &node3;
+    Element <2, 3, VectorXd> element(nodes);
 
 
     SECTION( "Test operator []" ){
-        Node <2,VectorXd> node = element[0];
         REQUIRE( element[0].get_location() == nodes[0]->get_location() );
         REQUIRE( element[0].get_location() != nodes[1]->get_location() );
     }
@@ -46,9 +41,10 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D do
     }
 
     SECTION( "Test copy constructor" ){
-        Element <2, 2, VectorXd> copyed_element(element);
+        Element <2, 3, VectorXd> copyed_element(element);
         REQUIRE( copyed_element[0] == element[0] );
         REQUIRE( copyed_element[1] == element[1] );
+        REQUIRE( copyed_element[2] == element[2] );
     }
 
     SECTION( "Test increase_shared_elements" ){
@@ -64,21 +60,29 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D do
     }
 
     SECTION( "Test assignment operator" ){
-        Element <2, 2, VectorXd> assigned_element = element;
+        Element <2, 3, VectorXd> assigned_element = element;
         REQUIRE( assigned_element[0] == element[0] );
         REQUIRE( assigned_element[1] == element[1] );
+        REQUIRE( assigned_element[2] == element[2] );
     }
 
 
     SECTION( "Test operators == and !=" ){
-        Element <2, 2, VectorXd> new_element(nodes);
+        Element <2, 3, VectorXd> new_element(nodes);
         REQUIRE( new_element == element );
-        Node <2,VectorXd> *reflected_nodes[2];
-        reflected_nodes[0] = &node2;
-        reflected_nodes[1] = &node1;
-        Element <2, 2, VectorXd> reflected_element(reflected_nodes);
+        Node <2,VectorXd> *reflected_nodes[3];
+        reflected_nodes[0] = &node3;
+        reflected_nodes[1] = &node2;
+        reflected_nodes[2] = &node1;
+        Element <2, 3, VectorXd> reflected_element(reflected_nodes);
         REQUIRE( reflected_element != element );
     }
+
+    SECTION( "Test get_volume()" ){
+        double volume = element.get_volume();
+        REQUIRE( volume == 1.0 );
+    }
+
 
 }
 

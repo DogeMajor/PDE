@@ -1,8 +1,13 @@
 #ifndef ELEMENT_H
 #define ELEMENT_H
 #include <iostream>
+#include "../C++ libs/eigen/Eigen/Sparse"
+#include "../C++ libs/eigen/Eigen/Dense"
+#include "../C++ libs/eigen/Eigen/Core"
 #include "node.h"
+
 using namespace std;
+using namespace Eigen;
 
 
 //We simply want to use the already existing nodes and don't need to worry about garbage collection.
@@ -17,9 +22,11 @@ public:
     void increase_shared_elements();
     void set_indices();
     Node<Dim,T> operator[](int i);
-    Element<Dim,N,T>& operator=(const Element &el);
+    Element<Dim,N,T>& operator=(Element &el);
     bool operator==(const Element &el) const;
     bool operator!=(const Element &el) const;
+    Matrix<double, Dim, Dim> get_simplex_matrix(Element &el) const;
+    double get_volume() const;
     void show() const;
 
 private:
@@ -90,7 +97,7 @@ Node<Dim,T> Element<Dim,N,T>::operator[](int i){
 }
 
 template <int Dim, int N, typename T>
-Element<Dim,N,T>& Element<Dim,N,T>::operator=(const Element &el){
+Element<Dim,N,T>& Element<Dim,N,T>::operator=(Element &el){
     if(*this != el){
         for(int i=0; i<N; i++){
             if(nodes[i]->get_shared_elements() <= 0){
@@ -104,7 +111,6 @@ Element<Dim,N,T>& Element<Dim,N,T>::operator=(const Element &el){
     }
     return *this;
 }
-
 
 template <int Dim, int N, typename T>
 bool Element<Dim,N,T>::operator==(const Element &el) const{
@@ -122,8 +128,27 @@ bool Element<Dim,N,T>::operator!=(const Element &el) const{
 }
 
 template <int Dim, int N, typename T>
+Matrix<double, Dim, Dim> Element<Dim,N,T>::get_simplex_matrix(Element &el) const{
+    //For a simplex, N == Dim+1
+    MatrixXd simplex_mat = MatrixXd::Zero(Dim,Dim);
+    for(int col=0; col<Dim; col++){
+        for(int row=0; row<Dim; row++){
+            simplex_mat(row, col) = el[row+1].get_location()(col)-el[row].get_location()(col);
+        }
+    }
+    return simplex_mat;
+}
+
+template <int Dim, int N, typename T>
+double Element<Dim,N,T>::get_volume() const{
+    Element<Dim,N,T> temp = *this;
+    MatrixXd simplex_mat = (Dim == N-1)? get_simplex_matrix(temp): MatrixXd::Zero(Dim,Dim);
+    return simplex_mat.determinant();
+}
+
+
+template <int Dim, int N, typename T>
 void Element<Dim,N,T>::show() const{
-    //int n = N;
     cout <<"#elements: " << N << endl;
     for(int i=0; i<N; i++){
         nodes[i]->show();
