@@ -9,10 +9,17 @@
 using namespace std;
 using namespace Eigen;
 
+class BaseElement{
+public:
+    virtual ~BaseElement(){}
+    virtual void show() const = 0;
+
+};
+
 
 //We simply want to use the already existing nodes and don't need to worry about garbage collection.
 template <int Dim, int N, typename T>
-class Element{
+class Element: public BaseElement{
 
 public:
     Element();
@@ -35,14 +42,14 @@ private:
 };
 
 template <int Dim, int N, typename T>
-Element<Dim,N,T>::Element(){
+Element<Dim,N,T>::Element() : BaseElement(){
     for(int i=0; i<N; i++){
         nodes[i] = new Node<Dim,T>;
     }
 }
 
 template <int Dim, int N, typename T>
-Element<Dim,N,T>::Element(Node<Dim,T> *nod[N]){
+Element<Dim,N,T>::Element(Node<Dim,T> *nod[N]) : BaseElement(){
     for(int i=0; i<N; i++){//If node has no shared_elements it must be a new one!
         if(nod[i]->get_shared_elements() <= 0){
             nodes[i] = new Node<Dim,T>(*nod[i]);
@@ -55,7 +62,7 @@ Element<Dim,N,T>::Element(Node<Dim,T> *nod[N]){
 }
 
 template <int Dim, int N, typename T>
-Element<Dim,N,T>::Element(const Element &el){
+Element<Dim,N,T>::Element(const Element &el) : BaseElement(){
     for(int i=0; i<N; i++){
         nodes[i] = el.nodes[i];
     }

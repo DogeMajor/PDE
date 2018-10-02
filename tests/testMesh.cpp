@@ -1,6 +1,7 @@
-#include "../include/node.h"
+//#include "../include/node.h"
 #include "../include/element.h"
 #include "../include/mesh.h"
+#include "../include/simpleMesh.h"
 //#include<Eigen/StdVector>
 
 #include <math.h>
@@ -21,6 +22,7 @@ double limit_decimals(double number, int decimals){
 
 TEST_CASE( "Test Element template containing Node template initiated with 2-D double vector from Eigen lib" ) {
 
+
     VectorXd location(2);
     location << 0.0, 0.0;
     Node <2,VectorXd> node1(location);
@@ -32,15 +34,60 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D do
     nodes[0] = &node1;
     nodes[1] = &node2;
     nodes[2] = &node3;
-    Element <2,3, VectorXd> el(nodes);
-    el.show();
+
+    Element <2, 3, VectorXd> element(nodes);
+    vector <BaseElement* > el_vec(2);
+    el_vec[0] = new Element <2, 3, VectorXd>(nodes);
+    el_vec[1] = new Element <2, 3, VectorXd>(nodes);
+    el_vec[0]->show();
+    VectorXd new_location = (Element <2, 3, VectorXd>(*el_vec[0]))[0].get_location();
+    cout << new_location << endl;
+    //element.show();
+    Mesh <2, 3, VectorXd> mesh;
+    mesh.show();
+    Mesh <2, 3, VectorXd> second_mesh(element);
+    second_mesh.show();
+
+
+
+}
+
+/*
+TEST_CASE( "Test SimpleMesh" ) {
+
+    /*VectorXd location(2);
+    location << 0.0, 0.0;
+    Node <2,VectorXd> node1(location);
+    location << 1.0, 0.0;
+    Node <2,VectorXd> node2(location);
+    location << 1.0, 1.0;
+    Node <2,VectorXd> node3(location);
+
+    float loc1 = 1.0;
+    float loc2 = 2.0;
+    float loc3 = 3.0;
+    Node <1, float> node1(loc1);
+    Node <1, float> node2(loc2);
+    Node <1, float> node3(loc3);
+    Node <1, float> *nodes[3];
+    nodes[0] = &node1;
+    nodes[1] = &node2;
+    nodes[2] = &node3;
+    Element <1,3, float> el(nodes);
+    //el.show();
     //vector < Element < 2,3, Vector2d > >* els;
     //els[0] = el;
     //els->push_back(&el);
     //els[0].show();
     //Mesh <2,3, VectorXd> mesh(el);
+    Node <1, float> *new_nodes[1];
+    new_nodes[0] = &node1;
+    Element <1, 1, float> new_el(new_nodes);
+    typedef Element <1,3, float> FloatElement;
     //cout << mesh.weak_form_element(1,1) << endl;
-    //mesh.show();
+    FloatElement float_el(nodes);
+    SimpleMesh < FloatElement > simple_mesh(new_el);
+    simple_mesh.show();
 
 
 /*
@@ -55,7 +102,7 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D do
         REQUIRE( volume == 1.0 );
     }
 
-*/
-}
+
+}*/
 
 

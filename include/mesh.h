@@ -1,11 +1,8 @@
 #ifndef MESH_H
 #define MESH_H
 #include <iostream>
-#include "node.h"
+//#include "node.h"
 #include "element.h"
-#include "../C++ libs/eigen/Eigen/Sparse"
-#include "../C++ libs/eigen/Eigen/Dense"
-#include "../C++ libs/eigen/Eigen/Core"
 #include <math.h>
 
 using namespace std;
@@ -17,62 +14,80 @@ class Mesh{
 
 public:
     Mesh();
-    Mesh(Element<Dim,N,T> *top);
+    Mesh(Element<Dim,N,T> &t);
+    Mesh(Element<Dim,N,T> t, Mesh<Dim,N,T> *n);
     ~Mesh();
-    Element<Dim,N,T>& get_next();
-    Matrix<double, Dim, Dim> get_simplex_matrix(Element<Dim,N,T> &el) const;//For calculating the volume
-    double get_element_volume(Element<Dim,N,T> &el) const;
-    double weak_form_element(int i, int j) const;
+    const Mesh <Dim,N,T>& operator=(const Mesh<Dim,N,T> &m);
+    bool operator==(const Mesh<Dim,N,T> &m) const;
+    bool operator!=(const Mesh<Dim,N,T> &m) const;
+    Element<Dim,N,T> get_element() const;
+    const Mesh<Dim,N,T>* get_next();
+    double weak_form_element(int i, int j) const;//Calculating the stiffness matrix
     void show() const;
 
 private:
-    Element<Dim,N,T> *top;
-    //Element<N,T> *next;
+    Element <Dim,N,T> top;
+    Mesh<Dim,N,T> *next;
 
 };
 
 template <int Dim, int N, typename T>
 Mesh<Dim,N,T>::Mesh(){
-    top = new Element<Dim,N,T>;
-    //next = new Element<N,T>;
+    //top = new Element<Dim,N,T>;
+    //top = new Element<Dim,N,T>;
+    next = nullptr;
+}
+
+template <int Dim, int N, typename T>
+Mesh<Dim,N,T>::Mesh(Element<Dim,N,T> &t){
+    top = t;
+    next = nullptr;
 }
 
 
 template <int Dim, int N, typename T>
-Mesh<Dim,N,T>::Mesh(Element<Dim,N,T> *top){
-    top = top;
+Mesh<Dim,N,T>::Mesh(Element<Dim,N,T> t, Mesh<Dim,N,T> *n){
+    top = t;
+    next = n;
 }
 
 template <int Dim, int N, typename T>
 Mesh<Dim,N,T>::~Mesh(){
-    delete top;
+    //delete top;
     //delete next;
+    delete next;
     cout << "Mesh destroyed!" << endl;
 }
 
-
 template <int Dim, int N, typename T>
-Element<Dim,N,T>& Mesh<Dim,N,T>::get_next(){
-    return *top;
-}
-
-
-template <int Dim, int N, typename T>
-Matrix<double, Dim, Dim> Mesh<Dim,N,T>::get_simplex_matrix(Element<Dim,N,T> &el) const{
-    //For a simplex, N == Dim+1
-    MatrixXd simplex_mat = MatrixXd::Zero(Dim,Dim);
-    for(int col=0; col<Dim; col++){
-        for(int row=0; row<Dim; row++){
-            simplex_mat(row, col) = el[row+1].get_location()(col)-el[row].get_location()(col);
-        }
+const Mesh <Dim,N,T>& Mesh<Dim,N,T>::operator=(const Mesh<Dim,N,T> & m){
+    if(*this!=m){
+        top = m.get_element();
+        next = m.get_next();
     }
-    return simplex_mat;
+    return *this;
 }
 
 template <int Dim, int N, typename T>
-double Mesh<Dim,N,T>::get_element_volume(Element<Dim,N,T> &el) const{
-    MatrixXd simplex_mat = get_simplex_matrix(el);
-    return simplex_mat.determinant();
+bool Mesh<Dim,N,T>::operator==(const Mesh<Dim,N,T> & m) const{
+    bool same_top = (m.top == top);
+    bool same_next = (m.next == next);
+    return same_top && same_next;
+}
+
+template <int Dim, int N, typename T>
+bool Mesh<Dim,N,T>::operator!=(const Mesh<Dim,N,T> & m) const{
+    return !(*this == m);
+}
+
+template <int Dim, int N, typename T>
+Element<Dim,N,T> Mesh<Dim,N,T>::get_element() const{
+    return top;
+}
+
+template <int Dim, int N, typename T>
+const Mesh<Dim,N,T>* Mesh<Dim,N,T>::get_next(){
+    return next;
 }
 
 template <int Dim, int N, typename T>
@@ -82,7 +97,14 @@ double Mesh<Dim,N,T>::weak_form_element(int i, int j) const{
 
 template <int Dim, int N, typename T>
 void Mesh<Dim,N,T>::show() const{
-    top->show();
+    //Mesh<Dim,N,T>* next_mesh = get_next();
+    cout << "To be fixed..." << endl;
+    //top.show();
+    /*do{
+        top.show();
+        this = next;
+    }
+    while(this != nullptr);*/
 }
 
 #endif
