@@ -7,12 +7,12 @@ using namespace std;
 
 
 template <int Dim, typename T>
-class Node: public BaseNode{
+class Node{
 
 public:
     Node();
     Node(T &loc);
-    Node(const Node &a);//copy constructor
+    Node(Node &a);//copy constructor
     ~Node();
     void set_index(int ind);
     void set_shared_elements(int shared_els);
@@ -36,14 +36,14 @@ template <int Dim, typename T>
 int Node<Dim, T>::node_amount=0;
 
 template <int Dim, typename T>
-Node<Dim, T>::Node() : BaseNode(){
+Node<Dim, T>::Node(){
     shared_elements = 0;
     index = 0;
     node_amount++;
 }
 
 template <int Dim, typename T>
-Node<Dim, T>::Node(T &loc) : BaseNode(){
+Node<Dim, T>::Node(T &loc){
     location = loc;
     shared_elements = 0;
     index = 0;
@@ -51,7 +51,7 @@ Node<Dim, T>::Node(T &loc) : BaseNode(){
 }
 
 template <int Dim, typename T>
-Node<Dim,T>::Node(const Node &a) : BaseNode(){
+Node<Dim,T>::Node(Node &a){
     location = a.location;
     index = a.index;
     shared_elements = a.shared_elements;
@@ -122,7 +122,10 @@ template <int Dim, typename T>
 void Node<Dim,T>::show() const{
     cout <<"index: " << index << endl;
     cout <<"location: " << endl;
-    cout << location << endl;
+    T loc = get_location();
+    for(int i=0; i<Dim; i++){
+        cout << loc[i] << " ";
+    }
     cout <<"Amount of shared elements: " << shared_elements << endl;
     cout <<"Amount of all nodes: " << node_amount << endl;
 }

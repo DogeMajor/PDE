@@ -7,13 +7,13 @@ using namespace std;
 template <typename T> class Point{
 public:
     Point();
-    Point(vector <T> val);
-    Point(Point<T> & p);
+    Point(vector <T> &val);
+    Point(const Point & p);
     int get_dimension() const;
     vector <T> get_value() const;
-    bool operator==(const Point<T> &p) const;
-    bool operator!=(const Point<T> &p) const;
-    Point <T> operator=(const Point<T> &p);
+    bool operator==(const Point &p) const;
+    bool operator!=(const Point &p) const;
+    Point <T>& operator=(const Point &p);
     T operator[](int i);
     void show();
 private:
@@ -28,12 +28,12 @@ Point<T>::Point(){
 }
 
 template <typename T>
-Point<T>::Point(vector <T> val){
+Point<T>::Point(vector <T> &val){
     value = val;
 }
 
 template <typename T>
-Point<T>::Point(Point <T> &p){
+Point<T>::Point(const Point &p){
     value = p.value;
 }
 
@@ -48,18 +48,21 @@ vector <T> Point<T>::get_value() const{
 }
 
 template <typename T>
-bool Point<T>::operator==(const Point<T> &p) const{
+bool Point<T>::operator==(const Point &p) const{
     return (value == p.value);
 }
 
 template <typename T>
-bool Point<T>::operator!=(const Point<T> &p) const{
+bool Point<T>::operator!=(const Point &p) const{
     return !(*this == p);
 }
 
 template <typename T>
-Point <T> Point<T>::operator=(const Point<T> &p){
-    if(p!=*this) value == p.value;
+Point <T>& Point<T>::operator=(const Point &p){
+    if(p!=*this){
+        //value.resize(p.size());
+        value = p.value;
+    }
     return *this;
 }
 

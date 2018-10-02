@@ -30,6 +30,9 @@ TEST_CASE( "Test Point class" ) {
     SECTION( "Test assignment operator" ){
         Point <double> assigned_point = point;
         REQUIRE( assigned_point.get_value() == val );
+        Point <double> fresh_point;
+        fresh_point = point;
+        REQUIRE( fresh_point.get_value() == val );
     }
 
     SECTION( "Test equal to unequal to operators" ){

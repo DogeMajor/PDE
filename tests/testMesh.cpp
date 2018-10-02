@@ -1,7 +1,7 @@
 //#include "../include/node.h"
 #include "../include/element.h"
 #include "../include/mesh.h"
-#include "../include/simpleMesh.h"
+#include "../include/baseMesh.h"
 //#include<Eigen/StdVector>
 
 #include <math.h>
@@ -36,19 +36,41 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D do
     nodes[2] = &node3;
 
     Element <2, 3, VectorXd> element(nodes);
-    vector <BaseElement* > el_vec(2);
+    element.increase_shared_elements();
+    vector <Element <2, 3, VectorXd>* > el_vec(2);
     el_vec[0] = new Element <2, 3, VectorXd>(nodes);
     el_vec[1] = new Element <2, 3, VectorXd>(nodes);
-    el_vec[0]->show();
-    VectorXd new_location = (Element <2, 3, VectorXd>(*el_vec[0]))[0].get_location();
+    //el_vec[0]->show();
+    VectorXd new_location = (*el_vec[0])[0].get_location();
     cout << new_location << endl;
+    cout << (*el_vec[1])[1].get_location() << endl;
+    cout << "vec_size: " << el_vec.size() << endl;
     //element.show();
-    Mesh <2, 3, VectorXd> mesh;
-    mesh.show();
-    Mesh <2, 3, VectorXd> second_mesh(element);
-    second_mesh.show();
+    //Mesh <2, 3, VectorXd> mesh;
+    //mesh.show();
+    //Mesh <2, 3, VectorXd> second_mesh(element);
+    //second_mesh.show();
+    /*SECTION( "Test constructing SimpleMesh(T &t) with element as arg" ){
+        BaseMesh <Element <2, 3, VectorXd> > second_mesh;
+        second_mesh.set_top(element);
+        second_mesh.show();
+    }
+*/
+    SECTION( "Test constructing SimpleMesh()" ){
+        BaseMesh <Element <2, 3, VectorXd> > b_mesh;
+        b_mesh.show();
+    }
 
+    SECTION( "Test constructing SimpleMesh with int as Type" ){
+        BaseMesh <int> s_mesh;
+        s_mesh.set_top(1);
+        //s_mesh.show();
+    }
 
+    //SECTION( "Test constructing Mesh" ){
+        //Mesh <2, 3, VectorXd> mesh(element);
+        //mesh.show();
+//}
 
 }
 
