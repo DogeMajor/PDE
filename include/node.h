@@ -38,7 +38,7 @@ int Node<Dim, T>::node_amount=0;
 template <int Dim, typename T>
 Node<Dim, T>::Node(){
     shared_elements = 0;
-    index = 0;
+    index = -1;//When node is not part of any element and has no location
     node_amount++;
 }
 
@@ -122,9 +122,11 @@ template <int Dim, typename T>
 void Node<Dim,T>::show() const{
     cout <<"index: " << index << endl;
     cout <<"location: " << endl;
-    T loc = get_location();
-    for(int i=0; i<Dim; i++){
+    if(index != -1){
+        T loc = get_location();
+        for(int i=0; i<Dim; i++){
         cout << loc[i] << " ";
+        }
     }
     cout <<"Amount of shared elements: " << shared_elements << endl;
     cout <<"Amount of all nodes: " << node_amount << endl;

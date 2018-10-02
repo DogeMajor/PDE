@@ -17,9 +17,11 @@ public:
 };
 
 
+
+
 //We simply want to use the already existing nodes and don't need to worry about garbage collection.
 template <int Dim, int N, typename T>
-class Element: public BaseElement{
+class Element{
 
 public:
     Element();
@@ -42,27 +44,24 @@ private:
 };
 
 template <int Dim, int N, typename T>
-Element<Dim,N,T>::Element() : BaseElement(){
+Element<Dim,N,T>::Element(){
     for(int i=0; i<N; i++){
         nodes[i] = new Node<Dim,T>;
-    }
-}
-
-template <int Dim, int N, typename T>
-Element<Dim,N,T>::Element(Node<Dim,T> *nod[N]) : BaseElement(){
-    for(int i=0; i<N; i++){//If node has no shared_elements it must be a new one!
-        if(nod[i]->get_shared_elements() <= 0){
-            nodes[i] = new Node<Dim,T>(*nod[i]);
-        }
-        else{
-            nodes[i] = nod[i];
-        }
     }
     increase_shared_elements();
 }
 
 template <int Dim, int N, typename T>
-Element<Dim,N,T>::Element(const Element &el) : BaseElement(){
+Element<Dim,N,T>::Element(Node<Dim,T> *nod[N]){
+    for(int i=0; i<N; i++){//If node has no shared_elements it must be a new one!
+        if(nod[i]->get_shared_elements() <= 0) {nodes[i] = new Node<Dim,T>(*nod[i]);}
+        else {nodes[i] = nod[i];}
+    }
+    increase_shared_elements();
+}
+
+template <int Dim, int N, typename T>
+Element<Dim,N,T>::Element(const Element &el){
     for(int i=0; i<N; i++){
         nodes[i] = el.nodes[i];
     }
@@ -140,7 +139,7 @@ Matrix<double, Dim, Dim> Element<Dim,N,T>::get_simplex_matrix(Element &el) const
     MatrixXd simplex_mat = MatrixXd::Zero(Dim,Dim);
     for(int col=0; col<Dim; col++){
         for(int row=0; row<Dim; row++){
-            simplex_mat(row, col) = el[row+1].get_location()(col)-el[row].get_location()(col);
+            simplex_mat(row, col) = el[row+1].get_location()[col]-el[row].get_location()[col];
         }
     }
     return simplex_mat;
@@ -152,7 +151,6 @@ double Element<Dim,N,T>::get_volume() const{
     MatrixXd simplex_mat = (Dim == N-1)? get_simplex_matrix(temp): MatrixXd::Zero(Dim,Dim);
     return simplex_mat.determinant();
 }
-
 
 template <int Dim, int N, typename T>
 void Element<Dim,N,T>::show() const{
