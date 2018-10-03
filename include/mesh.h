@@ -99,7 +99,7 @@ template <int Dim, int N, typename T>
 void Mesh<Dim,N,T>::show() const{
     //Mesh<Dim,N,T>* next_mesh = get_next();
     cout << "To be fixed..." << endl;
-    //top.show();
+    top.show();
     /*do{
         top.show();
         this = next;

@@ -14,6 +14,7 @@ TEST_CASE( "Test Point class" ) {
     vector<double> val;
     val.push_back(1.0);
     val.push_back(2.0);
+    Point <double> point_0;
     Point <double> point(val);
 
     SECTION( "Test default constructor" ){

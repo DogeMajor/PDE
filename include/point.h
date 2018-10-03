@@ -15,6 +15,7 @@ public:
     bool operator!=(const Point &p) const;
     Point <T>& operator=(const Point &p);
     T operator[](int i);
+    //vector <T> operator()();replace get_value perhaps
     void show();
 private:
     vector <T> value;

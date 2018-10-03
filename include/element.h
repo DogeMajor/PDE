@@ -106,10 +106,7 @@ template <int Dim, int N, typename T>
 Element<Dim,N,T>& Element<Dim,N,T>::operator=(Element &el){
     if(*this != el){
         for(int i=0; i<N; i++){
-            if(nodes[i]->get_shared_elements() <= 0){
-                delete nodes[i];
-            }
-
+            if(nodes[i]->get_shared_elements() <= 0) {delete nodes[i];}
         }
         for(int i=0; i<N; i++){
             nodes[i] = el.nodes[i];
@@ -161,4 +158,3 @@ void Element<Dim,N,T>::show() const{
 }
 
 #endif
-

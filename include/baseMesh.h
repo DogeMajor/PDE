@@ -1,5 +1,5 @@
-#ifndef SIMPLEMESH_H
-#define SIMPLEMESH_H
+#ifndef BASEMESH_H
+#define BASEMESH_H
 #include <iostream>
 //#include "node.h"
 //#include "element.h"
@@ -13,56 +13,64 @@ using namespace Eigen;
 
 
 template <typename T>
-class SimpleMesh{
+class BaseMesh{
 
 public:
-    SimpleMesh();
-    SimpleMesh(T &t);
-    SimpleMesh(T &t, SimpleMesh<T> *n);
-    ~SimpleMesh();
-    const SimpleMesh <T>& operator=(const SimpleMesh<T> &m);
-    bool operator==(const SimpleMesh<T> &m) const;
-    bool operator!=(const SimpleMesh<T> &m) const;
+    BaseMesh();
+    BaseMesh(T t);
+    BaseMesh(T &t, BaseMesh<T> *n);
+    ~BaseMesh();
+    void set_top(T t);
+    const BaseMesh <T>& operator=(const BaseMesh<T> &m);
+    bool operator==(const BaseMesh<T> &m) const;
+    bool operator!=(const BaseMesh<T> &m) const;
     T get_element() const;
-    const SimpleMesh<T>* get_next();
+    const BaseMesh<T>* get_next();
     void show() const;
 
 private:
     T top;
-    SimpleMesh *next;
+    BaseMesh *next;
 
 };
 
 template <typename T>
-SimpleMesh<T>::SimpleMesh(){
+BaseMesh<T>::BaseMesh(){
     //top = new Element<T>;
     //top = new Element<T>;
     next = nullptr;
 }
 
 template <typename T>
-SimpleMesh<T>::SimpleMesh(T &t){
+BaseMesh<T>::BaseMesh(T t){
     top = t;
     next = nullptr;
 }
 
 
 template <typename T>
-SimpleMesh<T>::SimpleMesh(T &t, SimpleMesh<T> *n){
+BaseMesh<T>::BaseMesh(T &t, BaseMesh<T> *n){
     top = t;
     next = n;
 }
 
 template <typename T>
-SimpleMesh<T>::~SimpleMesh(){
+BaseMesh<T>::~BaseMesh(){
     //delete top;
     //delete next;
     delete next;
-    cout << "SimpleMesh destroyed!" << endl;
+    cout << "BaseMesh destroyed!" << endl;
 }
 
 template <typename T>
-const SimpleMesh <T>& SimpleMesh<T>::operator=(const SimpleMesh<T> & m){
+void BaseMesh<T>::set_top(T t){
+    cout << "Setting to top to value" << endl;
+    //t.show();
+    top = t;
+}
+
+template <typename T>
+const BaseMesh <T>& BaseMesh<T>::operator=(const BaseMesh<T> & m){
     if(*this!=m){
         top = m.get_element();
         if(next!=nullptr){
@@ -77,7 +85,7 @@ const SimpleMesh <T>& SimpleMesh<T>::operator=(const SimpleMesh<T> & m){
 
         else{
             if(m.next!=nullptr){
-                next = new SimpleMesh(m.get_next->get_element());
+                next = new BaseMesh(m.get_next->get_element());
             }
         }
 
@@ -86,32 +94,32 @@ const SimpleMesh <T>& SimpleMesh<T>::operator=(const SimpleMesh<T> & m){
 }
 
 template <typename T>
-bool SimpleMesh<T>::operator==(const SimpleMesh<T> & m) const{
+bool BaseMesh<T>::operator==(const BaseMesh<T> & m) const{
     bool same_top = (m.top == top);
     bool same_next = (m.next == next);
     return same_top && same_next;
 }
 
 template <typename T>
-bool SimpleMesh<T>::operator!=(const SimpleMesh<T> & m) const{
+bool BaseMesh<T>::operator!=(const BaseMesh<T> & m) const{
     return !(*this == m);
 }
 
 template <typename T>
-T SimpleMesh<T>::get_element() const{
+T BaseMesh<T>::get_element() const{
     return top;
 }
 
 template <typename T>
-const SimpleMesh<T>* SimpleMesh<T>::get_next(){
+const BaseMesh<T>* BaseMesh<T>::get_next(){
     return next;
 }
 
 template <typename T>
-void SimpleMesh<T>::show() const{
-    //SimpleMesh<T>* next_SimpleMesh = get_next();
+void BaseMesh<T>::show() const{
+    //BaseMesh<T>* next_BaseMesh = get_next();
     cout << "To be fixed..." << endl;
-    //top.show();
+    top.show();
     /*do{
         top.show();
         this = next;

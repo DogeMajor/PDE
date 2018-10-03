@@ -1,6 +1,7 @@
 #include "../include/element.h"
 #include "../include/mesh.h"
 #include "../include/baseMesh.h"
+#include "../include/FunctionHandler.h"
 
 #include <math.h>
 
@@ -10,7 +11,7 @@ using namespace std;
 #include "../C++ libs/catch/catch.hpp"
 
 
-TEST_CASE( "Test Element template containing Node template initiated with 2-D double vector from Eigen lib" ) {
+TEST_CASE( "Test FunctionHandler" ) {
 
 
     VectorXd location(2);
@@ -46,7 +47,7 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D do
         second_mesh.show();
     }
 */
-    SECTION( "Test constructing BaseMesh()" ){
+    SECTION( "Test constructing FunctionHandler" ){
         BaseMesh <Element <2, 3, VectorXd> > b_mesh;
         //b_mesh.show();
     }
@@ -116,5 +117,6 @@ TEST_CASE( "Test SimpleMesh" ) {
 
 
 }*/
+
 
 
