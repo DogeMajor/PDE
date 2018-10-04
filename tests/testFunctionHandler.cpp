@@ -8,6 +8,15 @@
 
 using namespace std;
 
+double limit_decimals(double number, int decimals){
+    double N = pow(10, decimals);
+    return double(int(number * N)) / N;
+}
+
+double fn(VectorXd coords){
+    return coords.transpose()*coords;
+}
+
 #define CATCH_CONFIG_MAIN  // This tells Catch to provide a main()
 #include "../C++ libs/catch/catch.hpp"
 
@@ -59,6 +68,7 @@ TEST_CASE( "Test FunctionGenerator" ) {
 TEST_CASE( "Test FunctionAnalyzer" ) {
 
 
+
     VectorXd location(2);
     location << 0.0, 0.0;
     Node <2,VectorXd> node1(location);
@@ -74,7 +84,6 @@ TEST_CASE( "Test FunctionAnalyzer" ) {
     Element <2, 3, VectorXd> element(nodes);
     element.increase_shared_elements();
     MatrixXd simplex_mat = element.get_simplex_matrix(element);
-    cout << simplex_mat << endl;
     FunctionGenerator<2, 3, VectorXd> gen;
     MatrixXd M = gen.get_inv_matrix(element);
     SimplexFunction fn_a = gen.build_function(M,0);
@@ -82,23 +91,23 @@ TEST_CASE( "Test FunctionAnalyzer" ) {
     SimplexFunction fn_c = gen.build_function(M,2);
     BilinearFunction bl_f;
     bl_f.mat = MatrixXd::Identity(2,2);
-    cout << bl_f(location, location) << endl;
-    FunctionAnalyzer<2, 3, VectorXd> analyzer(bl_f);
+    FunctionAnalyzer<2, 3, VectorXd> analyzer(bl_f, fn);
 
     SECTION( "Test constructing FunctionAnalyzer" ){
         FunctionAnalyzer<2, 3, VectorXd> new_analyzer;
     }
 
     SECTION( "Test sobolev_dot_product" ){
-        double A_aa = analyzer.sobolev_dot_product(element, fn_a, fn_a);
-
         REQUIRE( analyzer.sobolev_dot_product(element, fn_a, fn_a) == 0.5 );
         REQUIRE( analyzer.sobolev_dot_product(element, fn_a, fn_b) == -0.5 );
         REQUIRE( analyzer.sobolev_dot_product(element, fn_a, fn_c) == 0.0 );
         REQUIRE( analyzer.sobolev_dot_product(element, fn_b, fn_b) == 1.0 );
         REQUIRE( analyzer.sobolev_dot_product(element, fn_b, fn_c) == -0.5 );
         REQUIRE( analyzer.sobolev_dot_product(element, fn_c, fn_c) == 0.5 );
+    }
 
+    SECTION( "Test sobolev_f" ){
+        REQUIRE( limit_decimals(analyzer.sobolev_f(element, fn_a),7) == 0.0925925 );
     }
 
 }
