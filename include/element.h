@@ -16,7 +16,9 @@ public:
 
 };
 
-
+int factorial(int n){
+    return (n != 0)? n*factorial(n-1) : 1;
+}
 
 
 //We simply want to use the already existing nodes and don't need to worry about garbage collection.
@@ -146,7 +148,7 @@ template <int Dim, int N, typename T>
 double Element<Dim,N,T>::get_volume() const{
     Element<Dim,N,T> temp = *this;
     MatrixXd simplex_mat = (Dim == N-1)? get_simplex_matrix(temp): MatrixXd::Zero(Dim,Dim);
-    return simplex_mat.determinant();
+    return simplex_mat.determinant()/factorial(Dim);
 }
 
 template <int Dim, int N, typename T>
