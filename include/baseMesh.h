@@ -3,6 +3,7 @@
 #include <iostream>
 //#include "node.h"
 //#include "element.h"
+#include "FunctionHandler.h"
 #include "../C++ libs/eigen/Eigen/Sparse"
 #include "../C++ libs/eigen/Eigen/Dense"
 #include "../C++ libs/eigen/Eigen/Core"
@@ -21,6 +22,7 @@ public:
     BaseMesh(T &t, BaseMesh<T> *n);
     ~BaseMesh();
     void set_top(T t);
+    void set_functions();
     const BaseMesh <T>& operator=(const BaseMesh<T> &m);
     bool operator==(const BaseMesh<T> &m) const;
     bool operator!=(const BaseMesh<T> &m) const;
@@ -31,6 +33,7 @@ public:
 private:
     T top;
     BaseMesh *next;
+    vector <SimplexFunction> functions;
 
 };
 
@@ -58,7 +61,7 @@ template <typename T>
 BaseMesh<T>::~BaseMesh(){
     //delete top;
     //delete next;
-    delete next;
+    if(next!=nullptr){delete next;}
     cout << "BaseMesh destroyed!" << endl;
 }
 
@@ -70,9 +73,16 @@ void BaseMesh<T>::set_top(T t){
 }
 
 template <typename T>
+void BaseMesh<T>::set_functions(){
+    FunctionGenerator gen;
+    functions = gen.build_functions();
+}
+
+template <typename T>
 const BaseMesh <T>& BaseMesh<T>::operator=(const BaseMesh<T> & m){
     if(*this!=m){
         top = m.get_element();
+        functions = m.functions;
         if(next!=nullptr){
             if(m.next != nullptr){
                 next = m.next;
@@ -97,6 +107,7 @@ template <typename T>
 bool BaseMesh<T>::operator==(const BaseMesh<T> & m) const{
     bool same_top = (m.top == top);
     bool same_next = (m.next == next);
+    bool same_fns = (m.functions == functions);
     return same_top && same_next;
 }
 
@@ -119,7 +130,7 @@ template <typename T>
 void BaseMesh<T>::show() const{
     //BaseMesh<T>* next_BaseMesh = get_next();
     cout << "To be fixed..." << endl;
-    top.show();
+    //top.show();
     /*do{
         top.show();
         this = next;

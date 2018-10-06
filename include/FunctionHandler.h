@@ -14,6 +14,12 @@ typedef double (* Function)(VectorXd x);
 
 struct SimplexFunction{
     VectorXd coeff;
+    bool operator==(const SimplexFunction &s) const{
+        return (coeff == s.coeff);
+    }
+    bool operator!=(const SimplexFunction &s) const{
+        return (coeff != s.coeff);
+    }
     double operator()(VectorXd coords){
         double result = dot_product(coeff,coords);
         return result + double(coeff.tail(1)[0]);
@@ -46,6 +52,7 @@ class FunctionGenerator{
     ~FunctionGenerator(){}
     MatrixXd get_inv_matrix(Element<Dim, N, T> &el);
     SimplexFunction build_function(MatrixXd M, int node_no);
+    vector <SimplexFunction> build_functions(Element<Dim, N, T> &el);
     //std::function<double(&SimplexFunction)> wrap_function(SimplexFunction f);
 
 };
@@ -70,6 +77,16 @@ SimplexFunction FunctionGenerator<Dim, N, T>::build_function(MatrixXd M, int nod
     SimplexFunction fn_obj;
     fn_obj.coeff = coeffs;
     return fn_obj;
+}
+
+template <int Dim, int N, typename T>
+vector <SimplexFunction> FunctionGenerator<Dim, N, T>::build_functions(Element<Dim, N, T> &el){
+    MatrixXd M_inv = get_inv_matrix(el);
+    vector <SimplexFunction> functions;
+    for(int i=0; i<Dim+1; i++){
+        functions.push_back(build_function(M_inv, i));
+    }
+    return functions;
 }
 
 /*template <int Dim, int N, typename T>

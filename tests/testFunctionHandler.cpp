@@ -3,15 +3,10 @@
 #include "../include/mesh.h"
 #include "../include/baseMesh.h"
 #include "../include/FunctionHandler.h"
-
-#include <math.h>
+#include "../include/HelpfulTools.h"
 
 using namespace std;
 
-double limit_decimals(double number, int decimals){
-    double N = pow(10, decimals);
-    return double(int(number * N)) / N;
-}
 
 double fn(VectorXd coords){
     return coords.transpose()*coords;
@@ -20,7 +15,7 @@ double fn(VectorXd coords){
 #define CATCH_CONFIG_MAIN  // This tells Catch to provide a main()
 #include "../C++ libs/catch/catch.hpp"
 
-/*
+
 TEST_CASE( "Test FunctionGenerator" ) {
 
 
@@ -47,7 +42,6 @@ TEST_CASE( "Test FunctionGenerator" ) {
 
     SECTION( "Test get_inv_matrix" ){
         MatrixXd M_inv = gen.get_inv_matrix(element);
-        cout << M_inv << endl;
         REQUIRE( M_inv(0,0) == -1 );
         REQUIRE( M_inv(1,0) == 0 );
         REQUIRE( M_inv(2,0) == 1 );
@@ -61,9 +55,16 @@ TEST_CASE( "Test FunctionGenerator" ) {
         REQUIRE( first_fn(node3.get_location()) == 0 );
     }
 
+    SECTION( "Test build_functions()" ){
+        vector <SimplexFunction> fns = gen.build_functions(element);
+        REQUIRE( fns.size()  == 3 );
+        REQUIRE( fns[0](node1.get_location()) == 1 );
+        REQUIRE( fns[1](node2.get_location()) == 1 );
+        REQUIRE( fns[2](node2.get_location()) == 0 );
+    }
 
 }
-*/
+
 
 TEST_CASE( "Test FunctionAnalyzer" ) {
 
