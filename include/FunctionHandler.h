@@ -5,98 +5,18 @@
 #include "../C++ libs/eigen/Eigen/Core"
 #include "node.h"
 #include "element.h"
+#include "Function.h"
 #include <math.h>
 #include <functional>
+#include <vector>
 
 using namespace std;
 using namespace Eigen;
 typedef double (* Function)(VectorXd x);
 
-struct SimplexFunction{
-    VectorXd coeff;
-    bool operator==(const SimplexFunction &s) const{
-        return (coeff == s.coeff);
-    }
-    bool operator!=(const SimplexFunction &s) const{
-        return (coeff != s.coeff);
-    }
-    double operator()(VectorXd coords){
-        double result = dot_product(coeff,coords);
-        return result + double(coeff.tail(1)[0]);
-        }
-    double dot_product(VectorXd a, VectorXd b){
-        int min_size = min(a.size(), b.size());
-        double result = 0.0;
-        for(int i=0; i<min_size; i++){result += a[i]*b[i];}
-        return result;
-        }
-    VectorXd gradient(VectorXd coords){
-        int coeff_size = coeff.size();
-        return coeff.head(coeff_size-1);
-    }
-};
 
-
-struct BilinearFunction{
-    MatrixXd mat;
-    double operator()(VectorXd x, VectorXd y){
-        double result = (x.transpose())*mat*y;
-        return result;
-        }
-};
-
-template <int Dim, int N, typename T>//Same as for the Element template
-class FunctionGenerator{
-    public:
-    FunctionGenerator(){}
-    ~FunctionGenerator(){}
-    MatrixXd get_inv_matrix(Element<Dim, N, T> &el);
-    SimplexFunction build_function(MatrixXd M, int node_no);
-    vector <SimplexFunction> build_functions(Element<Dim, N, T> &el);
-    //std::function<double(&SimplexFunction)> wrap_function(SimplexFunction f);
-
-};
-
-template <int Dim, int N, typename T>
-MatrixXd FunctionGenerator<Dim, N, T>::get_inv_matrix(Element<Dim, N, T> &el){
-    MatrixXd M(Dim+1, Dim+1);
-    for(int node=0; node<N; node++){
-        for(int col=0; col<Dim; col++){
-            M(node,col) = el[node].get_location()[col];
-        }
-        M(node,Dim) = 1;
-    }
-    return M.inverse();
-}
-
-template <int Dim, int N, typename T>
-SimplexFunction FunctionGenerator<Dim, N, T>::build_function(MatrixXd M, int node_no){
-    VectorXd unit_vec = VectorXd::Zero(Dim+1);
-    unit_vec(node_no) = 1;
-    VectorXd coeffs = M*unit_vec;
-    SimplexFunction fn_obj;
-    fn_obj.coeff = coeffs;
-    return fn_obj;
-}
-
-template <int Dim, int N, typename T>
-vector <SimplexFunction> FunctionGenerator<Dim, N, T>::build_functions(Element<Dim, N, T> &el){
-    MatrixXd M_inv = get_inv_matrix(el);
-    vector <SimplexFunction> functions;
-    for(int i=0; i<Dim+1; i++){
-        functions.push_back(build_function(M_inv, i));
-    }
-    return functions;
-}
-
-/*template <int Dim, int N, typename T>
-std::function<double(&SimplexFunction)>  FunctionGenerator<Dim, N, T>::wrap_function(SimplexFunction f){
-    //MyValue&)> fifth = &MyValue::fifth;
-    std::function<double(&SimplexFunction)> func = &SimplexFunction::();
-    return func;
-}*/
-
-template <int Dim, int N, typename T>//Same as for the Element template
+/*
+template <int Dim, int N, typename T>//Same as for the Element template hmm... this starts resembling PDE...
 class FunctionAnalyzer{
     public:
     FunctionAnalyzer(BilinearFunction &bl_fn, Function fn){A = bl_fn; f = fn;}
@@ -108,7 +28,6 @@ class FunctionAnalyzer{
     private:
     BilinearFunction A; //A(u,v) = f(v) for all v in V, dim(V) = #nodes
     Function f;
-    //std::function<double(&SimplexFunction)> wrap_function(SimplexFunction f);
 
 };
 
@@ -133,4 +52,5 @@ double FunctionAnalyzer<Dim, N, T>::sobolev_f(Element<Dim, N, T> &el, SimplexFun
     return f(avg_location)*a(avg_location)*el.get_volume();
 }
 
+*/
 #endif

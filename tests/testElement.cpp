@@ -1,6 +1,7 @@
 #include "../include/point.h"
 #include "../include/node.h"
 #include "../include/element.h"
+#include "../include/FunctionHandler.h"
 #include "../C++ libs/eigen/Eigen/Sparse"
 #include "../C++ libs/eigen/Eigen/Dense"
 #include <math.h>
@@ -68,6 +69,18 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D do
         REQUIRE( 1 == element[1].get_index() );
     }
 
+    SECTION( "Test set_functions" ){
+        element.set_functions();
+        REQUIRE( 0 == 0 );
+    }
+
+    SECTION( "Test get_function(int)" ){
+        SimplexFunction first_fn = element.get_function(0);
+        REQUIRE( first_fn(node1.get_location()) == 1 );
+        REQUIRE( first_fn(node2.get_location()) == 0 );
+        REQUIRE( first_fn(node3.get_location()) == 0 );
+    }
+
     SECTION( "Test assignment operator" ){
         Element <2, 3, VectorXd> assigned_element = element;
         REQUIRE( assigned_element[0] == element[0] );
@@ -89,7 +102,7 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D do
 
     SECTION( "Test get_volume()" ){
         double volume = element.get_volume();
-        REQUIRE( volume == 1.0 );
+        REQUIRE( volume == 0.5 );
     }
 }
 
@@ -130,7 +143,7 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D Po
 
 
     SECTION( "Test get_volume()" ){
-        REQUIRE( el.get_volume() == 1.0 );
+        REQUIRE( el.get_volume() == 0.5 );
     }
 
 
