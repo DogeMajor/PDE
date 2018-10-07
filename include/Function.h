@@ -1,3 +1,5 @@
+#ifndef FUNCTION_H
+#define FUNCTION_H
 #include <iostream>
 #include "../C++ libs/eigen/Eigen/Dense"
 #include "../C++ libs/eigen/Eigen/Core"
@@ -42,3 +44,4 @@ struct BilinearFunction{
         }
 };
 
+#endif
