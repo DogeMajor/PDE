@@ -22,7 +22,6 @@ public:
     BaseMesh(T &t, BaseMesh<T> *n);
     ~BaseMesh();
     void set_top(T t);
-    void set_functions();
     const BaseMesh <T>& operator=(const BaseMesh<T> &m);
     bool operator==(const BaseMesh<T> &m) const;
     bool operator!=(const BaseMesh<T> &m) const;
@@ -72,11 +71,6 @@ void BaseMesh<T>::set_top(T t){
     top = t;
 }
 
-template <typename T>
-void BaseMesh<T>::set_functions(){
-    FunctionGenerator gen;
-    functions = gen.build_functions();
-}
 
 template <typename T>
 const BaseMesh <T>& BaseMesh<T>::operator=(const BaseMesh<T> & m){

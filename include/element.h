@@ -5,6 +5,10 @@
 #include "../C++ libs/eigen/Eigen/Dense"
 #include "../C++ libs/eigen/Eigen/Core"
 #include "node.h"
+#include <vector>
+#include <functional>
+//#include "Function.h"
+#include "FunctionHandler.h"
 
 using namespace std;
 using namespace Eigen;
@@ -21,6 +25,7 @@ int factorial(int n){
 }
 
 
+
 //We simply want to use the already existing nodes and don't need to worry about garbage collection.
 template <int Dim, int N, typename T>
 class Element{
@@ -28,10 +33,12 @@ class Element{
 public:
     Element();
     Element(Node<Dim,T> *nod[N]);
+    Element(Node<Dim,T> *nod[N], vector <SimplexFunction> funcs);
     Element(const Element &el);//copy constructor
     ~Element();
     void increase_shared_elements();
     void set_indices();
+    SimplexFunction get_function(int node_no);
     Node<Dim,T> operator[](int i);
     Element<Dim,N,T>& operator=(Element &el);
     bool operator==(const Element &el) const;
@@ -42,6 +49,7 @@ public:
 
 private:
     Node<Dim,T>* nodes[N];
+    vector <SimplexFunction> functions;
 
 };
 
@@ -60,6 +68,16 @@ Element<Dim,N,T>::Element(Node<Dim,T> *nod[N]){
         else {nodes[i] = nod[i];}
     }
     increase_shared_elements();
+}
+
+template <int Dim, int N, typename T>
+Element<Dim,N,T>::Element(Node<Dim,T> *nod[N], vector <SimplexFunction> funcs){
+    for(int i=0; i<N; i++){//If node has no shared_elements it must be a new one!
+        if(nod[i]->get_shared_elements() <= 0) {nodes[i] = new Node<Dim,T>(*nod[i]);}
+        else {nodes[i] = nod[i];}
+    }
+    increase_shared_elements();
+    functions = funcs;
 }
 
 template <int Dim, int N, typename T>
@@ -97,6 +115,11 @@ void Element<Dim,N,T>::set_indices(){
     for(int i=0; i<N; i++){
         nodes[i]->set_index(i);
     }
+}
+
+template <int Dim, int N, typename T>
+SimplexFunction Element<Dim,N,T>::get_function(int node_no){
+     return functions[node_no];
 }
 
 template <int Dim, int N, typename T>
@@ -157,6 +180,58 @@ void Element<Dim,N,T>::show() const{
     for(int i=0; i<N; i++){
         nodes[i]->show();
     }
+}
+
+
+template <int Dim, int N, typename T>
+class ElementFactory{
+
+public:
+    ElementFactory(){}
+    ~ElementFactory(){}
+    Element<Dim, N, T> build(Node<Dim,T> *nod[N]);
+    MatrixXd get_inv_matrix(Node<Dim,T>* nodes[]);
+    SimplexFunction build_function(MatrixXd M, int node_no);
+    vector <SimplexFunction> build_functions(Node<Dim,T>* nodes[]);
+};
+
+template <int Dim, int N, typename T>
+Element<Dim, N, T> ElementFactory<Dim,N,T>::build(Node<Dim,T> *nod[N]){
+    vector <SimplexFunction> funcs = build_functions(nod);
+    Element<Dim, N, T> el(nod, funcs);
+    return el;
+}
+
+template <int Dim, int N, typename T>
+MatrixXd ElementFactory<Dim,N,T>::get_inv_matrix(Node<Dim,T>* nodes[]){
+    MatrixXd M(Dim+1, Dim+1);
+    for(int node=0; node<Dim+1; node++){
+        for(int col=0; col<Dim; col++){
+            M(node,col) = nodes[node]->get_location()[col];
+        }
+        M(node,Dim) = 1;
+    }
+    return M.inverse();
+}
+
+template <int Dim, int N, typename T>
+SimplexFunction ElementFactory<Dim,N,T>::build_function(MatrixXd M, int node_no){
+    VectorXd unit_vec = VectorXd::Zero(Dim+1);
+    unit_vec(node_no) = 1;
+    VectorXd coeffs = M*unit_vec;
+    SimplexFunction fn_obj;
+    fn_obj.coeff = coeffs;
+    return fn_obj;
+}
+
+template <int Dim, int N, typename T>
+vector <SimplexFunction> ElementFactory<Dim,N,T>::build_functions(Node<Dim,T>* nodes[]){
+    MatrixXd M_inv = get_inv_matrix(nodes);
+    vector <SimplexFunction> functions;
+    for(int i=0; i<Dim+1; i++){
+        functions.push_back(build_function(M_inv, i));
+    }
+    return functions;
 }
 
 #endif
