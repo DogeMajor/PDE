@@ -1,5 +1,4 @@
 #include "../include/point.h"
-#include "../include/node.h"
 #include "../include/element.h"
 #include <math.h>
 
@@ -123,7 +122,7 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D Po
     node_vec[0] = &n_1;
     node_vec[1] = &n_2;
     node_vec[2] = &n_3;
-    vector <SimplexFunction <Point <double> > fns(3);
+    vector <SimplexFunction <Point <double> > > fns(3);
     VectorXd coeff(3);
     coeff << -1,0,1;
     fns[0].coeff = coeff;
