@@ -1,9 +1,5 @@
 #include "../include/point.h"
-#include "../include/node.h"
 #include "../include/element.h"
-#include "../include/FunctionHandler.h"
-#include "../C++ libs/eigen/Eigen/Sparse"
-#include "../C++ libs/eigen/Eigen/Dense"
 #include <math.h>
 
 using namespace std;
@@ -18,6 +14,7 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D do
 
     VectorXd location(2);
     location << 0.0, 0.0;
+    cout << "VectorXd size: " << location.size() << endl;
     Node <2,VectorXd> node1(location);
     location << 1.0, 0.0;
     Node <2,VectorXd> node2(location);
@@ -27,7 +24,16 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D do
     nodes[0] = &node1;
     nodes[1] = &node2;
     nodes[2] = &node3;
-    Element <2, 3, VectorXd> element(nodes);
+
+    vector <SimplexFunction <VectorXd> > funcs(3);
+    VectorXd coeffs(3);
+    coeffs << -1,0,1;
+    funcs[0].coeff = coeffs;
+    coeffs << 1,-1,0;
+    funcs[1].coeff = coeffs;
+    coeffs << 0,1,0;
+    funcs[2].coeff = coeffs;
+    Element <2, 3, VectorXd> element(nodes, funcs);
 
 
     SECTION( "Test default constructor()" ){
@@ -43,12 +49,12 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D do
         REQUIRE( element[0].get_location() != nodes[1]->get_location() );
     }
 
-    /*SECTION( "Test show()" ){
+    SECTION( "Test show()" ){
         cout << "showing element[0]" << endl;
         element[0].show();
         cout << "showing node1" << endl;
         nodes[0]->show();
-    }*/
+    }
 
     SECTION( "Test copy constructor" ){
         Element <2, 3, VectorXd> copyed_element(element);
@@ -69,13 +75,8 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D do
         REQUIRE( 1 == element[1].get_index() );
     }
 
-    SECTION( "Test set_functions" ){
-        element.set_functions();
-        REQUIRE( 0 == 0 );
-    }
-
     SECTION( "Test get_function(int)" ){
-        SimplexFunction first_fn = element.get_function(0);
+        SimplexFunction<VectorXd> first_fn = element.get_function(0);
         REQUIRE( first_fn(node1.get_location()) == 1 );
         REQUIRE( first_fn(node2.get_location()) == 0 );
         REQUIRE( first_fn(node3.get_location()) == 0 );
@@ -90,13 +91,13 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D do
 
 
     SECTION( "Test operators == and !=" ){
-        Element <2, 3, VectorXd> new_element(nodes);
+        Element <2, 3, VectorXd> new_element(nodes, funcs);
         REQUIRE( new_element == element );
         Node <2,VectorXd> *reflected_nodes[3];
         reflected_nodes[0] = &node3;
         reflected_nodes[1] = &node2;
         reflected_nodes[2] = &node1;
-        Element <2, 3, VectorXd> reflected_element(reflected_nodes);
+        Element <2, 3, VectorXd> reflected_element(reflected_nodes, funcs);
         REQUIRE( reflected_element != element );
     }
 
@@ -121,7 +122,15 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D Po
     node_vec[0] = &n_1;
     node_vec[1] = &n_2;
     node_vec[2] = &n_3;
-    Element <2, 3, Point <double> > el(node_vec);
+    vector <SimplexFunction <Point <double> > > fns(3);
+    VectorXd coeff(3);
+    coeff << -1,0,1;
+    fns[0].coeff = coeff;
+    coeff << 1,-1,0;
+    fns[1].coeff = coeff;
+    coeff << 0,1,0;
+    fns[2].coeff = coeff;
+    Element <2, 3, Point <double> > el(node_vec, fns);
 
 
     SECTION( "Test operator []" ){
@@ -129,18 +138,17 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D Po
         REQUIRE( el[0].get_location() != node_vec[1]->get_location() );
     }
 
-    /*SECTION( "Test show()" ){
+    SECTION( "Test show()" ){
         cout << "showing element[0]" << endl;
-        element[0].show();
+        el[0].show();
         cout << "showing node1" << endl;
-        nodes[0]->show();
-    }*/
+        node_vec[0]->show();
+    }
 
     SECTION( "Test get_simplex_matrix(T &el)" ){
         Matrix<double, 2, 2> s_mat = el.get_simplex_matrix(el);
         REQUIRE( s_mat == MatrixXd::Identity(2,2) );
     }
-
 
     SECTION( "Test get_volume()" ){
         REQUIRE( el.get_volume() == 0.5 );
@@ -171,8 +179,13 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D Po
         REQUIRE( assigned_el[0] == el[0] );
         REQUIRE( assigned_el[1] == el[1] );
         REQUIRE( assigned_el[2] == el[2] );
+        REQUIRE( assigned_el.get_function(0) == el.get_function(0) );
     }
 
+        SECTION( "Test get_function(int)" ){
+        SimplexFunction< Point <double> > func_1 = el.get_function(0);
+        REQUIRE( func_1(n_1.get_location()) == 1 );
+        REQUIRE( func_1(n_2.get_location()) == 0 );
+        REQUIRE( func_1(n_3.get_location()) == 0 );
+    }
 }
-
-

@@ -1,9 +1,7 @@
 #ifndef NODE_H
 #define NODE_H
 #include <iostream>
-#include "baseNode.h"
 using namespace std;
-
 
 
 template <int Dim, typename T>

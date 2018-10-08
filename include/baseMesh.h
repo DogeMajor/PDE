@@ -32,7 +32,7 @@ public:
 private:
     T top;
     BaseMesh *next;
-    vector <SimplexFunction> functions;
+    vector <SimplexFunction <T> > functions;
 
 };
 
@@ -133,6 +133,3 @@ void BaseMesh<T>::show() const{
 }
 
 #endif
-
-
-
