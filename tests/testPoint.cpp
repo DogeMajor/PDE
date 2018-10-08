@@ -56,7 +56,6 @@ TEST_CASE( "Test Point class" ) {
         REQUIRE( point[1] == 2.0 );
     }
 
-
     SECTION( "Test show()" ){
         point.show();
     }
@@ -68,6 +67,10 @@ TEST_CASE( "Test Point class" ) {
         val.push_back(std::complex<double> (1,1));//1+i
         Point <complex <double> > c_point(val);
         c_point.show();
+        REQUIRE( c_point[0].real() == 1 );
+        REQUIRE( c_point[0].imag() == 0 );
+        REQUIRE( c_point[1].real() == 1 );
+        REQUIRE( c_point[1].imag() == 1 );
     }
 
 }
