@@ -163,7 +163,7 @@ Matrix<double, Dim, Dim> Element<Dim,N,T>::get_simplex_matrix(Element &el) const
     MatrixXd simplex_mat = MatrixXd::Zero(Dim,Dim);
     for(int col=0; col<Dim; col++){
         for(int row=0; row<Dim; row++){
-            simplex_mat(row, col) = el[row+1].get_location()[col]-el[row].get_location()[col];
+            simplex_mat(row, col) = el[row+1].get_location()[col] - el[row].get_location()[col];
         }
     }
     return simplex_mat;

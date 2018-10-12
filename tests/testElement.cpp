@@ -14,7 +14,7 @@ using namespace Eigen;
 #define CATCH_CONFIG_MAIN  // This tells Catch to provide a main()
 #include "../C++ libs/catch/catch.hpp"
 
-
+/*
 TEST_CASE( "Test Element template containing Node template initiated with 2-D double vector from Eigen lib" ) {
 
     VectorXd location(2);
@@ -41,7 +41,7 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D do
 	node1.show();
     Element <2, 3, VectorXd> element(nodes, funcs);
 
-	/*
+	
     SECTION( "Test default constructor()" ){
         Element <2, 3, VectorXd> empty_element;
         REQUIRE( empty_element[0].get_shared_elements() == 1 );
@@ -164,7 +164,7 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D do
 		els.push_back(e2);
 		els[0].show();
 	}
-	 */
+	 
 	SECTION( "Testing getting new nodes()" ) {
 		map< array<int, 2>, Node<2, VectorXd> * > new_nodes = element.get_new_nodes();
 		//for (int i = 0; i < 3; i++) {
@@ -174,11 +174,11 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D do
 			//}
 		//}
 		cout << "size:" << new_nodes.size();
-		typedef std::shared_ptr< Node<2, VectorXd> > NodePtr;
-		shared_ptr< NodePtr > ptr = make_shared<Node<2, VectorXd> >();
+		//typedef std::shared_ptr< Node<2, VectorXd> > NodePtr;
+		//shared_ptr< NodePtr > ptr = make_shared<Node<2, VectorXd> >();
 		//Node<2, VectorXd> *ptr;
 		//ptr = new_nodes[{0, 0}];
-		ptr->show();
+		//ptr->show();
 		//VectorXd loc_00 = new_nodes[{0, 0}]->get_location();
 		//cout << loc_00 << endl;
 	}
@@ -197,10 +197,10 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D do
 		}
 		node_map[{0, 1}]->show();
 		//cout << node_map[{0, 1}]->get_location() << endl;
-	}*/
+	}
 
-}
-/*
+}*/
+
 TEST_CASE( "Test Element template containing Node template initiated with 2-D Point <double> template objects" ) {
 
     vector <double> vec1 = {0.0, 0.0};
@@ -230,6 +230,8 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D Po
     SECTION( "Test operator []" ){
         REQUIRE( el[0].get_location() == node_vec[0]->get_location() );
         REQUIRE( el[0].get_location() != node_vec[1]->get_location() );
+		REQUIRE(el[0].get_location()[0] == 0.0);
+		REQUIRE(el[0].get_location()[1] == 0.0);
     }
 
     SECTION( "Test show()" ){
@@ -283,4 +285,3 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D Po
         REQUIRE( func_1(n_3.get_location()) == 0 );
     }
 }
-*/

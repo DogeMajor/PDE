@@ -14,7 +14,7 @@ public:
     bool operator==(const Point &p) const;
     bool operator!=(const Point &p) const;
     Point <T>& operator=(const Point &p);
-    T operator[](int i);
+    const T operator[](int i) const;
 	friend const Point<T> operator+(const Point<T> &p, const Point<T> &q) {
 		vector<T> loc(p.value.size());
 		for (int i = 0; i < p.value.size(); i++) {loc[i] = p.value[i] + q.value[i];}
@@ -85,7 +85,7 @@ Point <T>& Point<T>::operator=(const Point &p){
 }
 
 template <typename T>
-T Point<T>::operator[](int i){
+const T Point<T>::operator[](int i) const{
     return value[i];
 }
 
