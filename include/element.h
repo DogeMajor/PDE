@@ -5,6 +5,10 @@
 #include "../C++ libs/eigen/Eigen/Core"
 #include "node.h"
 #include <vector>
+#include <utility>
+#include <map>
+#include <array>
+#include <memory>
 #include "Function.h"
 
 using namespace std;
@@ -27,12 +31,19 @@ public:
     ~Element();
     void increase_shared_elements();
     void set_indices();
+	Node<Dim, T>** get_nodes();
     SimplexFunction<T> get_function(int node_no);
     Node<Dim,T> operator[](int i);
     Element<Dim,N,T>& operator=(Element &el);
     bool operator==(const Element &el) const;
     bool operator!=(const Element &el) const;
     Matrix<double, Dim, Dim> get_simplex_matrix(Element &el) const;
+    //vector <Element <Dim,N,T> > divide();
+	vector <pair <int[2], T> > get_midpoints();
+	Node<Dim, T>** get_midpoint_nodes(vector <pair <int[2], T> > &mid_points);
+	vector < Element <Dim, N, T> > get_vertex_els(Node<Dim, T> *mid_nodes[N]);
+	//vector < Element <Dim, N, T> > get_inner_els(Node<Dim, T> *mid_nodes[N]);
+	map< array<int, 2>, Node<Dim, T>* > get_new_nodes();
     double get_volume() const;
     void show() const;
 
@@ -101,6 +112,11 @@ void Element<Dim,N,T>::set_indices(){
 }
 
 template <int Dim, int N, typename T>
+Node<Dim, T> ** Element<Dim, N, T>::get_nodes() {
+	return nodes;
+}
+
+template <int Dim, int N, typename T>
 SimplexFunction<T> Element<Dim,N,T>::get_function(int node_no){
      return functions[node_no];
 }
@@ -160,6 +176,76 @@ double Element<Dim,N,T>::get_volume() const{
     return simplex_mat.determinant()/factorial(Dim);
 }
 
+
+
+/*template <int Dim, int N, typename T>
+vector <Element <Dim, N, T> > Element<Dim, N, T>::divide() {
+	vector <Element <Dim, N, T> > els;
+	Node<Dim, T> *new_nodes[N];
+
+	//Element <Dim, N, T> el_iter(*this);
+	els.push_back(Element)
+}*/
+
+//1. item of pair gives the original point indices and the second in the midpoint
+template <int Dim, int N, typename T>//OK
+vector <pair <int[2], T > > Element<Dim, N, T>::get_midpoints() {
+	vector <pair <int[2], T> >mid_points;
+	pair <int[2], T> mid_point;
+	T loc;
+	for (int i = 0; i < N; i++) {
+		for (int j = i + 1; j < N; j++) {
+			mid_point.first[0] = i;
+			mid_point.first[1] = j;
+			mid_point.second = 0.5*(nodes[i]->get_location() + nodes[j]->get_location());
+			mid_points.push_back(mid_point);
+		}
+	}
+	return mid_points;
+}
+
+template <int Dim, int N, typename T> //OK
+Node<Dim, T> ** Element<Dim, N, T>::get_midpoint_nodes(vector <pair <int[2], T> > &mid_points) {
+	Node<Dim, T> *midpoint_nodes[(Dim*(Dim+1))/2];
+	for (int i = 0; i < mid_points.size(); i++) {
+		midpoint_nodes[i] = new Node<Dim, T>(mid_points[i].second);
+	}
+	return midpoint_nodes;
+}
+
+template <int Dim, int N, typename T>
+vector < Element <Dim, N, T> > Element<Dim, N, T>::get_vertex_els(Node<Dim, T> *mid_nodes[N]) {
+	vector <pair <int[2], T> > mid_points = get_midpoints();
+	vector < Element <Dim, N, T> > vertex_els;
+	for (int i = 0; i < N; i++) {
+		cout << "To be coded...";
+	}
+	return vertex_els;
+}
+
+template <int Dim, int N, typename T>
+map< array<int, 2>, Node<Dim, T> * > Element<Dim, N, T>::get_new_nodes() {
+	//vector <pair <int[2], T> > m_points = get_midpoints();
+	//Node<2, T> ** m_nodes = get_midpoint_nodes(m_points);
+	map< array<int, 2>, Node<Dim, T> * > node_map;
+	T loc;
+	
+	for (int i = 0; i < 3; i++) {
+		for (int j = i + 1; j < 3; j++) {
+			//node_map[{i, j}] = m_nodes[i + j - 1];
+			loc = 0.5*(nodes[i]->get_location() + nodes[j]->get_location());
+			//node_map[{i, j}] = new Node<Dim, VectorXd>(*m_nodes[i + j - 1]);
+			Node<Dim, T>* temp_node = new Node<Dim, T>(loc);
+			temp_node->show();
+			node_map.insert(pair< array<int, 2>, Node<Dim, T>* >({ i, j }, temp_node));
+			//node_map[{i, j}] = new Node<Dim, T>(loc);
+		}
+	}
+	return node_map;
+
+}
+
+
 template <int Dim, int N, typename T>
 void Element<Dim,N,T>::show() const{
     cout <<"#elements: " << N << endl;
@@ -217,6 +303,7 @@ SimplexFunction<T> ElementFactory<Dim,N,T>::build_function(MatrixXd M, int node_
     fn_obj.coeff = coeffs;
     return fn_obj;
 }
+
 
 template <int Dim, int N, typename T>
 vector <SimplexFunction <T> > ElementFactory<Dim,N,T>::build_functions(Node<Dim,T>* nodes[]){

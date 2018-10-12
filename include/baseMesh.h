@@ -26,6 +26,7 @@ public:
     bool operator==(const BaseMesh<T> &m) const;
     bool operator!=(const BaseMesh<T> &m) const;
     T get_element() const;
+    //vector <T> divide_element(T &el);
     const BaseMesh<T>* get_next();
     void show() const;
 

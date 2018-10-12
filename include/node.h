@@ -14,13 +14,13 @@ public:
     ~Node();
     void set_index(int ind);
     void set_shared_elements(int shared_els);
-    T get_location() const;
+    const T& get_location() const;
     int get_index() const;
     int get_shared_elements() const;
     int get_node_amount() const;
     Node<Dim,T>& operator=(const Node &a);
-    bool operator== (const Node &a) const;
-    bool operator!=(const Node &a) const;
+    bool operator== (const Node<Dim, T> &a) const;
+    bool operator!=(const Node<Dim, T> &a) const;
     virtual void show() const;
 
 private:
@@ -72,7 +72,7 @@ void Node<Dim,T>::set_shared_elements(int shared_els){
 }
 
 template <int Dim, typename T>
-T Node<Dim,T>::get_location() const{
+const T& Node<Dim,T>::get_location() const{
     return location;
 }
 
@@ -102,7 +102,7 @@ Node<Dim,T>& Node<Dim,T>::operator=(const Node &a){
 }
 
 template <int Dim, typename T>
-bool Node<Dim,T>::operator==(const Node &a) const{
+bool Node<Dim,T>::operator==(const Node<Dim, T> &a) const{
     bool same_location = (location == a.location);
     bool same_index = (index == a.index);
     bool same_shared_elements = (shared_elements == a.shared_elements);
@@ -111,7 +111,7 @@ bool Node<Dim,T>::operator==(const Node &a) const{
 }
 
 template <int Dim, typename T>
-bool Node<Dim,T>::operator!=(const Node &a) const{
+bool Node<Dim,T>::operator!=(const Node<Dim, T> &a) const{
     return !(*this==a);
 }
 
