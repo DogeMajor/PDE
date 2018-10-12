@@ -56,6 +56,32 @@ TEST_CASE( "Test Point class" ) {
         REQUIRE( point[1] == 2.0 );
     }
 
+	SECTION("Test + and - operators") {
+		vector<double> zero(2);
+		vector<double> twice(2);
+		twice[0] = 2 * val[0];
+		twice[1] = 2 * val[1];
+		Point <double> similar_point(point);
+		Point <double> zero_point = point-similar_point;
+		Point <double> twice_point = point + similar_point;
+		//Point <double> not_same_point;
+		REQUIRE(zero_point.get_value() == zero);
+		REQUIRE(twice_point.get_value() == twice);
+	}
+
+	SECTION("Test multiplication (with a constant) operators") {
+		vector<double> two_times(2);
+		vector<double> origo(2);
+		two_times[0] = 2 * val[0];
+		two_times[1] = 2 * val[1];
+		
+		Point <double> origo_p = 0*point;
+		Point <double> doubled_point = point*2;
+		//Point <double> not_same_point;
+		REQUIRE(origo_p.get_value() == origo);
+		REQUIRE(doubled_point.get_value() == two_times);
+	}
+
     SECTION( "Test show()" ){
         point.show();
     }

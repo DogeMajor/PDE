@@ -175,7 +175,7 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D do
 		//}
 		cout << "size:" << new_nodes.size();
 		typedef std::shared_ptr< Node<2, VectorXd> > NodePtr;
-		shared_ptr< NodePtr > ptr(node1);
+		shared_ptr< NodePtr > ptr = make_shared<Node<2, VectorXd> >();
 		//Node<2, VectorXd> *ptr;
 		//ptr = new_nodes[{0, 0}];
 		ptr->show();

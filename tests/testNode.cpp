@@ -17,9 +17,18 @@ TEST_CASE( "Test Node template with 3-D double vector from Eigen lib" ) {
     location << 1.0, 2.0, 3.0;
     Node <3,VectorXd> similar_node(location);
 
+	SECTION("Test default constructor") {
+		Node <3, VectorXd> empty_node;
+		Node <3, VectorXd> empty_nodes[2];
+		REQUIRE(empty_node.get_shared_elements() == 0);
+		REQUIRE(empty_node.get_index() == -1);
+		REQUIRE(empty_node.get_location().size() == 0);
+		REQUIRE(empty_nodes[1].get_index() == -1);
+	}
+	
     SECTION( "Test get_location" ){
         VectorXd value = node.get_location();
-        REQUIRE( value(0) == location(0) );
+        REQUIRE( value == location );
     }
 
     SECTION( "Test get_index" ){
