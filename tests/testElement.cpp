@@ -201,6 +201,10 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D do
 
 }*/
 
+
+
+
+
 TEST_CASE( "Test Element template containing Node template initiated with 2-D Point <double> template objects" ) {
 
     vector <double> vec1 = {0.0, 0.0};
@@ -227,12 +231,44 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D Po
     Element <2, 3, Point <double> > el(node_vec, fns);
 
 
-    SECTION( "Test operator []" ){
-        REQUIRE( el[0].get_location() == node_vec[0]->get_location() );
-        REQUIRE( el[0].get_location() != node_vec[1]->get_location() );
+    SECTION( "Test constructing a vector of pointers to Node objects to be used in VectorElement constructor" ){
+		vector < Node <2, Point <double> >* > dem_nodes;
+		dem_nodes.push_back(&n_1);
+		dem_nodes.push_back(&n_2);
+		dem_nodes.push_back(&n_3);
+		cout << dem_nodes.size() << endl;
+		dem_nodes[0]->show();
+		dem_nodes[1]->show();
+		VectorElement <2, 3, Point <double> > dem_el(dem_nodes, fns);
+		dem_el.show();
+		//REQUIRE(el[0].get_location()[1] == 0.0);
+    }
+
+	SECTION("Test constructing a vector of Node objects to be used in VectorElement") {
+		vector < Node <2, Point <double> > > ref_nodes;
+		cout << n_1.how_many() << endl;
+		ref_nodes.push_back(n_1);
+		ref_nodes.push_back(n_2);
+		ref_nodes.push_back(n_3);
+		cout << n_1.how_many() << endl;
+		cout << ref_nodes.size() << endl;
+		ref_nodes[0].show();
+		ref_nodes[1].show();
+		VectorElement <2, 3, Point <double> > ref_el(ref_nodes, fns);
+		cout << n_1.how_many() << endl;
+		cout << "Tralala!" << endl;
+		ref_el.show();
+		//REQUIRE(el[0].get_location()[1] == 0.0);
+	}
+
+
+	/*SECTION("Test operator []") {
+		REQUIRE(el[0].get_location() == node_vec[0]->get_location());
+		REQUIRE(el[0].get_location() != node_vec[1]->get_location());
 		REQUIRE(el[0].get_location()[0] == 0.0);
 		REQUIRE(el[0].get_location()[1] == 0.0);
-    }
+	}
+
 
     SECTION( "Test show()" ){
         cout << "showing element[0]" << endl;
@@ -283,5 +319,5 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D Po
         REQUIRE( func_1(n_1.get_location()) == 1 );
         REQUIRE( func_1(n_2.get_location()) == 0 );
         REQUIRE( func_1(n_3.get_location()) == 0 );
-    }
+    }*/
 }

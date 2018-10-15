@@ -11,7 +11,7 @@ class Node: Counter<Node<Dim, T> >{
 public:
     Node();
     Node(T &loc);
-    Node(Node &a);//copy constructor
+    Node(const Node &a);//copy constructor
     ~Node();
     void set_index(int ind);
     void set_shared_elements(int shared_els);
@@ -45,7 +45,7 @@ Node<Dim, T>::Node(T &loc){
 }
 
 template <int Dim, typename T>
-Node<Dim,T>::Node(Node &a){
+Node<Dim,T>::Node(const Node &a){
     location = a.location;
     index = a.index;
     shared_elements = a.shared_elements;

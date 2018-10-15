@@ -55,12 +55,11 @@ private:
 
 template <int Dim, int N, typename T>
 Element<Dim,N,T>::Element(){
-    for(int i=0; i<N; i++){
-        nodes[i] = new Node<Dim,T>;
-    }
-    increase_shared_elements();
+    //for(int i=0; i<N; i++){
+        //nodes[i] = new Node<Dim,T>;
+    //}
+    //increase_shared_elements();
 }
-
 
 template <int Dim, int N, typename T>
 Element<Dim,N,T>::Element(Node<Dim,T> *nod[N], vector <SimplexFunction <T> > funcs){
@@ -71,6 +70,7 @@ Element<Dim,N,T>::Element(Node<Dim,T> *nod[N], vector <SimplexFunction <T> > fun
     increase_shared_elements();
     functions = funcs;
 }
+
 
 template <int Dim, int N, typename T>
 Element<Dim,N,T>::Element(const Element &el){
@@ -314,5 +314,91 @@ vector <SimplexFunction <T> > ElementFactory<Dim,N,T>::build_functions(Node<Dim,
     }
     return functions;
 }
+
+
+
+template <int Dim, int N, typename T>
+class VectorElement {
+
+public:
+	VectorElement();
+	VectorElement(vector < Node <Dim, T>* > nodes_vec, vector <SimplexFunction <T> > funcs);
+	VectorElement(vector < Node <Dim, T> > &nodes_vec, vector <SimplexFunction <T> > funcs);
+	~VectorElement();
+	void increase_shared_elements();
+	void show() const;
+
+private:
+	vector < Node <Dim, T>* > nodes;
+	vector <SimplexFunction <T> > functions;
+
+};
+
+template <int Dim, int N, typename T>
+VectorElement<Dim, N, T>::VectorElement() {
+	//for(int i=0; i<N; i++){
+		//nodes[i] = new Node<Dim,T>;
+	//}
+	//increase_shared_elements();
+}
+
+template <int Dim, int N, typename T>
+VectorElement<Dim, N, T>::VectorElement(vector < Node<Dim, T>* > nodes_vec, vector <SimplexFunction <T> > funcs) {
+	for (int i = 0; i < nodes_vec.size(); i++) { nodes.push_back(nodes_vec[i]); }
+	//nodes = nodes_vec;
+	increase_shared_elements();
+	functions = funcs;
+}
+
+template <int Dim, int N, typename T>
+VectorElement<Dim, N, T>::VectorElement(vector < Node<Dim, T> > &nodes_vec, vector <SimplexFunction <T> > funcs) {
+	for (int i = 0; i < nodes_vec.size(); i++) { nodes.push_back(&nodes_vec[i]); }
+	//nodes = nodes_vec;
+	increase_shared_elements();
+	functions = funcs;
+}
+
+
+
+template <int Dim, int N, typename T>
+VectorElement<Dim, N, T>::~VectorElement() {
+	int shared_elements = 0;
+	/*for (int i = 0; i < N; i++) {
+		shared_elements = nodes[i]->get_shared_elements();
+		nodes[i]->set_shared_elements(shared_elements - 1);
+		if (shared_elements - 1 <= 0) {
+			delete nodes[i];
+		}
+	}*/
+	functions.clear();
+	cout << "Element destroyed!" << endl;
+}
+
+template <int Dim, int N, typename T>
+void VectorElement<Dim, N, T>::increase_shared_elements() {
+	int shared_elements = 0;
+	for (int i = 0; i < N; i++) {
+		shared_elements = nodes[i]->get_shared_elements();
+		nodes[i]->set_shared_elements(shared_elements + 1);
+	}
+}
+
+template <int Dim, int N, typename T>
+void VectorElement<Dim, N, T>::show() const {
+	cout << "#elements: " << N << endl;
+	for (int i = 0; i < N; i++) {
+		nodes[i]->show();
+	}
+	cout << "#elements: " << functions.size() << endl;
+	for (int i = 0; i < functions.size(); i++) {
+		cout << "Function coefficients for node no " << i << endl;
+		for (int j = 0; j < functions[i].coeff.rows(); j++) {
+			cout << functions[i].coeff[j] << " " << endl;
+		}
+		cout << endl;
+	}
+}
+
+
 
 #endif
