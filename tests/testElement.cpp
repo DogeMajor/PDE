@@ -216,10 +216,13 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D Po
     Node <2,Point <double> > n_1(point1);
     Node <2,Point <double> > n_2(point2);
     Node <2,Point <double> > n_3(point3);
-    Node <2,Point <double> > *node_vec[3];
-    node_vec[0] = &n_1;
-    node_vec[1] = &n_2;
-    node_vec[2] = &n_3;
+
+	vector < Node <2, Point <double> >* > node_vec;
+	cout << n_1.how_many() << endl;
+	node_vec.push_back(&n_1);
+	node_vec.push_back(&n_2);
+	node_vec.push_back(&n_3);
+
     vector <SimplexFunction <Point <double> > > fns(3);
     VectorXd coeff(3);
     coeff << -1,0,1;
@@ -230,45 +233,12 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D Po
     fns[2].coeff = coeff;
     Element <2, 3, Point <double> > el(node_vec, fns);
 
-
-    SECTION( "Test constructing a vector of pointers to Node objects to be used in VectorElement constructor" ){
-		vector < Node <2, Point <double> >* > dem_nodes;
-		dem_nodes.push_back(&n_1);
-		dem_nodes.push_back(&n_2);
-		dem_nodes.push_back(&n_3);
-		cout << dem_nodes.size() << endl;
-		dem_nodes[0]->show();
-		dem_nodes[1]->show();
-		VectorElement <2, 3, Point <double> > dem_el(dem_nodes, fns);
-		dem_el.show();
-		//REQUIRE(el[0].get_location()[1] == 0.0);
-    }
-
-	SECTION("Test constructing a vector of Node objects to be used in VectorElement") {
-		vector < Node <2, Point <double> > > ref_nodes;
-		cout << n_1.how_many() << endl;
-		ref_nodes.push_back(n_1);
-		ref_nodes.push_back(n_2);
-		ref_nodes.push_back(n_3);
-		cout << n_1.how_many() << endl;
-		cout << ref_nodes.size() << endl;
-		ref_nodes[0].show();
-		ref_nodes[1].show();
-		VectorElement <2, 3, Point <double> > ref_el(ref_nodes, fns);
-		cout << n_1.how_many() << endl;
-		cout << "Tralala!" << endl;
-		ref_el.show();
-		//REQUIRE(el[0].get_location()[1] == 0.0);
-	}
-
-
 	/*SECTION("Test operator []") {
 		REQUIRE(el[0].get_location() == node_vec[0]->get_location());
 		REQUIRE(el[0].get_location() != node_vec[1]->get_location());
 		REQUIRE(el[0].get_location()[0] == 0.0);
 		REQUIRE(el[0].get_location()[1] == 0.0);
 	}
-
 
     SECTION( "Test show()" ){
         cout << "showing element[0]" << endl;
@@ -285,7 +255,6 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D Po
     SECTION( "Test get_volume()" ){
         REQUIRE( el.get_volume() == 0.5 );
     }
-
 
     SECTION( "Test copy constructor" ){
         Element <2, 3, Point <double> > copyed_el(el);
@@ -314,10 +283,46 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D Po
         REQUIRE( assigned_el.get_function(0) == el.get_function(0) );
     }
 
-        SECTION( "Test get_function(int)" ){
+    SECTION( "Test get_function(int)" ){
         SimplexFunction< Point <double> > func_1 = el.get_function(0);
         REQUIRE( func_1(n_1.get_location()) == 1 );
         REQUIRE( func_1(n_2.get_location()) == 0 );
         REQUIRE( func_1(n_3.get_location()) == 0 );
-    }*/
+    }
+
+	SECTION("Test midpoint_nodes()") {
+		VectorXd loc(2);
+		loc << 0.5, 0.0;
+		int node_no = el[0].how_many();
+		vector <pair <int[2], Point <double> > > m_points = el.get_midpoints();
+		vector <Node <2, Point <double> >* > m_nodes = el.get_midpoint_nodes(m_points);
+		m_nodes[2]->show();
+		REQUIRE(el[0].how_many() == node_no + 3);
+		REQUIRE(m_nodes[0]->get_location()[0] == vec1[0]);
+		REQUIRE(m_nodes[1]->get_location()[1] == vec2[1]);
+		REQUIRE(m_nodes[2]->get_location()[0] == vec3[0]);
+	}
+	*/
+	SECTION("Testing getting new nodes()") {
+		map< array<int, 2>, Node<2, Point<double > > > n_nodes = el.get_new_nodes();
+		//for (int i = 0; i < 3; i++) {
+			//for (int j = i + 1; j < 3; j++) {
+				//REQUIRE(*new_nodes[{i, j}] == element[i + j - 1]);
+				//cout << new_nodes[{i, j}]->get_location() << endl;
+			//}
+		//}
+		cout << "size:" << n_nodes.size();
+		//typedef std::shared_ptr< Node<2, VectorXd> > NodePtr;
+		//shared_ptr< NodePtr > ptr = make_shared<Node<2, VectorXd> >();
+		//Node<2, VectorXd> *ptr;
+		//ptr = new_nodes[{0, 0}];
+		//ptr->show();
+		n_nodes[{0, 0}].show();
+		//REQUIRE( n_nodes[{0, 0}].get_location()[0] == 0.5 );
+		//REQUIRE(n_nodes[{0, 0}].get_location()[1] == 0);
+		//REQUIRE(n_nodes[{1, 2}].get_location()[0] == 1.0);
+		//REQUIRE(n_nodes[{1, 2}].get_location()[1] == 0.5);
+	}
+
+
 }

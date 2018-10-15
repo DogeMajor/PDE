@@ -26,35 +26,37 @@ class Element{
 
 public:
     Element();
-    Element(Node<Dim,T> *nod[N], vector <SimplexFunction <T> > funcs);
+	Element(vector < Node <Dim, T>* > nodes_vec, vector <SimplexFunction <T> > funcs);
+    //Element(Node<Dim,T> *nod[N], vector <SimplexFunction <T> > funcs);
     Element(const Element &el);//copy constructor
     ~Element();
     void increase_shared_elements();
+	void decrease_shared_elements();
     void set_indices();
-	Node<Dim, T>** get_nodes();
+	vector < Node <Dim, T>* > get_nodes();
     SimplexFunction<T> get_function(int node_no);
     Node<Dim,T> operator[](int i);
-    Element<Dim,N,T>& operator=(Element &el);
+    Element<Dim,N,T>& operator=(const Element &el);
     bool operator==(const Element &el) const;
     bool operator!=(const Element &el) const;
     Matrix<double, Dim, Dim> get_simplex_matrix(Element &el) const;
     //vector <Element <Dim,N,T> > divide();
 	vector <pair <int[2], T> > get_midpoints();
-	Node<Dim, T>** get_midpoint_nodes(vector <pair <int[2], T> > &mid_points);
+	vector < Node <Dim, T>* >  get_midpoint_nodes(vector <pair <int[2], T> > &mid_points);
 	vector < Element <Dim, N, T> > get_vertex_els(Node<Dim, T> *mid_nodes[N]);
 	//vector < Element <Dim, N, T> > get_inner_els(Node<Dim, T> *mid_nodes[N]);
-	map< array<int, 2>, Node<Dim, T>* > get_new_nodes();
+	map< array<int, 2>, Node<Dim, T> > get_new_nodes();
     double get_volume() const;
     void show() const;
 
 private:
-    Node<Dim,T>* nodes[N];
+	vector < Node <Dim, T>* > nodes; // with pointers #nodes does not increase when new element is added provided that nodes have already been built
     vector <SimplexFunction <T> > functions;
-
 };
 
 template <int Dim, int N, typename T>
-Element<Dim,N,T>::Element(){
+Element<Dim,N,T>::Element()
+	: nodes(N, nullptr) {
     //for(int i=0; i<N; i++){
         //nodes[i] = new Node<Dim,T>;
     //}
@@ -62,35 +64,27 @@ Element<Dim,N,T>::Element(){
 }
 
 template <int Dim, int N, typename T>
-Element<Dim,N,T>::Element(Node<Dim,T> *nod[N], vector <SimplexFunction <T> > funcs){
-    for(int i=0; i<N; i++){//If node has no shared_elements it must be a new one!
-        if(nod[i]->get_shared_elements() <= 0) {nodes[i] = new Node<Dim,T>(*nod[i]);}
-        else {nodes[i] = nod[i];}
-    }
-    increase_shared_elements();
-    functions = funcs;
+Element<Dim, N, T>::Element(vector < Node <Dim, T>* > nodes_vec, vector <SimplexFunction <T> > funcs) {
+	nodes = nodes_vec;
+	increase_shared_elements();
+	functions = funcs;
 }
-
 
 template <int Dim, int N, typename T>
 Element<Dim,N,T>::Element(const Element &el){
-    for(int i=0; i<N; i++){
-        nodes[i] = el.nodes[i];
-    }
+    //for(int i=0; i<N; i++){nodes[i] = el.nodes[i];}
+	nodes = el.nodes;
     increase_shared_elements();
     functions = el.functions;
 }
 
 template <int Dim, int N, typename T>
 Element<Dim,N,T>::~Element(){
-    int shared_elements = 0;
-    for(int i=0; i<N; i++){
-        shared_elements = nodes[i]->get_shared_elements();
-        nodes[i]->set_shared_elements(shared_elements-1);
-        if(shared_elements-1 <= 0){
-            delete nodes[i];
-        }
-    }
+	decrease_shared_elements();
+    //for(int i=0; i<nodes.size(); i++){
+    //    if(nodes[i]->get_shared_elements() <= 0){delete nodes[i];}
+   // }
+	nodes.clear();
     functions.clear();
     cout << "Element destroyed!" << endl;
 }
@@ -105,6 +99,15 @@ void Element<Dim,N,T>::increase_shared_elements(){
 }
 
 template <int Dim, int N, typename T>
+void Element<Dim, N, T>::decrease_shared_elements() {
+	int shared_elements = 0;
+	for (int i = 0; i < N; i++) {
+		shared_elements = nodes[i]->get_shared_elements();
+		nodes[i]->set_shared_elements(shared_elements - 1);
+	}
+}
+
+template <int Dim, int N, typename T>
 void Element<Dim,N,T>::set_indices(){
     for(int i=0; i<N; i++){
         nodes[i]->set_index(i);
@@ -112,7 +115,7 @@ void Element<Dim,N,T>::set_indices(){
 }
 
 template <int Dim, int N, typename T>
-Node<Dim, T> ** Element<Dim, N, T>::get_nodes() {
+vector < Node <Dim, T>* > Element<Dim, N, T>::get_nodes() {
 	return nodes;
 }
 
@@ -127,7 +130,7 @@ Node<Dim,T> Element<Dim,N,T>::operator[](int i){
 }
 
 template <int Dim, int N, typename T>
-Element<Dim,N,T>& Element<Dim,N,T>::operator=(Element &el){
+Element<Dim,N,T>& Element<Dim,N,T>::operator=(const Element &el){
     if(*this != el){
         for(int i=0; i<N; i++){
             if(nodes[i]->get_shared_elements() <= 0) {delete nodes[i];}
@@ -205,8 +208,8 @@ vector <pair <int[2], T > > Element<Dim, N, T>::get_midpoints() {
 }
 
 template <int Dim, int N, typename T> //OK
-Node<Dim, T> ** Element<Dim, N, T>::get_midpoint_nodes(vector <pair <int[2], T> > &mid_points) {
-	Node<Dim, T> *midpoint_nodes[(Dim*(Dim+1))/2];
+vector < Node <Dim, T>* >  Element<Dim, N, T>::get_midpoint_nodes(vector <pair <int[2], T> > &mid_points) {
+	vector < Node <Dim, T>* >  midpoint_nodes((Dim*(Dim+1))/2, nullptr);
 	for (int i = 0; i < mid_points.size(); i++) {
 		midpoint_nodes[i] = new Node<Dim, T>(mid_points[i].second);
 	}
@@ -224,34 +227,31 @@ vector < Element <Dim, N, T> > Element<Dim, N, T>::get_vertex_els(Node<Dim, T> *
 }
 
 template <int Dim, int N, typename T>
-map< array<int, 2>, Node<Dim, T> * > Element<Dim, N, T>::get_new_nodes() {
+map< array<int, 2>, Node<Dim, T> > Element<Dim, N, T>::get_new_nodes() {
 	//vector <pair <int[2], T> > m_points = get_midpoints();
 	//Node<2, T> ** m_nodes = get_midpoint_nodes(m_points);
-	map< array<int, 2>, Node<Dim, T> * > node_map;
+	map< array<int, 2>, Node<Dim, T> > node_map;
 	T loc;
 	
-	for (int i = 0; i < 3; i++) {
-		for (int j = i + 1; j < 3; j++) {
+	for (int i = 0; i < nodes.size(); i++) {
+		for (int j = i + 1; j < nodes.size(); j++) {
 			//node_map[{i, j}] = m_nodes[i + j - 1];
 			loc = 0.5*(nodes[i]->get_location() + nodes[j]->get_location());
 			//node_map[{i, j}] = new Node<Dim, VectorXd>(*m_nodes[i + j - 1]);
-			Node<Dim, T>* temp_node = new Node<Dim, T>(loc);
-			temp_node->show();
-			node_map.insert(pair< array<int, 2>, Node<Dim, T>* >({ i, j }, temp_node));
+			Node<Dim, T> temp_node(loc);
+			temp_node.show();
+			node_map.insert(pair< array<int, 2>, Node<Dim, T> >({ i, j }, temp_node));
 			//node_map[{i, j}] = new Node<Dim, T>(loc);
 		}
 	}
 	return node_map;
-
 }
 
 
 template <int Dim, int N, typename T>
 void Element<Dim,N,T>::show() const{
     cout <<"#elements: " << N << endl;
-    for(int i=0; i<N; i++){
-        nodes[i]->show();
-    }
+    for(int i=0; i<N; i++){nodes[i]->show();}
     cout <<"#elements: " << functions.size() << endl;
     for(int i=0; i<functions.size(); i++){
         cout << "Function coefficients for node no " << i <<endl;
@@ -304,7 +304,6 @@ SimplexFunction<T> ElementFactory<Dim,N,T>::build_function(MatrixXd M, int node_
     return fn_obj;
 }
 
-
 template <int Dim, int N, typename T>
 vector <SimplexFunction <T> > ElementFactory<Dim,N,T>::build_functions(Node<Dim,T>* nodes[]){
     MatrixXd M_inv = get_inv_matrix(nodes);
@@ -314,91 +313,6 @@ vector <SimplexFunction <T> > ElementFactory<Dim,N,T>::build_functions(Node<Dim,
     }
     return functions;
 }
-
-
-
-template <int Dim, int N, typename T>
-class VectorElement {
-
-public:
-	VectorElement();
-	VectorElement(vector < Node <Dim, T>* > nodes_vec, vector <SimplexFunction <T> > funcs);
-	VectorElement(vector < Node <Dim, T> > &nodes_vec, vector <SimplexFunction <T> > funcs);
-	~VectorElement();
-	void increase_shared_elements();
-	void show() const;
-
-private:
-	vector < Node <Dim, T>* > nodes;
-	vector <SimplexFunction <T> > functions;
-
-};
-
-template <int Dim, int N, typename T>
-VectorElement<Dim, N, T>::VectorElement() {
-	//for(int i=0; i<N; i++){
-		//nodes[i] = new Node<Dim,T>;
-	//}
-	//increase_shared_elements();
-}
-
-template <int Dim, int N, typename T>
-VectorElement<Dim, N, T>::VectorElement(vector < Node<Dim, T>* > nodes_vec, vector <SimplexFunction <T> > funcs) {
-	for (int i = 0; i < nodes_vec.size(); i++) { nodes.push_back(nodes_vec[i]); }
-	//nodes = nodes_vec;
-	increase_shared_elements();
-	functions = funcs;
-}
-
-template <int Dim, int N, typename T>
-VectorElement<Dim, N, T>::VectorElement(vector < Node<Dim, T> > &nodes_vec, vector <SimplexFunction <T> > funcs) {
-	for (int i = 0; i < nodes_vec.size(); i++) { nodes.push_back(&nodes_vec[i]); }
-	//nodes = nodes_vec;
-	increase_shared_elements();
-	functions = funcs;
-}
-
-
-
-template <int Dim, int N, typename T>
-VectorElement<Dim, N, T>::~VectorElement() {
-	int shared_elements = 0;
-	/*for (int i = 0; i < N; i++) {
-		shared_elements = nodes[i]->get_shared_elements();
-		nodes[i]->set_shared_elements(shared_elements - 1);
-		if (shared_elements - 1 <= 0) {
-			delete nodes[i];
-		}
-	}*/
-	functions.clear();
-	cout << "Element destroyed!" << endl;
-}
-
-template <int Dim, int N, typename T>
-void VectorElement<Dim, N, T>::increase_shared_elements() {
-	int shared_elements = 0;
-	for (int i = 0; i < N; i++) {
-		shared_elements = nodes[i]->get_shared_elements();
-		nodes[i]->set_shared_elements(shared_elements + 1);
-	}
-}
-
-template <int Dim, int N, typename T>
-void VectorElement<Dim, N, T>::show() const {
-	cout << "#elements: " << N << endl;
-	for (int i = 0; i < N; i++) {
-		nodes[i]->show();
-	}
-	cout << "#elements: " << functions.size() << endl;
-	for (int i = 0; i < functions.size(); i++) {
-		cout << "Function coefficients for node no " << i << endl;
-		for (int j = 0; j < functions[i].coeff.rows(); j++) {
-			cout << functions[i].coeff[j] << " " << endl;
-		}
-		cout << endl;
-	}
-}
-
 
 
 #endif

@@ -85,7 +85,6 @@ int Node<Dim, T>::how_many() const {
 	return objects_alive;
 }
 
-
 template <int Dim, typename T>
 Node<Dim,T>& Node<Dim,T>::operator=(const Node &a){
     if(*this!=a){
@@ -102,14 +101,12 @@ bool Node<Dim,T>::operator==(const Node<Dim, T> &a) const{
     bool same_index = (index == a.index);
     bool same_shared_elements = (shared_elements == a.shared_elements);
     return same_location && same_index && same_shared_elements;
-
 }
 
 template <int Dim, typename T>
 bool Node<Dim,T>::operator!=(const Node<Dim, T> &a) const{
     return !(*this==a);
 }
-
 
 template <int Dim, typename T>
 void Node<Dim,T>::show() const{
