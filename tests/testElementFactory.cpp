@@ -44,7 +44,6 @@ TEST_CASE( "Test ElementFactory" ) {
         VectorXd first_coeffs(3);
         first_coeffs<< -1.0, 0.0, 1.0;
         REQUIRE( first_coeffs == first_fn.coeff );
-
     }
 
     SECTION( "Test get_inv_matrix" ){
