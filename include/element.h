@@ -32,7 +32,7 @@ public:
     void increase_shared_elements();
 	void decrease_shared_elements();
     void set_indices();
-	vector < Node <Dim, T>* > get_nodes();
+	vector <Node <Dim, T>* > get_nodes();
     SimplexFunction<T> get_function(int node_no);
     Node<Dim,T> operator[](int i);
     Element<Dim,N,T>& operator=(const Element &el);
@@ -276,7 +276,7 @@ public:
 
 template <int Dim, int N, typename T>
 Element<Dim, N, T> ElementFactory<Dim,N,T>::build(vector < Node <Dim, T>* > nodes_vec){
-    vector <SimplexFunction <T> > funcs = build_functions(nod);
+    vector <SimplexFunction <T> > funcs = build_functions(nodes_vec);
     Element<Dim, N, T> el(nodes_vec, funcs);
     return el;
 }
