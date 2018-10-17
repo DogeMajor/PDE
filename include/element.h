@@ -277,7 +277,7 @@ public:
 	~ElementDivider() {}
 	vector <Element <Dim, N, T>* > divide(Element <Dim, N, T>& el);
 	Element<Dim, N, T> get_vertex_element(int I, vector <Node <Dim, T>* >  midpoint_nodes, map<array<int, 2>, int> midpoints_map, Element <Dim, N, T>& el);
-	Element<Dim, N, T> get_inner_element(int I, vector <Node <Dim, T>* >  midpoint_nodes, map<array<int, 2>, int> midpoints_map, Element <Dim, N, T>& el);
+	Element<Dim, N, T> get_inner_element(int I, vector <Node <Dim, T>* >  midpoint_nodes, map<array<int, 2>, int> midpoints_map);
 	map<array<int, 2>, int> get_midpoints_map();
 	T average_location(vector <Node <Dim, T>* >  chosen_nodes);
 	Node <Dim, T>& nearest_node(T location, vector <Node <Dim, T>* >  nodes);
@@ -307,6 +307,13 @@ vector <Element <Dim, N, T>* > ElementDivider<Dim, N, T>::divide(Element <Dim, N
 	vector <Node <Dim, T>* >  midpoint_nodes = el.get_midpoint_nodes();
 	map< array<int, 2>, int> midpoints_map = get_midpoints_map();
 	//Diverse grejer
+	for (int i = 0; i < N; i++) {
+		els.push_back(new Element <Dim, N, T>(get_vertex_element(i, midpoint_nodes, midpoints_map, el)));
+	}
+	int inner_els_amount = pow(2, Dim) - N;
+	for (int i = 0; i < inner_els_amount; i++) {
+		els.push_back(new Element <Dim, N, T>(get_inner_element(i, midpoint_nodes, midpoints_map)));
+	}
 	return els;
 }
 
@@ -325,29 +332,16 @@ Element<Dim, N, T> ElementDivider<Dim, N, T>::get_vertex_element(int I, vector <
 }
 
 template <int Dim, int N, typename T>
-Element<Dim, N, T> ElementDivider<Dim, N, T>::get_inner_element(int I, vector <Node <Dim, T>* >  midpoint_nodes, map< array<int, 2>, int> midpoints_map, Element <Dim, N, T>& el) {
+Element<Dim, N, T> ElementDivider<Dim, N, T>::get_inner_element(int I, vector <Node <Dim, T>* >  midpoint_nodes, map< array<int, 2>, int> midpoints_map) {
 	vector < Node <Dim, T>* > new_nodes;
-	//vector < Node <Dim, T>* > unused_nodes;
-	//new_nodes.push_back(midpoint_nodes[I]);//NOT OK!!!
 	map< array<int, 2>, int> unused_nodes_map;
-
 	for (int i = 0; i < N; i++) {
 		for (int j = i + 1; j < N; j++) {
-			if (i == I || j == I) {
-				new_nodes.push_back(midpoint_nodes[midpoints_map[{i, j}]]);
-			}
-			else {
-				//unused_nodes.push_back(midpoint_nodes[midpoints_map[{i, j}]]);
-				unused_nodes_map[{i, j}] = midpoints_map[{i, j}];
-			}
+			if (i == I || j == I) {new_nodes.push_back(midpoint_nodes[midpoints_map[{i, j}]]);}
+			else {unused_nodes_map[{i, j}] = midpoints_map[{i, j}];}
 		}
 	}
-	//T avg_loc = average_location(new_nodes);
-	//cout << "avg_loc: " << endl << avg_loc << endl;
-	//Node <Dim, T> nearest_node = nearest_node(avg_loc, unused_nodes);
-	//cout << unused_nodes.size() << endl;
-	//show_map(unused_nodes);
-	new_nodes.push_back(midpoint_nodes[unused_nodes_map.begin()->second]);
+	new_nodes.push_back(midpoint_nodes[unused_nodes_map.begin()->second]);//chooses first element
 	return factory.build(new_nodes);
 }
 
@@ -357,8 +351,7 @@ T ElementDivider<Dim, N, T>::average_location(vector <Node <Dim, T>* >  chosen_n
 	for (int i = 1; i < chosen_nodes.size(); i++) {
 		loc = loc + chosen_nodes[i]->get_location();
 	}
-	loc = loc * (1 / double(chosen_nodes.size()));
-	return loc;
+	return loc * (1 / double(chosen_nodes.size()));
 }
 
 template <int Dim, int N, typename T>

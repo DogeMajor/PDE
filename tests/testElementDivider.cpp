@@ -99,7 +99,7 @@ TEST_CASE("Test ElementDivider") {
 
 	SECTION("One can generate new inner elements out of old element when refining the mesh") {
 		vector <Node <2, VectorXd >* > m_nodes = element.get_midpoint_nodes();
-		Element <2, 3, VectorXd > inner_el = divider.get_inner_element(0, m_nodes, MIDPOINTS_MAP, element);		
+		Element <2, 3, VectorXd > inner_el = divider.get_inner_element(0, m_nodes, MIDPOINTS_MAP);		
 		REQUIRE(inner_el.get_function(0)(inner_el[0].get_location()) == 1);
 		REQUIRE(inner_el.get_function(1)(inner_el[0].get_location()) == 0);
 		REQUIRE(inner_el[0].get_location() == 0.5*(element[0].get_location() + element[1].get_location()));
@@ -107,7 +107,16 @@ TEST_CASE("Test ElementDivider") {
 		REQUIRE(inner_el[2].get_location() == 0.5*(element[1].get_location() + element[2].get_location()));
 	}
 
-	SECTION("Calculating average locaton should succeed") {
+	SECTION("Generating new Elements should succeed") {
+		vector <Element <2, 3, VectorXd >* > els = divider.divide(element);
+		cout << els.size() << endl;
+		els[0]->show();
+		REQUIRE(els.size() == 4);
+		REQUIRE(divider.get_inner_element(0, element.get_midpoint_nodes(), MIDPOINTS_MAP)[1].get_location() == (*els[3])[1].get_location());
+		REQUIRE(divider.get_vertex_element(1, element.get_midpoint_nodes(), MIDPOINTS_MAP, element)[2].get_location() == (*els[1])[2].get_location());
+	}
+
+	SECTION("Calculating average location should succeed") {
 		vector <Node <2, VectorXd >* > el_nodes = element.get_nodes();
 		VectorXd avg_loc = divider.average_location(el_nodes);
 		REQUIRE(limit_decimals(avg_loc[0],4) == 0.6666);

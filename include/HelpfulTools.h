@@ -24,22 +24,6 @@ void show_map(map< array<int, 2>, int> &m){
 	}
 }
 
-//auto compVectorXd = [](const VectorXd& a, const VectorXd& b) { return a.length() < b.length(); };
-/*auto compVectorXd = [](const VectorXd& a, const VectorXd& b) {
-	bool result = true;
-	for (int i = 0; i < a.size(); i++) {
-		result = (result && (a[i] < b[i]))
-	return result;
-};
-map<VectorXd, array<int, 2>, decltype(compVectorXd)> my_map(compVectorXd);
-
-typedef map<VectorXd, array<int, 2> >::const_iterator LocIter;
-void show_map(map<VectorXd, array<int, 2> > &m) {
-	for (LocIter iter = m.begin(); iter != m.end(); iter++) {
-		cout << "Key: " << iter->first << endl << "Value:" << endl;
-		cout << iter->second[0] <<", "<< iter->second[1] << endl;
-	}
-}*/
 
 template <int Dim, typename T>
 double dist_squared(const T &a, const T &b){
