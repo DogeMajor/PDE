@@ -36,6 +36,7 @@ TEST_CASE("Test ElementDivider") {
 	funcs[2].coeff = coeffs;
 	Element <2, 3, VectorXd> element(nodes, funcs);
 	ElementDivider <2, 3, VectorXd> divider;
+	
 
 	map< array<int, 2>, int> MIDPOINTS_MAP;
 	int I = 0;
@@ -44,31 +45,83 @@ TEST_CASE("Test ElementDivider") {
 			MIDPOINTS_MAP.insert(pair< array<int, 2>, int>({ i, j }, I));
 			I++;
 		}
-		//I++;
 	}
-	show_map(MIDPOINTS_MAP);
+	//show_map(MIDPOINTS_MAP);
 
-	int AMOUNT = 4;
-	map< array<int, 2>, int> M_MAP;
-	int J = 0;
-	for (int i = 0; i < AMOUNT; i++) {
-		for (int j = i + 1; j < AMOUNT; j++) {
-			M_MAP.insert(pair< array<int, 2>, int>({ i, j }, J));
-			J++;
-		}
-		//J++;
+	SECTION("dist_squared template function should work") {
+		VectorXd a(3);
+		a << 0, 1, 2;
+		VectorXd b(3);
+		b << 1, 2, 5;
+		REQUIRE(dist_squared<3, VectorXd> (a, b) == 11.0);
+		REQUIRE(dist_squared<3, VectorXd> (a, a) == 0.0);
 	}
-	//show_map(M_MAP);
+
+
+	SECTION("find_smallest (pair) template function should work") {
+		VectorXd B(3);
+		B << 0.3, 0.2, 0.5;
+		pair<int, double> tiniest = find_smallest<VectorXd>(B, B.size());
+		cout << tiniest.first << endl;
+		REQUIRE(tiniest.first == 1);
+		REQUIRE(tiniest.second == 0.2);
+		vector <double> dists = { 1.62, 0.82, 0.02 };
+		tiniest = find_smallest<vector<double> >(dists, dists.size());
+		REQUIRE(tiniest.first == 2);
+		REQUIRE(tiniest.second == 0.02);
+	}
 
 	SECTION( "Test constructing ElementDivider" ) {
 		ElementDivider <2, 3, VectorXd> new_divider;
 	}
 
-	SECTION( "One can generate new vertex elements out of old element while refining the mesh" ) {
+	SECTION("Generating midpoint_map should succeed") {
+		map<array<int, 2>, int> m_map = divider.get_midpoints_map();
+		REQUIRE(m_map == MIDPOINTS_MAP);
+	}
+
+	//SECTION("Generating location_map should succeed") {
+		//map<VectorXd, array<int, 2> > location_map = divider.get_locations_map(element);
+		//cout << location_map.size() << endl;
+		//REQUIRE(m_map == MIDPOINTS_MAP);
+	//}
+	
+
+	SECTION("One can generate new vertex elements out of old element when refining the mesh") {
 		vector <Node <2, VectorXd >* > mid_nodes = element.get_midpoint_nodes();
 		Element <2, 3, VectorXd > el_AB = divider.get_vertex_element(0, mid_nodes, MIDPOINTS_MAP, element);
-		el_AB.show();
+		REQUIRE(el_AB[0].get_location() == element[0].get_location());
+		REQUIRE(el_AB.get_function(0)(el_AB[0].get_location()) == 1);
+		REQUIRE(el_AB.get_function(1)(el_AB[0].get_location()) == 0);
+		REQUIRE(el_AB[1].get_location() == 0.5*(element[0].get_location()+ element[1].get_location()));
+		REQUIRE(el_AB[2].get_location() == 0.5*(element[0].get_location() + element[2].get_location()));
 	}
+
+	SECTION("One can generate new inner elements out of old element when refining the mesh") {
+		vector <Node <2, VectorXd >* > m_nodes = element.get_midpoint_nodes();
+		Element <2, 3, VectorXd > inner_el = divider.get_inner_element(0, m_nodes, MIDPOINTS_MAP, element);		
+		REQUIRE(inner_el.get_function(0)(inner_el[0].get_location()) == 1);
+		REQUIRE(inner_el.get_function(1)(inner_el[0].get_location()) == 0);
+		REQUIRE(inner_el[0].get_location() == 0.5*(element[0].get_location() + element[1].get_location()));
+		REQUIRE(inner_el[1].get_location() == 0.5*(element[0].get_location() + element[2].get_location()));
+		REQUIRE(inner_el[2].get_location() == 0.5*(element[1].get_location() + element[2].get_location()));
+	}
+
+	SECTION("Calculating average locaton should succeed") {
+		vector <Node <2, VectorXd >* > el_nodes = element.get_nodes();
+		VectorXd avg_loc = divider.average_location(el_nodes);
+		REQUIRE(limit_decimals(avg_loc[0],4) == 0.6666);
+		REQUIRE(limit_decimals(avg_loc[1],4) == 0.3333);
+	}
+
+	SECTION("Finding nearest node should succeed") {
+		vector <Node <2, VectorXd >* > el_nodes = element.get_nodes();
+		VectorXd z(2);
+		z << 0.9, 0.9;
+		Node <2, VectorXd > nearest_node = divider.nearest_node(z, el_nodes);
+		REQUIRE(nearest_node.get_location() == el_nodes[2]->get_location());
+	}
+
 
 }
 

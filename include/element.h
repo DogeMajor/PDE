@@ -10,6 +10,7 @@
 #include <array>
 #include <memory>
 #include "Function.h"
+#include "HelpfulTools.h"
 
 using namespace std;
 using namespace Eigen;
@@ -270,17 +271,22 @@ vector <SimplexFunction <T> > ElementFactory<Dim,N,T>::build_functions(vector < 
 
 template <int Dim, int N, typename T>
 class ElementDivider {
+
 public:
 	ElementDivider() { factory = ElementFactory <Dim, N, T>(); }
 	~ElementDivider() {}
 	vector <Element <Dim, N, T>* > divide(Element <Dim, N, T>& el);
-	Element<Dim, N, T> get_vertex_element(int I, vector <Node <Dim, T>* >  midpoint_nodes, map< array<int, 2>, int> midpoints_map, Element <Dim, N, T>& el);
-	Element<Dim, N, T> get_inner_element(int I, vector <Node <Dim, T>* >  midpoint_nodes, map< array<int, 2>, int> midpoints_map);
-	map< array<int, 2>, int> get_midpoints_map();
+	Element<Dim, N, T> get_vertex_element(int I, vector <Node <Dim, T>* >  midpoint_nodes, map<array<int, 2>, int> midpoints_map, Element <Dim, N, T>& el);
+	Element<Dim, N, T> get_inner_element(int I, vector <Node <Dim, T>* >  midpoint_nodes, map<array<int, 2>, int> midpoints_map, Element <Dim, N, T>& el);
+	map<array<int, 2>, int> get_midpoints_map();
+	T average_location(vector <Node <Dim, T>* >  chosen_nodes);
+	Node <Dim, T>& nearest_node(T location, vector <Node <Dim, T>* >  nodes);
+
 private:
 	ElementFactory <Dim, N, T> factory;
 
 };
+
 
 template <int Dim, int N, typename T>
 map<array<int, 2>, int> ElementDivider<Dim, N, T>::get_midpoints_map() {
@@ -319,18 +325,50 @@ Element<Dim, N, T> ElementDivider<Dim, N, T>::get_vertex_element(int I, vector <
 }
 
 template <int Dim, int N, typename T>
-Element<Dim, N, T> ElementDivider<Dim, N, T>::get_inner_element(int I, vector <Node <Dim, T>* >  midpoint_nodes, map< array<int, 2>, int> midpoints_map) {
-	vector < Node <Dim, T>* > added_nodes;
-	//added_nodes.push_back(midpoint_nodes[I]);
+Element<Dim, N, T> ElementDivider<Dim, N, T>::get_inner_element(int I, vector <Node <Dim, T>* >  midpoint_nodes, map< array<int, 2>, int> midpoints_map, Element <Dim, N, T>& el) {
+	vector < Node <Dim, T>* > new_nodes;
+	//vector < Node <Dim, T>* > unused_nodes;
+	//new_nodes.push_back(midpoint_nodes[I]);//NOT OK!!!
+	map< array<int, 2>, int> unused_nodes_map;
+
 	for (int i = 0; i < N; i++) {
 		for (int j = i + 1; j < N; j++) {
 			if (i == I || j == I) {
-				added_nodes.push_back(midpoint_nodes[midpoints_map[{i, j}]]);
+				new_nodes.push_back(midpoint_nodes[midpoints_map[{i, j}]]);
+			}
+			else {
+				//unused_nodes.push_back(midpoint_nodes[midpoints_map[{i, j}]]);
+				unused_nodes_map[{i, j}] = midpoints_map[{i, j}];
 			}
 		}
 	}
-	return factory.build(added_nodes);
+	//T avg_loc = average_location(new_nodes);
+	//cout << "avg_loc: " << endl << avg_loc << endl;
+	//Node <Dim, T> nearest_node = nearest_node(avg_loc, unused_nodes);
+	//cout << unused_nodes.size() << endl;
+	//show_map(unused_nodes);
+	new_nodes.push_back(midpoint_nodes[unused_nodes_map.begin()->second]);
+	return factory.build(new_nodes);
 }
 
+template <int Dim, int N, typename T>
+T ElementDivider<Dim, N, T>::average_location(vector <Node <Dim, T>* >  chosen_nodes) {
+	T loc = chosen_nodes[0]->get_location();
+	for (int i = 1; i < chosen_nodes.size(); i++) {
+		loc = loc + chosen_nodes[i]->get_location();
+	}
+	loc = loc * (1 / double(chosen_nodes.size()));
+	return loc;
+}
+
+template <int Dim, int N, typename T>
+Node <Dim, T>& ElementDivider<Dim, N, T>::nearest_node(T location, vector <Node <Dim, T>* >  nodes) {
+	vector<double> distances;
+	for (int i = 0; i < nodes.size(); i++) {
+		distances.push_back(dist_squared<Dim, T>(nodes[i]->get_location(), location));
+	}
+	pair<int, double> smallest = find_smallest<vector<double> >(distances, nodes.size());
+	return *nodes[smallest.first];
+}
 
 #endif
