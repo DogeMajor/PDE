@@ -23,20 +23,21 @@ int factorial(int n){
 
 //We simply want to use the already existing nodes and don't need to worry about garbage collection.
 template <int Dim, int N, typename T>
-class Element{
+class Element : Counter<Element<Dim, N, T> > {
 
 public:
     Element();
-	Element(vector < Node <Dim, T>* > nodes_vec, vector <SimplexFunction <T> > funcs);
+	Element(vector< Node <Dim, T>* > nodes_vec, vector<SimplexFunction <T> > funcs);
     Element(const Element &el);//copy constructor
     ~Element();
     void increase_shared_elements();
 	void decrease_shared_elements();
     void set_indices();
+	int how_many() const;
 	vector <Node <Dim, T>* > get_nodes();
     SimplexFunction<T> get_function(int node_no);
     Node<Dim,T>& operator[](int i);
-    Element<Dim,N,T>& operator=(Element &el);
+    Element<Dim,N,T>& operator=(const Element &el);
     bool operator==(const Element &el) const;
     bool operator!=(const Element &el) const;
     Matrix<double, Dim, Dim> get_simplex_matrix(Element &el) const;
@@ -113,6 +114,11 @@ void Element<Dim,N,T>::set_indices(){
 }
 
 template <int Dim, int N, typename T>
+int Element<Dim, N, T>::how_many() const{
+	return objects_alive;
+}
+
+template <int Dim, int N, typename T>
 vector < Node <Dim, T>* > Element<Dim, N, T>::get_nodes() {
 	return nodes;
 }
@@ -128,7 +134,7 @@ Node<Dim,T>& Element<Dim,N,T>::operator[](int i){
 }
 
 template <int Dim, int N, typename T>
-Element<Dim,N,T>& Element<Dim,N,T>::operator=(Element &el){
+Element<Dim,N,T>& Element<Dim,N,T>::operator=(const Element &el){
     if(*this != el){
 		decrease_shared_elements();
         for(int i=0; i<N; i++){
