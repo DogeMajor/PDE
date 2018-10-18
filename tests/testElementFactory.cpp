@@ -44,6 +44,12 @@ TEST_CASE( "Test ElementFactory" ) {
         REQUIRE( first_coeffs == first_fn.coeff );
     }
 
+	SECTION("Test building several elements with same nodes") {
+		Element <2, 3, VectorXd> el_2 = factory.build(nodes);
+		location << 1.0, 1.0;
+		REQUIRE(el_2[2].get_location() == location);
+	}
+
     SECTION( "Test get_inv_matrix" ){
         MatrixXd M_inv = factory.get_inv_matrix(nodes);
         MatrixXd expected_M(3,3);

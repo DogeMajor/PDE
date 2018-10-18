@@ -36,7 +36,7 @@ public:
 	vector <Node <Dim, T>* > get_nodes();
     SimplexFunction<T> get_function(int node_no);
     Node<Dim,T>& operator[](int i);
-    Element<Dim,N,T>& operator=(const Element &el);
+    Element<Dim,N,T>& operator=(Element &el);
     bool operator==(const Element &el) const;
     bool operator!=(const Element &el) const;
     Matrix<double, Dim, Dim> get_simplex_matrix(Element &el) const;
@@ -76,9 +76,11 @@ Element<Dim,N,T>::Element(const Element &el){
 
 template <int Dim, int N, typename T>
 Element<Dim,N,T>::~Element(){
-	decrease_shared_elements();
-    for(int i=0; i<nodes.size(); i++){
-		if (nodes[i]->get_shared_elements() <= 0) { delete nodes[i]; cout << "Node no " << i << " destroyed" << endl; }
+	if (nodes[0] != nullptr) {//If the first node is null then all of them are
+		decrease_shared_elements();
+		for (int i = 0; i < nodes.size(); i++) {
+			if (nodes[i]->get_shared_elements() <= 0) { delete nodes[i]; cout << "Node no " << i << " destroyed" << endl; }
+		}
 	}
 	nodes.clear();
     functions.clear();
@@ -126,7 +128,7 @@ Node<Dim,T>& Element<Dim,N,T>::operator[](int i){
 }
 
 template <int Dim, int N, typename T>
-Element<Dim,N,T>& Element<Dim,N,T>::operator=(const Element &el){
+Element<Dim,N,T>& Element<Dim,N,T>::operator=(Element &el){
     if(*this != el){
 		decrease_shared_elements();
         for(int i=0; i<N; i++){
