@@ -22,11 +22,15 @@ TEST_CASE("Test ElementDivider") {
 	Node <2, VectorXd> node2(location);
 	location << 1.0, 1.0;
 	Node <2, VectorXd> node3(location);
-	vector<Node <2, VectorXd>* > nodes;
-	nodes.push_back(&node1);
-	nodes.push_back(&node2);
-	nodes.push_back(&node3);
-	vector <SimplexFunction <VectorXd> > funcs(3);
+	vector<Node<2, VectorXd> *> nodes(3, nullptr);
+	location << 0.0, 0.0;
+	nodes[0] = new Node<2, VectorXd>(location);
+	location << 1.0, 0.0;
+	nodes[1] = new Node<2, VectorXd>(location);
+	location << 1.0, 1.0;
+	nodes[2] = new Node<2, VectorXd>(location);
+	//cout << nodes[1]->how_many() << endl;
+	vector<SimplexFunction <VectorXd> > funcs(3);
 	VectorXd coeffs(3);
 	coeffs << -1, 0, 1;
 	funcs[0].coeff = coeffs;
@@ -34,9 +38,9 @@ TEST_CASE("Test ElementDivider") {
 	funcs[1].coeff = coeffs;
 	coeffs << 0, 1, 0;
 	funcs[2].coeff = coeffs;
+
 	Element <2, 3, VectorXd> element(nodes, funcs);
 	ElementDivider <2, 3, VectorXd> divider;
-	
 
 	map< array<int, 2>, int> MIDPOINTS_MAP;
 	int I = 0;

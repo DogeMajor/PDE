@@ -18,7 +18,7 @@ class BaseMesh{
 
 public:
     BaseMesh();
-    BaseMesh(T t);
+    BaseMesh(T &t);
     BaseMesh(T &t, BaseMesh<T> *n);
     ~BaseMesh();
     void set_top(T t);
@@ -45,7 +45,7 @@ BaseMesh<T>::BaseMesh(){
 }
 
 template <typename T>
-BaseMesh<T>::BaseMesh(T t){
+BaseMesh<T>::BaseMesh(T &t){
     top = t;
     next = nullptr;
 }

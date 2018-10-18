@@ -35,7 +35,7 @@ public:
     void set_indices();
 	vector <Node <Dim, T>* > get_nodes();
     SimplexFunction<T> get_function(int node_no);
-    Node<Dim,T> operator[](int i);
+    Node<Dim,T>& operator[](int i);
     Element<Dim,N,T>& operator=(const Element &el);
     bool operator==(const Element &el) const;
     bool operator!=(const Element &el) const;
@@ -77,9 +77,9 @@ Element<Dim,N,T>::Element(const Element &el){
 template <int Dim, int N, typename T>
 Element<Dim,N,T>::~Element(){
 	decrease_shared_elements();
-    //for(int i=0; i<nodes.size(); i++){
-    //    if(nodes[i]->get_shared_elements() <= 0){delete nodes[i];}
-   // }
+    for(int i=0; i<nodes.size(); i++){
+		if (nodes[i]->get_shared_elements() <= 0) { delete nodes[i]; cout << "Node no " << i << " destroyed" << endl; }
+	}
 	nodes.clear();
     functions.clear();
     cout << "Element destroyed!" << endl;
@@ -121,13 +121,14 @@ SimplexFunction<T> Element<Dim,N,T>::get_function(int node_no){
 }
 
 template <int Dim, int N, typename T>
-Node<Dim,T> Element<Dim,N,T>::operator[](int i){
+Node<Dim,T>& Element<Dim,N,T>::operator[](int i){
     return *(nodes[i]);
 }
 
 template <int Dim, int N, typename T>
 Element<Dim,N,T>& Element<Dim,N,T>::operator=(const Element &el){
     if(*this != el){
+		decrease_shared_elements();
         for(int i=0; i<N; i++){
             if(nodes[i]->get_shared_elements() <= 0) {delete nodes[i];}
         }

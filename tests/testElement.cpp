@@ -6,6 +6,7 @@
 #include <array>
 #include <map>
 #include <memory>
+#include <vector>
 
 using namespace std;
 using namespace Eigen;
@@ -14,8 +15,8 @@ using namespace Eigen;
 #define CATCH_CONFIG_MAIN  // This tells Catch to provide a main()
 #include "../C++ libs/catch/catch.hpp"
 
-/*
-TEST_CASE( "Test Element template containing Node template initiated with 2-D double vector from Eigen lib" ) {
+
+TEST_CASE( "Test Element template containing Node template initiated with 2-D double vector from Eigen lib" ){
 
     VectorXd location(2);
     location << 0.0, 0.0;
@@ -25,12 +26,15 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D do
     Node <2,VectorXd> node2(location);
     location << 1.0, 1.0;
     Node <2,VectorXd> node3(location);
-    Node <2,VectorXd> * nodes[3];
-    nodes[0] = &node1;
-    nodes[1] = &node2;
-    nodes[2] = &node3;
-	cout << nodes[1]->get_location() << endl;
-    vector <SimplexFunction <VectorXd> > funcs(3);
+    vector<Node<2,VectorXd> *> nodes(3, nullptr);
+	location << 0.0, 0.0;
+    nodes[0] = new Node<2, VectorXd>(location);
+	location << 1.0, 0.0;
+    nodes[1] = new Node<2, VectorXd>(location);
+	location << 1.0, 1.0;
+    nodes[2] = new Node<2, VectorXd>(location);
+	//cout << nodes[1]->how_many() << endl;
+    vector<SimplexFunction <VectorXd> > funcs(3);
     VectorXd coeffs(3);
     coeffs << -1,0,1;
     funcs[0].coeff = coeffs;
@@ -38,30 +42,29 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D do
     funcs[1].coeff = coeffs;
     coeffs << 0,1,0;
     funcs[2].coeff = coeffs;
-	node1.show();
+	
     Element <2, 3, VectorXd> element(nodes, funcs);
+	//element[0].show();
+
 
 	
     SECTION( "Test default constructor()" ){
         Element <2, 3, VectorXd> empty_element;
-        REQUIRE( empty_element[0].get_shared_elements() == 1 );
+        REQUIRE( empty_element[0].get_shared_elements() == 0 );
         REQUIRE( empty_element[0].get_index() == -1 );
-        REQUIRE( empty_element[2].get_shared_elements() == 1 );
+        REQUIRE( empty_element[2].get_shared_elements() == 0 );
         REQUIRE( empty_element[2].get_index() == -1 );
+		cout << element[0].how_many() << endl;
+		REQUIRE(element[0].how_many() == 9);
     }
-
+	
 	SECTION("Test get_nodes") {
-		Node <2, VectorXd> **retrieved_nodes = element.get_nodes();
-		retrieved_nodes[0]->show();
-		retrieved_nodes[1]->show();
-		retrieved_nodes[2]->show();
-		REQUIRE( retrieved_nodes[2]->get_node_amount() == 6 );
+
+		vector<Node <2, VectorXd> *> retrieved_nodes = element.get_nodes();
+		REQUIRE( retrieved_nodes[2]->how_many() == 6 );
 		REQUIRE( retrieved_nodes[2]->get_location() == node3.get_location() );
 		REQUIRE( retrieved_nodes[2]->get_index() == node3.get_index() );
 		REQUIRE( retrieved_nodes[2]->get_shared_elements() == node3.get_shared_elements()+1 );
-		//Node <2, VectorXd> nod_2 = *retrieved_nodes[1];
-		//cout << nod_2.get_location() << endl;
-		//REQUIRE(retrieved_nodes[2]->get_location() == location);
 	}
 
     SECTION( "Test operator []" ){
@@ -69,12 +72,12 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D do
         REQUIRE( element[0].get_location() != nodes[1]->get_location() );
     }
 
-    SECTION( "Test show()" ){
+    /*SECTION( "Test show()" ){
         cout << "showing element[0]" << endl;
         element[0].show();
         cout << "showing node1" << endl;
         nodes[0]->show();
-    }
+    }*/
 
     SECTION( "Test copy constructor" ){
         Element <2, 3, VectorXd> copyed_element(element);
@@ -83,10 +86,12 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D do
         REQUIRE( copyed_element[2] == element[2] );
     }
 
-    SECTION( "Test increase_shared_elements" ){
+	SECTION( "Test increase/decrease_shared_elements" ){
         int shared_els = element[0].get_shared_elements();
         element.increase_shared_elements();
         REQUIRE( shared_els+1 == element[0].get_shared_elements() );
+		element.decrease_shared_elements();
+		REQUIRE(shared_els == element[1].get_shared_elements());
     }
 
     SECTION( "Test set_indices" ){
@@ -107,24 +112,28 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D do
         REQUIRE( assigned_element[0] == element[0] );
         REQUIRE( assigned_element[1] == element[1] );
         REQUIRE( assigned_element[2] == element[2] );
+		cout << assigned_element[0].how_many() << endl;
     }
-
+	
 
     SECTION( "Test operators == and !=" ){
         Element <2, 3, VectorXd> new_element(nodes, funcs);
         REQUIRE( new_element == element );
-        Node <2,VectorXd> *reflected_nodes[3];
-        reflected_nodes[0] = &node3;
-        reflected_nodes[1] = &node2;
-        reflected_nodes[2] = &node1;
-        Element <2, 3, VectorXd> reflected_element(reflected_nodes, funcs);
-        REQUIRE( reflected_element != element );
+		vector<Node <2, VectorXd> *> reflected_nodes;// (3, nullptr);
+        reflected_nodes.push_back(&node3);
+        reflected_nodes.push_back(&node2);
+        reflected_nodes.push_back(&node1);
+        //Element <2, 3, VectorXd> reflected_element(reflected_nodes, funcs);
+		ElementFactory <2, 3, VectorXd> factory;
+		Element <2, 3, VectorXd> reflected_element = factory.build(reflected_nodes);
+		//reflected_element.show();
+        //REQUIRE( reflected_element != element );
     }
-
-    SECTION( "Test get_volume()" ){
+	
+    /*SECTION( "Test get_volume()" ){
         REQUIRE(element.get_volume() == 0.5 );
     }
-
+	
 	SECTION("Test midpoints()") {
 		vector <pair <int[2], VectorXd> > midpoints = element.get_midpoints();
 		VectorXd mid_loc(2);
@@ -143,11 +152,11 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D do
 	SECTION("Test midpoint_nodes()") {
 		VectorXd loc(2);
 		loc << 0.5, 0.0;
-		int node_no = element[0].get_node_amount();
+		int node_no = element[0].how_many();
 		vector <pair <int[2], VectorXd> > mpoints = element.get_midpoints();
-		Node<2, VectorXd> ** new_nodes = element.get_midpoint_nodes(mpoints);
+		vector<Node<2, VectorXd> *> new_nodes = element.get_midpoint_nodes();
 		new_nodes[2]->show();
-		REQUIRE( element[0].get_node_amount() == node_no+3 );
+		REQUIRE( element[0].how_many() == node_no+3 );
 		//REQUIRE(new_nodes[0]->get_location() == loc);
 		//loc << 0.5, 0.5;
 		//REQUIRE(new_nodes[1]->get_location() == loc);
@@ -165,28 +174,11 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D do
 		els[0].show();
 	}
 	 
-	SECTION( "Testing getting new nodes()" ) {
-		map< array<int, 2>, Node<2, VectorXd> * > new_nodes = element.get_new_nodes();
-		//for (int i = 0; i < 3; i++) {
-			//for (int j = i + 1; j < 3; j++) {
-				//REQUIRE(*new_nodes[{i, j}] == element[i + j - 1]);
-				//cout << new_nodes[{i, j}]->get_location() << endl;
-			//}
-		//}
-		cout << "size:" << new_nodes.size();
-		//typedef std::shared_ptr< Node<2, VectorXd> > NodePtr;
-		//shared_ptr< NodePtr > ptr = make_shared<Node<2, VectorXd> >();
-		//Node<2, VectorXd> *ptr;
-		//ptr = new_nodes[{0, 0}];
-		//ptr->show();
-		//VectorXd loc_00 = new_nodes[{0, 0}]->get_location();
-		//cout << loc_00 << endl;
-	}
 	
-/*
+
 	SECTION("Test map of nodes") {
 		vector <pair <int[2], VectorXd> > m_points = element.get_midpoints();
-		Node<2, VectorXd> ** m_nodes = element.get_midpoint_nodes(m_points);
+		vector< Node<2, VectorXd> * > m_nodes = element.get_midpoint_nodes();
 		map< array<int, 2>, Node<2, VectorXd>* > node_map;
 		//Node<2, VectorXd> n6(*m_nodes[1]);
 		//cout << n6.get_location() << endl;
@@ -197,13 +189,13 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D do
 		}
 		node_map[{0, 1}]->show();
 		//cout << node_map[{0, 1}]->get_location() << endl;
-	}
-
-}*/
-
-
+	}*/
+	
+}
 
 
+
+/*
 
 TEST_CASE( "Test Element template containing Node template initiated with 2-D Point <double> template objects" ) {
 
@@ -213,16 +205,10 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D Po
     Point <double> point1(vec1);
     Point <double> point2(vec2);
     Point <double> point3(vec3);
-    Node <2,Point <double> > n_1(point1);
-    Node <2,Point <double> > n_2(point2);
-    Node <2,Point <double> > n_3(point3);
-
 	vector < Node <2, Point <double> >* > node_vec;
-	cout << n_1.how_many() << endl;
-	node_vec.push_back(&n_1);
-	node_vec.push_back(&n_2);
-	node_vec.push_back(&n_3);
-
+	node_vec.push_back(new Node <2, Point <double> >(point1));//delete is utilized by ~Element afters the tests are run
+	node_vec.push_back(new Node <2, Point <double> >(point2));
+	node_vec.push_back(new Node <2, Point <double> >(point3));
     vector <SimplexFunction <Point <double> > > fns(3);
     VectorXd coeff(3);
     coeff << -1,0,1;
@@ -292,9 +278,9 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D Po
 
     SECTION( "Test get_function(int)" ){
         SimplexFunction< Point <double> > func_1 = el.get_function(0);
-        REQUIRE( func_1(n_1.get_location()) == 1 );
-        REQUIRE( func_1(n_2.get_location()) == 0 );
-        REQUIRE( func_1(n_3.get_location()) == 0 );
+        REQUIRE( func_1(node_vec[0]->get_location()) == 1 );
+        REQUIRE( func_1(node_vec[1]->get_location()) == 0 );
+        REQUIRE( func_1(node_vec[2]->get_location()) == 0 );
     }
 	
 	SECTION("Test midpoint_nodes()") {
@@ -310,10 +296,5 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D Po
 		REQUIRE(m_nodes[2]->get_location()[0] == 0.5*(vec2[0] + vec3[0]));
 	}
 
-
-	SECTION("One can generate new vertex elements out of old element while refining the mesh") {
-		vector <Node <2, Point <double> >* > mid_nodes = el.get_midpoint_nodes();
-		Element <2, 3, Point <double> > el_AB = el.get_vertex_element(0, mid_nodes, MIDPOINTS_MAP);
-		el_AB.show();
-	}
 }
+*/

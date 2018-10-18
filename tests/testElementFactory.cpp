@@ -4,28 +4,26 @@
 
 using namespace std;
 
-
-double fn(VectorXd coords){
-    return coords.transpose()*coords;
-}
-
 #define CATCH_CONFIG_MAIN
 #include "../C++ libs/catch/catch.hpp"
 
 
 TEST_CASE( "Test ElementFactory" ) {
 
-    VectorXd location(2);
-    location << 0.0, 0.0;
-    Node <2,VectorXd> node1(location);
-    location << 1.0, 0.0;
-    Node <2,VectorXd> node2(location);
-    location << 1.0, 1.0;
-    Node <2,VectorXd> node3(location);
-    vector<Node <2,VectorXd> *> nodes;
-    nodes.push_back(&node1);
-	nodes.push_back(&node2);
-	nodes.push_back(&node3);
+	VectorXd location(2);
+	location << 0.0, 0.0;
+	Node <2, VectorXd> node1(location);
+	location << 1.0, 0.0;
+	Node <2, VectorXd> node2(location);
+	location << 1.0, 1.0;
+	Node <2, VectorXd> node3(location);
+	vector<Node<2, VectorXd> *> nodes(3, nullptr);
+	location << 0.0, 0.0;
+	nodes[0] = new Node<2, VectorXd>(location);
+	location << 1.0, 0.0;
+	nodes[1] = new Node<2, VectorXd>(location);
+	location << 1.0, 1.0;
+	nodes[2] = new Node<2, VectorXd>(location);
 
     ElementFactory <2, 3, VectorXd> factory;
 
