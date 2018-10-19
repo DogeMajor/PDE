@@ -89,9 +89,18 @@ bool Mesh<Dim, N, T>::pop() {
 
 template <int Dim, int N, typename T>
 bool Mesh<Dim, N, T>::pop(MeshNode<Element<Dim, N, T> > *previous) {
-	if (previous->next != nullptr && previous != nullptr) {
+	if (previous == nullptr) {
+		return pop();
+	}
+	if (previous->next != nullptr) {
 		MeshNode<Element<Dim, N, T> >* temp = previous->next;
 		previous->next = temp->next;
+		//cout << "previous element" << endl;
+		//previous->data.show();
+		cout << "Deleting element" << endl;
+		temp->data.show();
+		//cout << "next element" << endl;
+		//if (temp->next != nullptr) { temp->next->data.show(); }
 		delete temp;
 		node_counter--;
 		return true;
@@ -138,19 +147,35 @@ const Element<Dim,N,T> Mesh<Dim, N,T>::get_last() {
 
 template <int Dim, int N, typename T>
 void Mesh<Dim, N, T>::refine() {
-	MeshNode<Element<Dim, N, T> >* previous = top;//For future needs...
-
-	MeshNode<Element<Dim, N, T> >* iter = top->next;;//For future needs...
-	vector<Element<Dim, N, T>* > new_els = divider.divide(top->data);
-	pop();//Delete the first node - the next old node has to be deleted with some other method
-	push(*new_els[0]);
-	previous = top;
-	for (int i = 1; i < new_els.size(); i++) {
-		push(*new_els[i]);
+	MeshNode<Element<Dim, N, T> >* original_node = top;
+	MeshNode<Element<Dim, N, T> >* previous = top;
+	MeshNode<Element<Dim, N, T> >* before_original_node = nullptr;
+	//original_node->data.show();
+	vector<Element<Dim, N, T>* > new_els;
+	//do{
+	for (int j = 0; j < 2; j++) {
+		new_els = divider.divide(original_node->data);
+		for (int i = 0; i < new_els.size(); i++) {
+			push(previous, *new_els[i]);
+			if (previous->next == nullptr) { cout << "nullptr reached!" << endl; }
+			previous = previous->next;
+		}
+		//original_node->data[2].show();
+		//original_node->data.show();
+		if (before_original_node == nullptr) { pop(); }
+		
+		//previous->next->data.show();
+		before_original_node = previous;
+		//if (j == 1) { before_original_node->next->data.show(); }
+		//pop(previous);
+		original_node = previous->next;
+		if (before_original_node != nullptr) { pop(before_original_node); }
+		
+		cout << "Original node is nullptr:" << bool(original_node == nullptr) << endl;
+		//original_node->data.show();
 	}
-	//while (iter != nullptr) {
-		//new_els = divider.divide(iter->data);
 	//}
+	//while (original_node != nullptr);
 
 }
 

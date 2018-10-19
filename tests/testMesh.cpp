@@ -186,7 +186,7 @@ TEST_CASE("Test the real Mesh with Elements based on Points") {
 	//LinkedMesh< Node<2, Point <double> > > node_mesh(*node_vec[0]);//ok
 
 
-	SECTION("Mesh can be initialized with default constructor") {//OK
+	/*SECTION("Mesh can be initialized with default constructor") {//OK
 		Mesh<2, 3, Point <double> > empty_mesh;
 		REQUIRE(empty_mesh.how_many() == 2);
 	}
@@ -224,18 +224,16 @@ TEST_CASE("Test the real Mesh with Elements based on Points") {
 	SECTION("One can push a MeshNode from anywhere in the Mesh") {//OK!!
 		MeshNode<Element<2, 3, Point <double> > >* top_mesh_node = el_mesh.get_top_mesh_node();
 		REQUIRE(el_mesh.push(top_mesh_node, el2));//Should be pushed at the middle place
-		el_mesh.show();
-
 		REQUIRE(el_mesh.how_many_nodes() == 3);
 		REQUIRE(el_mesh.get_last() == el1);
 		//Rebuild the mesh!!
 		REQUIRE(el_mesh.pop(top_mesh_node) == true);
 		REQUIRE(el_mesh.how_many_nodes() == 2);
-	}
+	}*/
 
 	SECTION("Refining the mesh should succeed") {
 		el_mesh.refine();
-		REQUIRE(el_mesh.how_many_nodes() == 5);
+		REQUIRE(el_mesh.how_many_nodes() == 8);
 		vector<double> new_loc1 = { 0, 0 };
 		//el_mesh.show();
 		//REQUIRE(el_mesh.get_top()[0].get_location() == new_loc1);

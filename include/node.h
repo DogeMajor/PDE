@@ -117,9 +117,11 @@ void Node<Dim,T>::show() const{
         for(int i=0; i<Dim; i++){
         cout << loc[i] << " ";
         }
+		cout << endl;
     }
-    cout <<"Amount of shared elements: " << shared_elements << endl;
-    cout <<"Amount of all nodes: " << how_many() << endl;
+	
+    //cout <<"Amount of shared elements: " << shared_elements << endl;
+    //cout <<"Amount of all nodes: " << how_many() << endl;
 }
 
 #endif

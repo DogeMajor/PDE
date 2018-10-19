@@ -213,16 +213,16 @@ vector < Node <Dim, T>* >  Element<Dim, N, T>::get_midpoint_nodes() {
 
 template <int Dim, int N, typename T>
 void Element<Dim,N,T>::show() const{
-    cout <<"#elements: " << N << endl;
+    //cout <<"#elements: " << N << endl;
     for(int i=0; i<nodes.size(); i++){nodes[i]->show();}
-    cout <<"#elements: " << functions.size() << endl;
-    for(int i=0; i<functions.size(); i++){
+    //cout <<"#elements: " << functions.size() << endl;
+    /*for(int i=0; i<functions.size(); i++){
         cout << "Function coefficients for node no " << i <<endl;
         for(int j=0; j<functions[i].coeff.rows(); j++){
             cout << functions[i].coeff[j] <<" " <<endl;
         }
         cout << endl;
-    }
+    }*/
 }
 
 
