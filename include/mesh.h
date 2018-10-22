@@ -28,8 +28,8 @@ public:
 	Mesh(Element<Dim, N, T> &t);
 	~Mesh();
 	bool push(Element<Dim, N, T> &t);//To the top  OK
-	bool pop();//From the top  OK
 	bool push(MeshNode<Element<Dim, N, T> > *previous, Element<Dim, N, T> &t);//Adds efter the previous lement!
+	bool pop();//From the top  OK
 	bool pop(MeshNode<Element<Dim, N, T> > *previous);//Deletes the next element!!!
 	int how_many() const;// { return objects_alive; }
 	int how_many_nodes() const;
@@ -77,15 +77,22 @@ bool Mesh<Dim, N, T>::push(Element<Dim, N, T> &t) {
 }
 
 template <int Dim, int N, typename T>
+bool Mesh<Dim, N, T>::push(MeshNode<Element<Dim, N, T> > *previous, Element<Dim, N, T> &t) {
+	if (previous == nullptr) {
+		return push(t);
+	}
+	MeshNode <Element<Dim, N, T> >* temp = previous->next;
+	previous->next = new MeshNode <Element<Dim, N, T> >{ t, temp };
+	node_counter++;
+	return true;
+}
+
+template <int Dim, int N, typename T>
 bool Mesh<Dim, N, T>::pop() {
 	if (top != nullptr) {
 		MeshNode<Element<Dim, N, T> >* old_top = top;
 		top = old_top->next;
 		delete old_top;
-		
-		cout << "heh" << endl;
-		//cout << "new top: " << endl;
-		//if (top != nullptr) { top->data.show(); }
 		node_counter--;
 		return true;
 	}
@@ -95,14 +102,10 @@ bool Mesh<Dim, N, T>::pop() {
 template <int Dim, int N, typename T>//NOT OK!!!!
 bool Mesh<Dim, N, T>::pop(MeshNode<Element<Dim, N, T> > *previous) {
 	if (previous == nullptr) {
-		//cout << "Deleting element" << endl;
-		//top->data.show();
 		return pop();
 	}
 	if (previous->next != nullptr) {
 		MeshNode<Element<Dim, N, T> >* old = previous->next;
-		//temp->data.show();
-		//delete previous->next;
 		previous->next = old->next;
 		cout << "Deleting element" << endl;
 		old->data.show();
@@ -113,16 +116,7 @@ bool Mesh<Dim, N, T>::pop(MeshNode<Element<Dim, N, T> > *previous) {
 	return false;
 }
 
-template <int Dim, int N, typename T>
-bool Mesh<Dim, N, T>::push(MeshNode<Element<Dim, N, T> > *previous, Element<Dim, N, T> &t) {
-	if (previous == nullptr) {
-		return push(t);
-	}
-	MeshNode <Element<Dim, N, T> >* temp = previous->next;
-	previous->next = new MeshNode <Element<Dim, N, T> >{ t, temp };
-	node_counter++;
-	return true;
-}
+
 
 template <int Dim, int N, typename T>
 int Mesh<Dim, N, T>::how_many() const {
@@ -163,26 +157,32 @@ const Element<Dim, N, T> Mesh<Dim, N, T>::get_element(int item_no) {
 template <int Dim, int N, typename T>
 void Mesh<Dim, N, T>::refine() {
 	MeshNode<Element<Dim, N, T> >* original_node = top;
-	MeshNode<Element<Dim, N, T> >* previous = nullptr;
+	MeshNode<Element<Dim, N, T> >* previous = top;
 	MeshNode<Element<Dim, N, T> >* before_original_node = nullptr;
 	//original_node->data.show();
 	vector<Element<Dim, N, T>* > new_els;
+	//show();
 	//do{
 	for (int j = 0; j < 2; j++) {
 		new_els = divider.divide(original_node->data);
 		//if (before_original_node != nullptr) { before_original_node->next->data.show(); }
-		cout << "Deleting element succeeded: " << pop(before_original_node);
+		cout << j << endl;
 		for (int i = 0; i < new_els.size(); i++) {
+			cout << i << endl;
+			//previous->data.show();
 			push(previous, *new_els[i]);
-			previous = previous->next;
+			if (i == 0 && j==1) show();
+			previous = previous->next;//Cannot work if previous == nullptr!!!!!
 		}
-		cout << "heh" << endl;
+		cout << "Deleting element succeeded: " << pop(before_original_node);
 		show();
-		cout << "heh" << endl;
+		//cout << "After iteration number " << j << endl;
+		//show();
 		before_original_node = previous;
-		previous->next->data.show();
+		//previous->next->data.show();
 		//pop(previous);
 		original_node = previous->next;
+		previous = previous->next;
 		//if (before_original_node != nullptr) { pop(before_original_node); }
 		
 		cout << "Original node is nullptr:" << bool(original_node == nullptr) << endl;
@@ -200,7 +200,7 @@ void Mesh<Dim, N, T>::show() const {
 	MeshNode<Element<Dim, N, T> >* iter = top;
 	int count = 0;
 	while (iter != nullptr) {
-		cout << "Showing elemnt no " << count << endl;
+		cout << "Showing element no " << count << endl;
 		iter->data.show();
 		iter = iter->next;
 		count++;

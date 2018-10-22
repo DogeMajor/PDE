@@ -237,7 +237,7 @@ TEST_CASE("Test the real Mesh with Elements based on Points") {
 		REQUIRE(el_mesh.pop() == true);
 		REQUIRE(el_mesh.pop(top_mesh_node) == true);
 		REQUIRE(el_mesh.how_many_nodes() == 2);
-	}*/
+	}
 	SECTION("One can push and pop a MeshNode from anywhere in the Mesh") {//OK!!
 		vector<Node <2, Point <double>  > * > node_vec_D;
 		node_vec_D.push_back(new Node<2, Point <double> >(point6));
@@ -288,14 +288,15 @@ TEST_CASE("Test the real Mesh with Elements based on Points") {
 
 		}
 
-	}
+	}*/
 
-	/*SECTION("Refining the mesh should succeed") {
+	SECTION("Refining the mesh should succeed") {
 		el_mesh.refine();
 		REQUIRE(el_mesh.how_many_nodes() == 8);
-		//vector<double> new_loc1 = { 0, 0 };
-		//el_mesh.show();
-		//REQUIRE(el_mesh.get_top()[0].get_location() == new_loc1);
+		vector<double> new_loc_22_1 = { 0, 1.0 };
+		vector<double> new_loc_22_2 = { 0.5, 1.0 };
+		el_mesh.show();
+		REQUIRE(el_mesh.get_element(2)[0].get_location() == new_loc_22_1);
 	}
 
 	//SECTION( "Test copy constructors" ){
