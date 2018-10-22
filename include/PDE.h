@@ -6,7 +6,7 @@
 #include "../C++ libs/eigen/Eigen/Core"
 #include "node.h"
 #include "element.h"
-#include "baseMesh.h"
+#include "mesh.h"
 #include <math.h>
 
 #include "../C++ libs/eigen/Eigen/IterativeLinearSolvers"
@@ -15,10 +15,6 @@
 #include <vector>
 
 using namespace std;
-using namespace Eigen;
-typedef double (* Function)(VectorXd x);
-
-
 using namespace Eigen;
 
 typedef double (* Function)(VectorXd x);
@@ -32,7 +28,7 @@ class PDE
         PDE(BilinearFunction bl_fn, Function fn){A_kernel = bl_fn; f_kernel = fn;}
         double A(Element<Dim, Dim+1,T> &el, SimplexFunction<T> a, SimplexFunction<T> b);//Integrates A_kernel*a*b over Element simplex
         double f(Element<Dim, Dim+1, T> &el, SimplexFunction<T> a);//Integrates f_kernel*a over Element simplex
-        void show() const;
+        //void show() const;
 
     protected:
         BilinearFunction A_kernel;

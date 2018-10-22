@@ -33,11 +33,10 @@ public:
 	bool pop(MeshNode<Element<Dim, N, T> > *previous);//Deletes the next element!!!
 	int how_many() const;// { return objects_alive; }
 	int how_many_nodes() const;
-	//vector <T> divide_element(T &el);
 	MeshNode<Element<Dim, N, T> > * get_top_mesh_node() { return top; }
 	const Element<Dim, N, T> get_top() { return top->data; }
 	const Element<Dim, N, T> get_last();
-	const Element<Dim, N, T> get_element(int item_no);
+	Element<Dim, N, T> get_element(int item_no);
 	void refine();
 	bool operator==(const Mesh<Dim, N, T> & m) const;
 	bool operator!=(const Mesh<Dim, N, T> & m) const;
@@ -78,9 +77,7 @@ bool Mesh<Dim, N, T>::push(Element<Dim, N, T> &t) {
 
 template <int Dim, int N, typename T>
 bool Mesh<Dim, N, T>::push(MeshNode<Element<Dim, N, T> > *previous, Element<Dim, N, T> &t) {
-	if (previous == nullptr) {
-		return push(t);
-	}
+	if (previous == nullptr) {return push(t);}
 	MeshNode <Element<Dim, N, T> >* temp = previous->next;
 	previous->next = new MeshNode <Element<Dim, N, T> >{ t, temp };
 	node_counter++;
@@ -99,24 +96,18 @@ bool Mesh<Dim, N, T>::pop() {
 	return false;
 }
 
-template <int Dim, int N, typename T>//NOT OK!!!!
+template <int Dim, int N, typename T>
 bool Mesh<Dim, N, T>::pop(MeshNode<Element<Dim, N, T> > *previous) {
-	if (previous == nullptr) {
-		return pop();
-	}
+	if (previous == nullptr) {return pop();}
 	if (previous->next != nullptr) {
 		MeshNode<Element<Dim, N, T> >* old = previous->next;
 		previous->next = old->next;
-		cout << "Deleting element" << endl;
-		old->data.show();
 		delete old;
 		node_counter--;
 		return true;
 	}
 	return false;
 }
-
-
 
 template <int Dim, int N, typename T>
 int Mesh<Dim, N, T>::how_many() const {
@@ -148,7 +139,7 @@ const Element<Dim,N,T> Mesh<Dim, N,T>::get_last() {
 }
 
 template <int Dim, int N, typename T>
-const Element<Dim, N, T> Mesh<Dim, N, T>::get_element(int item_no) {
+Element<Dim, N, T> Mesh<Dim, N, T>::get_element(int item_no) {
 	MeshNode <Element<Dim, N, T> >* iter = top;
 	for (int i = 0; i < item_no; i++) { iter = iter->next; }
 	return iter->data;
@@ -159,43 +150,23 @@ void Mesh<Dim, N, T>::refine() {
 	MeshNode<Element<Dim, N, T> >* original_node = top;
 	MeshNode<Element<Dim, N, T> >* previous = top;
 	MeshNode<Element<Dim, N, T> >* before_original_node = nullptr;
-	//original_node->data.show();
 	vector<Element<Dim, N, T>* > new_els;
-	//show();
-	//do{
-	for (int j = 0; j < 2; j++) {
+
+	while(original_node != nullptr){
 		new_els = divider.divide(original_node->data);
-		//if (before_original_node != nullptr) { before_original_node->next->data.show(); }
-		cout << j << endl;
 		for (int i = 0; i < new_els.size(); i++) {
-			cout << i << endl;
-			//previous->data.show();
 			push(previous, *new_els[i]);
-			if (i == 0 && j==1) show();
-			previous = previous->next;//Cannot work if previous == nullptr!!!!!
+			previous = previous->next;
 		}
-		cout << "Deleting element succeeded: " << pop(before_original_node);
-		show();
-		//cout << "After iteration number " << j << endl;
-		//show();
+		pop(before_original_node);
 		before_original_node = previous;
-		//previous->next->data.show();
-		//pop(previous);
 		original_node = previous->next;
 		previous = previous->next;
-		//if (before_original_node != nullptr) { pop(before_original_node); }
-		
-		cout << "Original node is nullptr:" << bool(original_node == nullptr) << endl;
-		//original_node->data.show();
 	}
-	//}
-	//while (original_node != nullptr);
-
 }
 
 template <int Dim, int N, typename T>
 void Mesh<Dim, N, T>::show() const {
-	//BaseMesh<int, N T>* next_BaseMesh = get_next();
 	cout << "Amount of nodes: " << node_counter << endl;
 	MeshNode<Element<Dim, N, T> >* iter = top;
 	int count = 0;
@@ -207,7 +178,6 @@ void Mesh<Dim, N, T>::show() const {
 	}
 	cout << endl;
 }
-
 
 
 #endif

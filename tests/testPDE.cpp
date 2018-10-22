@@ -18,27 +18,31 @@ double f_kern(VectorXd coords){
 
 TEST_CASE( "Test PDE" ) {
 
-    VectorXd location(2);
-    location << 0.0, 0.0;
-    Node <2,VectorXd> node1(location);
-    location << 1.0, 0.0;
-    Node <2,VectorXd> node2(location);
-    location << 1.0, 1.0;
-    Node <2,VectorXd> node3(location);
-    Node <2,VectorXd> *nodes[3];
-    nodes[0] = &node1;
-    nodes[1] = &node2;
-    nodes[2] = &node3;
+	VectorXd location(2);
+	location << 0.0, 0.0;
+	Node <2, VectorXd> node1(location);
+	location << 1.0, 0.0;
+	Node <2, VectorXd> node2(location);
+	location << 1.0, 1.0;
+	Node <2, VectorXd> node3(location);
+	vector<Node<2, VectorXd> *> nodes(3, nullptr);
+	location << 0.0, 0.0;
+	nodes[0] = new Node<2, VectorXd>(location);
+	location << 1.0, 0.0;
+	nodes[1] = new Node<2, VectorXd>(location);
+	location << 1.0, 1.0;
+	nodes[2] = new Node<2, VectorXd>(location);
+	vector<SimplexFunction <VectorXd> > funcs(3);
+	VectorXd coeffs(3);
+	coeffs << -1, 0, 1;
+	funcs[0].coeff = coeffs;
+	coeffs << 1, -1, 0;
+	funcs[1].coeff = coeffs;
+	coeffs << 0, 1, 0;
+	funcs[2].coeff = coeffs;
 
-    vector <SimplexFunction <VectorXd> > funcs(3);
-    VectorXd coeffs(3);
-    coeffs << -1,0,1;
-    funcs[0].coeff = coeffs;
-    coeffs << 1,-1,0;
-    funcs[1].coeff = coeffs;
-    coeffs << 0,1,0;
-    funcs[2].coeff = coeffs;
-    Element <2, 3, VectorXd> element(nodes, funcs);
+	Element <2, 3, VectorXd> element(nodes, funcs);
+
     BilinearFunction bl_fn;
     bl_fn.mat = MatrixXd::Identity(2,2);
     PDE<2, VectorXd>  pde(bl_fn, f_kern);

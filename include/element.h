@@ -9,6 +9,7 @@
 #include <map>
 #include <array>
 #include <memory>
+#include <math.h>
 #include "Function.h"
 #include "HelpfulTools.h"
 
