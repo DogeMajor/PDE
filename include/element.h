@@ -85,7 +85,7 @@ Element<Dim,N,T>::~Element(){
 	}
 	nodes.clear();
     functions.clear();
-    cout << "Element destroyed!" << endl;
+    //cout << "Element destroyed!" << endl;
 }
 
 template <int Dim, int N, typename T>
