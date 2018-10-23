@@ -34,14 +34,14 @@ private:
 template <int Dim, typename T>
 Node<Dim, T>::Node(){
     shared_elements = 0;
-    index = -1;//When node is not part of any element and has no location
+    index = -1;
 }
 
 template <int Dim, typename T>
 Node<Dim, T>::Node(T &loc){
     location = loc;
     shared_elements = 0;
-    index = 0;
+    index = -1;
 }
 
 template <int Dim, typename T>

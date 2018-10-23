@@ -9,10 +9,21 @@
 
 using namespace std;
 using namespace Eigen;
+double PI = 3.14159;
 
 double f_kern(VectorXd coords) {
 	return coords.transpose()*coords;
 }
+
+double f_kern_point(Point <double> coords) {//Particle in a N-Dim box...
+	double result = 0;
+	for (int i = 0; i < coords.get_dimension(); i++) {
+		result *= sin(coords[i]*PI);
+	}
+	return result;
+}
+
+
 
 #define CATCH_CONFIG_MAIN
 #include "../C++ libs/catch/catch.hpp"
@@ -130,7 +141,17 @@ TEST_CASE("Test Solver with Point -based Mesh") {
 
 	SECTION("Test get_stiffness matrix(MatrixXd)") {
 		MatrixXd stiffness_mat = solver.get_stiffness_matrix(10);
-		cout << stiffness_mat << endl;
+		MatrixXd mat_should_be(4,4);
+		mat_should_be << 2, 0, -1, -1, 0, 2, -1, 0, 0, 0, 2, 0, 0, -1, 0, 2;
+		REQUIRE(stiffness_mat == mat_should_be);
+	}
+
+	SECTION("Calculating vector f should succeed") {
+		VectorXd f_vec = solver.get_vector_part();
+		VectorXd vec_should_be(4);
+		vec_should_be << 0.185185, 0.185185, 0.092592, 0.092592;
+		for (int i = 0; i < 4; i++) { REQUIRE(limit_decimals(f_vec(i), 6) == vec_should_be(i)); }
+		
 	}
 
 }

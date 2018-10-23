@@ -92,9 +92,9 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D do
     }
 
     SECTION( "Test set_indices" ){
-        element.set_indices();
-        REQUIRE( 0 == element[0].get_index() );
-        REQUIRE( 1 == element[1].get_index() );
+        element.set_indices(34);
+        REQUIRE( 35 == element[0].get_index() );
+        REQUIRE( 36 == element[1].get_index() );
     }
 
     SECTION( "Test get_function(int)" ){
@@ -253,9 +253,9 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D Po
     }
 
     SECTION( "Test set_indices" ){
-        el.set_indices();
-        REQUIRE( 0 == el[0].get_index() );
-        REQUIRE( 1 == el[1].get_index() );
+        el.set_indices(665);
+        REQUIRE( 666 == el[0].get_index() );
+        REQUIRE( 667 == el[1].get_index() );
     }
 
     SECTION( "Test assignment operator" ){

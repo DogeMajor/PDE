@@ -24,7 +24,8 @@ public:
     PDE(BilinearFunction bl_fn, Function fn){A_kernel = bl_fn; f_kernel = fn;}
 	const BilinearFunction & get_bilinear_func() const { return A_kernel; }
     const double A(Element<Dim, Dim+1,T> el, SimplexFunction<T> a, SimplexFunction<T> b) const;//Integrates A_kernel*a*b over Element simplex
-    double f(Element<Dim, Dim+1, T> &el, const SimplexFunction<T> a);//Integrates f_kernel*a over Element simplex
+    double f(Element<Dim, Dim+1, T> &el, SimplexFunction<T> a) const;//Integrates f_kernel*a over Element simplex
+	VectorXd to_VectorXd(T &location) const;
 	PDE<Dim, T>& operator=(const PDE<Dim, T> &p);
 	//void show() const;
 
@@ -45,13 +46,22 @@ const double PDE<Dim, T>::A(Element<Dim, Dim+1, T> el, SimplexFunction<T> a, Sim
 }
 
 template <int Dim, typename T>//Chooses one point in the middle of simplex, returns f(P_mid)*a(P_mid)*el.volume()
-double PDE<Dim, T>::f(Element<Dim, Dim+1, T> &el, const SimplexFunction<T> a){
+VectorXd PDE<Dim, T>::to_VectorXd(T &location) const {
+	VectorXd x = VectorXd::Zero(Dim);
+	for (int i = 0; i < Dim; i++) {
+		x(i) = location[i];
+	}
+	return x;
+}
+
+template <int Dim, typename T>//Chooses one point in the middle of simplex, returns f(P_mid)*a(P_mid)*el.volume()
+double PDE<Dim, T>::f(Element<Dim, Dim+1, T> &el, SimplexFunction<T> a) const{
     T avg_location = el[0].get_location();
     for(int i=1; i<Dim+1; i++){
-        avg_location += el[i].get_location();
+        avg_location = avg_location + el[i].get_location();
     }
     avg_location = (1.0/double(Dim+1))*avg_location;
-    return f_kernel(avg_location)*a(avg_location)*el.get_volume();
+    return f_kernel(to_VectorXd(avg_location))*a(avg_location)*el.get_volume();
 }
 
 template <int Dim, typename T>

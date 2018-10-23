@@ -147,6 +147,14 @@ TEST_CASE("Test the real Mesh with Elements based on Points") {
 		REQUIRE(el_mesh.get_element(2)[1].get_location()[0] == 0);
 		REQUIRE(el_mesh.get_element(2)[1].get_location()[1] == 0.5);
 	}
+
+	SECTION("Setting indices (for Nodes inside of Elements!) in the mesh should succeed") {
+		
+		el_mesh.reset_indices();
+		el_mesh.show();
+		REQUIRE(el_mesh.get_last()[1].get_index() == 3);
+		REQUIRE(el_mesh.get_top()[0].get_index() == 0);
+	}
 }
 
 

@@ -35,9 +35,10 @@ public:
 	int how_many_nodes() const;
 	MeshNode<Element<Dim, N, T> > * get_top_mesh_node() { return top; }
 	Element<Dim, N, T> get_top() { return top->data; }
-	const Element<Dim, N, T> get_last();
+	Element<Dim, N, T> get_last();
 	Element<Dim, N, T> get_element(int item_no);
 	void refine();
+	int reset_indices(int index=-1);
 	bool operator==(const Mesh<Dim, N, T> & m) const;
 	bool operator!=(const Mesh<Dim, N, T> & m) const;
 	void show() const;
@@ -131,7 +132,7 @@ bool Mesh<Dim, N, T>::operator!=(const Mesh<Dim, N, T> & m) const {
 }
 
 template <int Dim, int N, typename T>
-const Element<Dim,N,T> Mesh<Dim, N,T>::get_last() {
+Element<Dim,N,T> Mesh<Dim, N,T>::get_last() {
 	if (top->next == nullptr) { return top->data; }
 	MeshNode <Element<Dim, N, T> >* iter = top;
 	while (iter->next != nullptr) { iter = iter->next; }
@@ -163,6 +164,17 @@ void Mesh<Dim, N, T>::refine() {
 		original_node = previous->next;
 		previous = previous->next;
 	}
+	reset_indices();
+}
+
+template <int Dim, int N, typename T>
+int Mesh<Dim, N, T>::reset_indices(int index) {
+	MeshNode<Element<Dim, N, T> >* iter = top;
+	while (iter != nullptr) {
+		index = iter->data.set_indices(index);
+		iter = iter->next;
+	}
+	return index;
 }
 
 template <int Dim, int N, typename T>
