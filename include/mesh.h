@@ -28,13 +28,13 @@ public:
 	Mesh(Element<Dim, N, T> &t);
 	~Mesh();
 	bool push(Element<Dim, N, T> &t);//To the top  OK
-	bool push(MeshNode<Element<Dim, N, T> > *previous, Element<Dim, N, T> &t);//Adds efter the previous lement!
+	bool push(MeshNode<Element<Dim, N, T> > *previous, Element<Dim, N, T> &t);//Adds efter the previous element!
 	bool pop();//From the top  OK
 	bool pop(MeshNode<Element<Dim, N, T> > *previous);//Deletes the next element!!!
 	int how_many() const;// { return objects_alive; }
 	int how_many_nodes() const;
 	MeshNode<Element<Dim, N, T> > * get_top_mesh_node() { return top; }
-	const Element<Dim, N, T> get_top() { return top->data; }
+	Element<Dim, N, T> get_top() { return top->data; }
 	const Element<Dim, N, T> get_last();
 	Element<Dim, N, T> get_element(int item_no);
 	void refine();

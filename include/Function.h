@@ -30,12 +30,17 @@ struct SimplexFunction{
         int coeff_size = coeff.size();
         return coeff.head(coeff_size-1);
     }
+
+	VectorXd gradient() {//Does not depend on coords for simplex functions
+		int coeff_size = coeff.size();
+		return coeff.head(coeff_size-1);
+	}
 };
 
 
 struct BilinearFunction{
     MatrixXd mat;
-    double operator()(VectorXd x, VectorXd y){
+    double operator()(VectorXd x, VectorXd y) const{
         double result = (x.transpose())*mat*y;
         return result;
         }

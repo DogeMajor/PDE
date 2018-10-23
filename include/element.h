@@ -217,13 +217,13 @@ void Element<Dim,N,T>::show() const{
     //cout <<"#elements: " << N << endl;
     for(int i=0; i<nodes.size(); i++){nodes[i]->show();}
     //cout <<"#elements: " << functions.size() << endl;
-    /*for(int i=0; i<functions.size(); i++){
+    for(int i=0; i<functions.size(); i++){
         cout << "Function coefficients for node no " << i <<endl;
         for(int j=0; j<functions[i].coeff.rows(); j++){
             cout << functions[i].coeff[j] <<" " <<endl;
         }
         cout << endl;
-    }*/
+    }
 }
 
 
@@ -260,7 +260,7 @@ MatrixXd ElementFactory<Dim,N,T>::get_inv_matrix(vector < Node <Dim, T>* > nodes
 
 template <int Dim, int N, typename T>
 SimplexFunction<T> ElementFactory<Dim,N,T>::build_function(MatrixXd M, int node_no){
-    VectorXd unit_vec = VectorXd::Zero(Dim+1);
+    VectorXd unit_vec = VectorXd::Zero(N);
     unit_vec(node_no) = 1;
     VectorXd coeffs = M*unit_vec;
     SimplexFunction<T> fn_obj;
