@@ -14,12 +14,25 @@ public:
     bool operator==(const Point &p) const;
     bool operator!=(const Point &p) const;
     Point <T>& operator=(const Point &p);
-    T operator[](int i);
-    //const T& operator*(T coeff);
-    //friend Point<T> operator*(T coeff, const Point p){
-    //        return p*coeff;//Has to be defined inside the class brackets!!!
-    //}
-    //vector <T> operator()();replace get_value perhaps
+    const T operator[](int i) const;
+	friend const Point<T> operator+(const Point<T> &p, const Point<T> &q) {
+		vector<T> loc(p.value.size());
+		for (int i = 0; i < p.value.size(); i++) {loc[i] = p.value[i] + q.value[i];}
+		return Point(loc);
+	}
+	friend const Point<T> operator-(const Point<T> &p, const Point<T> &q) {
+		vector<T> loc(p.value.size());
+		for (int i = 0; i < p.value.size(); i++) {loc[i] = p.value[i] - q.value[i];}
+		return Point(loc);
+	}
+	friend const Point<T> operator*(const T coeff, const Point<T> &p) {
+		vector<T> loc(p.value.size());
+		for (int i = 0; i < p.value.size(); i++) { loc[i] = coeff * p.value[i]; }
+		return Point(loc);
+	}
+    friend const Point <T> operator*(const Point<T> &p, const T coeff) {
+		return coeff*p;
+	}
     void show();
 private:
     vector <T> value;
@@ -72,15 +85,9 @@ Point <T>& Point<T>::operator=(const Point &p){
 }
 
 template <typename T>
-T Point<T>::operator[](int i){
+const T Point<T>::operator[](int i) const{
     return value[i];
 }
-/*
-template <typename T>
-const T& Point<T>::operator*(T coeff){
-    for(int i=0; i<value.size(); i++){value[i] = coeff*value[i];}
-    return *this;
-}*/
 
 template <typename T>
 void Point<T>::show(){

@@ -17,9 +17,18 @@ TEST_CASE( "Test Node template with 3-D double vector from Eigen lib" ) {
     location << 1.0, 2.0, 3.0;
     Node <3,VectorXd> similar_node(location);
 
+	SECTION("Test default constructor") {
+		Node <3, VectorXd> empty_node;
+		Node <3, VectorXd> empty_nodes[2];
+		REQUIRE(empty_node.get_shared_elements() == 0);
+		REQUIRE(empty_node.get_index() == -1);
+		REQUIRE(empty_node.get_location().size() == 0);
+		REQUIRE(empty_nodes[1].get_index() == -1);
+	}
+	
     SECTION( "Test get_location" ){
         VectorXd value = node.get_location();
-        REQUIRE( value(0) == location(0) );
+        REQUIRE( value == location );
     }
 
     SECTION( "Test get_index" ){
@@ -35,8 +44,8 @@ TEST_CASE( "Test Node template with 3-D double vector from Eigen lib" ) {
         node.show();
     }
 
-    SECTION( "Test get_node_amount()" ){
-        REQUIRE( 2 == node.get_node_amount() );
+    SECTION( "Test how_many()" ){
+        REQUIRE( 2 == node.how_many() );
     }
 
     SECTION( "Test set_index" ){
@@ -62,9 +71,9 @@ TEST_CASE( "Test Node template with 3-D double vector from Eigen lib" ) {
 
 
     SECTION( "Test assignment operator" ){
-        int node_no = node.get_node_amount();
+        int node_no = node.how_many();
         Node <3,VectorXd> assigned_node = node;
-        REQUIRE( node.get_node_amount() == node_no+1 );
+        REQUIRE( node.how_many() == node_no+1 );
         REQUIRE( node.get_index() == assigned_node.get_index() );
         REQUIRE( node.get_shared_elements() == assigned_node.get_shared_elements() );
         REQUIRE( node.get_location() == assigned_node.get_location() );
@@ -74,9 +83,9 @@ TEST_CASE( "Test Node template with 3-D double vector from Eigen lib" ) {
     }
 
     SECTION( "Test copy constructor" ){
-        int node_number = node.get_node_amount();
+        int node_number = node.how_many();
         Node <3,VectorXd> copyed_node(node);
-        REQUIRE( node.get_node_amount() == node_number+1 );
+        REQUIRE( node.how_many() == node_number+1 );
         REQUIRE( node.get_index() == copyed_node.get_index() );
         REQUIRE( node.get_shared_elements() == copyed_node.get_shared_elements() );
         REQUIRE( node.get_location() == copyed_node.get_location() );
