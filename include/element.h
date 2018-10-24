@@ -221,13 +221,13 @@ void Element<Dim,N,T>::show() const{
     //cout <<"#elements: " << N << endl;
     for(int i=0; i<nodes.size(); i++){nodes[i]->show();}
     //cout <<"#elements: " << functions.size() << endl;
-    for(int i=0; i<functions.size(); i++){
+    /*for(int i=0; i<functions.size(); i++){
         cout << "Function coefficients for node no " << i <<endl;
         for(int j=0; j<functions[i].coeff.rows(); j++){
             cout << functions[i].coeff[j] <<" " <<endl;
         }
         cout << endl;
-    }
+    }*/
 }
 
 
@@ -334,7 +334,8 @@ vector <Element <Dim, N, T>* > ElementDivider<Dim, N, T>::divide(Element <Dim, N
 template <int Dim, int N, typename T>
 Element<Dim, N, T> ElementDivider<Dim, N, T>::get_vertex_element(int I, vector <Node <Dim, T>* >  midpoint_nodes, map< array<int, 2>, int> midpoints_map, Element <Dim, N, T>& el) {
 	vector <Node <Dim, T>* > added_nodes;
-	added_nodes.push_back(new Node <Dim, T>(el[I]));//Not clear if new should be used...
+	//added_nodes.push_back(new Node <Dim, T>(el[I]));//Not clear if new should be used...
+	added_nodes.push_back(&el[I]);
 	for (int i = 0; i < N; i++) {
 		for (int j = i + 1; j < N; j++) {
 			if (i == I || j == I) {

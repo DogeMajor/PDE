@@ -164,7 +164,7 @@ void Mesh<Dim, N, T>::refine() {
 		original_node = previous->next;
 		previous = previous->next;
 	}
-	reset_indices();
+	//reset_indices();
 }
 
 template <int Dim, int N, typename T>

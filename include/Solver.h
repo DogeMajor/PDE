@@ -29,7 +29,9 @@ public:
 	MatrixXd get_stiffness_matrix(int unique_nodes) const;
 	VectorXd get_vector_part() const;
 	//SparseMatrix<double> get_stiffness_matrix() const;
-	//VectorXd solve();
+	void refine() { mesh->refine(); max_index = mesh->reset_indices(-1); }
+	VectorXd solve();
+	MatrixXd get_solution_values(VectorXd solution);//In the same order as indexing of nodes
 	void show() const;
 
 private:
@@ -64,7 +66,7 @@ MatrixXd Solver<Dim, T>::get_stiffness_matrix(int unique_nodes) const {
 			for (int j = i; j < Dim + 1; j++) {
 				fn_j = iter->data.get_function(j);
 				J = iter->data[j].get_index();
-				cout << pde.A(iter->data, fn_i, fn_j) << endl;
+				//cout << pde.A(iter->data, fn_i, fn_j) << endl;
 				stiffness(I, J) += pde.A(iter->data, fn_i, fn_j);
 			}
 		}
@@ -105,6 +107,35 @@ SparseMatrix<double> Solver<Dim, T>::get_stiffness_matrix() const {
 	stiffness.setFromTriplets(tripletList.begin(), tripletList.end());
 	return stiffness;
 }*/
+
+template <int Dim, typename T>
+VectorXd Solver<Dim, T>::solve() {
+	MatrixXd stiffness = get_stiffness_matrix(max_index);
+	VectorXd f_vec = get_vector_part();
+	cout << stiffness << endl;
+	cout << f_vec << endl;
+	return stiffness.inverse()*f_vec;
+}
+
+template <int Dim, typename T>
+MatrixXd Solver<Dim, T>::get_solution_values(VectorXd solution) {
+	MatrixXd values = MatrixXd::Zero(solution.size(), Dim + 1);
+	MeshNode <Element<Dim, Dim + 1, T> >* iter = mesh->get_top_mesh_node();
+	int I;
+	T loc;
+	while (iter != nullptr) {
+		for (int i = 0; i < Dim + 1; i++) {
+			I = iter->data[i].get_index();
+			loc = iter->data[i].get_location();
+			for (int J = 0; J < Dim; J++) {
+				values(I, J) = loc[J];
+			}
+			values(I, Dim) = solution(I);
+		}
+		iter = iter->next;
+	}
+	return values;
+}
 
 template <int Dim, typename T>
 void Solver<Dim, T>::show() const {
