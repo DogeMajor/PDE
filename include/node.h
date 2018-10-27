@@ -10,7 +10,7 @@ class Node: Counter<Node<Dim, T> >{
 
 public:
     Node();
-    Node(T &loc);
+    Node(const T &loc);
     Node(const Node &a);//copy constructor
     ~Node();
     void set_index(int ind);
@@ -22,7 +22,7 @@ public:
     Node<Dim,T>& operator=(const Node &a);
     bool operator== (const Node<Dim, T> &a) const;
     bool operator!=(const Node<Dim, T> &a) const;
-    virtual void show() const;
+    void show() const;
 
 private:
     T location;
@@ -38,7 +38,8 @@ Node<Dim, T>::Node(){
 }
 
 template <int Dim, typename T>
-Node<Dim, T>::Node(T &loc){
+Node<Dim, T>::Node(const T &loc){
+	//for (int i = 0; i < Dim; i++) {location[i] = loc[i];}
     location = loc;
     shared_elements = 0;
     index = -1;
@@ -108,15 +109,13 @@ bool Node<Dim,T>::operator!=(const Node<Dim, T> &a) const{
     return !(*this==a);
 }
 
-template <int Dim, typename T>
+template <int Dim, typename T>//Does not show location when T = VectorXd!!!
 void Node<Dim,T>::show() const{
     cout <<"index: " << index << endl;
     cout <<"location: " << endl;
     if(index != -1){
         T loc = get_location();
-        for(int i=0; i<Dim; i++){
-        cout << loc[i] << " ";
-        }
+        for(int i=0; i<Dim; i++){cout << location[i] << ", ";}
 		cout << endl;
     }
 	

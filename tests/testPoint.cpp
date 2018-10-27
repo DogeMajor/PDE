@@ -14,31 +14,31 @@ TEST_CASE( "Test Point class" ) {
     vector<double> val;
     val.push_back(1.0);
     val.push_back(2.0);
-    Point <double> point_0;
-    Point <double> point(val);
+    Point <2,double> point_0;
+    Point <2,double> point(val);
 
     SECTION( "Test default constructor" ){
-        Point <double> default_point;
+        Point <2,double> default_point;
         vector <double> default_vec= default_point.get_value();
         cout << default_vec.size();
     }
 
     SECTION( "Test copy constructor" ){
-        Point <double> copied_point(point);
+        Point <2,double> copied_point(point);
         REQUIRE( copied_point.get_value() == val );
     }
 
     SECTION( "Test assignment operator" ){
-        Point <double> assigned_point = point;
+        Point <2,double> assigned_point = point;
         REQUIRE( assigned_point.get_value() == val );
-        Point <double> fresh_point;
+        Point <2,double> fresh_point;
         fresh_point = point;
         REQUIRE( fresh_point.get_value() == val );
     }
 
     SECTION( "Test equal to unequal to operators" ){
-        Point <double> same_point(point);
-        Point <double> not_same_point;
+        Point <2,double> same_point(point);
+        Point <2,double> not_same_point;
         REQUIRE( same_point == point );
         REQUIRE( not_same_point != point );
     }
@@ -61,10 +61,10 @@ TEST_CASE( "Test Point class" ) {
 		vector<double> twice(2);
 		twice[0] = 2 * val[0];
 		twice[1] = 2 * val[1];
-		Point <double> similar_point(point);
-		Point <double> zero_point = point-similar_point;
-		Point <double> twice_point = point + similar_point;
-		//Point <double> not_same_point;
+		Point <2,double> similar_point(point);
+		Point <2,double> zero_point = point-similar_point;
+		Point <2,double> twice_point = point + similar_point;
+		//Point <2,double> not_same_point;
 		REQUIRE(zero_point.get_value() == zero);
 		REQUIRE(twice_point.get_value() == twice);
 	}
@@ -75,9 +75,9 @@ TEST_CASE( "Test Point class" ) {
 		two_times[0] = 2 * val[0];
 		two_times[1] = 2 * val[1];
 		
-		Point <double> origo_p = 0*point;
-		Point <double> doubled_point = point*2;
-		//Point <double> not_same_point;
+		Point <2,double> origo_p = 0*point;
+		Point <2,double> doubled_point = point*2;
+		//Point <2,double> not_same_point;
 		REQUIRE(origo_p.get_value() == origo);
 		REQUIRE(doubled_point.get_value() == two_times);
 	}
@@ -91,7 +91,7 @@ TEST_CASE( "Test Point class" ) {
         vector <complex <double> > val;
         val.push_back(std::complex<double> (1,0));
         val.push_back(std::complex<double> (1,1));//1+i
-        Point <complex <double> > c_point(val);
+        Point <2,complex <double> > c_point(val);
         c_point.show();
         REQUIRE( c_point[0].real() == 1 );
         REQUIRE( c_point[0].imag() == 0 );
