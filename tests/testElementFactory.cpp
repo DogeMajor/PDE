@@ -83,7 +83,7 @@ TEST_CASE( "Test ElementFactory" ) {
 		REQUIRE(xtr_nodes[1].get_location() == locations[1]);
 	}
 
-	SECTION("Building Elemnt from locations vector should succeed") {
+	SECTION("Building Element from locations vector should succeed") {
 		vector<VectorXd> locs;
 		locs.push_back(node1.get_location());
 		locs.push_back(node2.get_location());

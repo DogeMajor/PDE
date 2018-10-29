@@ -247,9 +247,9 @@ vector <Node <Dim, T>* >  Element<Dim, N, T>::get_midpoint_nodes(map<array<int, 
 		loc = iter->second;
 		midpoint_nodes.push_back(new Node<Dim, T>(loc));
 	}
-	for (int i = 0; i < midpoint_nodes.size(); i++) {
-		midpoint_nodes[i]->show();
-	}
+	//for (int i = 0; i < midpoint_nodes.size(); i++) {
+		//midpoint_nodes[i]->show();
+	//}
 	return midpoint_nodes;
 }
 
@@ -353,7 +353,9 @@ public:
 
 	map<array<int, 2>, T> get_midlocation_map(Element<Dim, N, T> &el);
 
-	map< array<int, 2>, Node<Dim, T>* > get_common_nodes(Element<Dim, N, T> &current_el, vector <Node <Dim, T>* > nodes, Function bound_fn);
+	map< array<int, 2>, Node<Dim, T>* > get_mid_nodes_map(Element<Dim, N, T> &el);
+
+	map< array<int, 2>, Node<Dim, T>* > get_common_nodes(Element<Dim, N, T> &current_el, vector <Node <Dim, T>* > new_nodes, map< array<int, 2>, Node<Dim, T>* > commons, Function bound_fn);
 
 	vector <Element <Dim, N, T>* > divide(Element <Dim, N, T>& el, map< array<int, 2>, Node<Dim, T>* > common_nodes);
 	vector <Element <Dim, N, T>* > divide(Element <Dim, N, T>& el);
@@ -371,12 +373,8 @@ template <int Dim, int N, typename T> //OK
 vector <Node <Dim, T>* >  ElementDivider<Dim, N, T>::get_midpoint_nodes(Element<Dim, N, T> &el) {
 	vector <pair <int[2], T> >mid_points = el.get_midpoints();
 	vector <Node <Dim, T>* >  midpoint_nodes((Dim*(Dim + 1)) / 2, nullptr);
-	T loc;
 	for (int i = 0; i < mid_points.size(); i++) {
-		//loc = mid_points[i].second;
-		cout << loc[0] << ", " << loc[1] << endl;
-		midpoint_nodes[i] = new Node<Dim, T>(loc);
-		midpoint_nodes[i]->show();
+		midpoint_nodes[i] = new Node<Dim, T>(mid_points[i].second);
 	}
 	return midpoint_nodes;
 }
@@ -388,8 +386,23 @@ map<array<int, 2>, T>  ElementDivider<Dim, N, T>::get_midlocation_map(Element<Di
 	return m_map;
 }
 
+
 template <int Dim, int N, typename T>
-map< array<int, 2>, Node<Dim, T>* > ElementDivider<Dim, N, T>::get_common_nodes(Element<Dim, N, T> &current_el, vector <Node <Dim, T>* > nodes, Function bound_fn) {
+map< array<int, 2>, Node<Dim, T>* > ElementDivider<Dim, N, T>::get_mid_nodes_map(Element<Dim, N, T> &el) {
+	map< array<int, 2>, Node<Dim, T>* > nodes_map;
+	map<array<int, 2>, T> m_map = el.get_midpoints_map();
+	T loc;
+	for (int i = 0; i < N; i++) {
+		for (int j = i + 1; j < N; j++) {
+			loc = m_map[{i, j}];
+			nodes_map.insert(pair<array<int, 2>, Node<Dim, T>* >({ i,j }, new Node<Dim, T>(loc)));
+		}
+	}
+	return nodes_map;
+}
+
+template <int Dim, int N, typename T>
+map< array<int, 2>, Node<Dim, T>* > ElementDivider<Dim, N, T>::get_common_nodes(Element<Dim, N, T> &current_el, vector <Node <Dim, T>* > new_nodes, map< array<int, 2>, Node<Dim, T>* > commons, Function bound_fn) {
 	map< array<int, 2>, Node<Dim, T>* > commons;
 	for (int i = 0; i < nodes.size(); i++) {
 		if(bound_fn(nodes[i]->get_location()) == true){}
