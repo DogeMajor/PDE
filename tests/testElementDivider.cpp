@@ -42,6 +42,10 @@ TEST_CASE("Test ElementDivider with Point template -based Nodes") {
 	//Mesh<2, 3, Point <2,double> > el_mesh(el1);
 	//el_mesh.push(el2);
 	ElementDivider<2, 3, Point <2,double> > divider;
+	element.set_indices(-1);
+	el2.set_indices(2);
+	el2.show();
+	element.show();
 
 
 	map< array<int, 2>, int> MIDPOINTS_MAP;
@@ -112,6 +116,11 @@ TEST_CASE("Test ElementDivider with Point template -based Nodes") {
 	}
 
 	SECTION("Generating map of midpoints should succeed") {
+		cout << "El1" << endl;
+		element.show();
+		cout << "El2" << endl;
+		el2.show();
+
 		map<array<int, 2>, Point<2, double> > m_nods_map = element.get_midpoints_map();
 		REQUIRE(m_nods_map.size() == 3);
 		for (PointsMapIter iter = m_nods_map.begin(); iter != m_nods_map.end(); iter++) {
@@ -123,13 +132,25 @@ TEST_CASE("Test ElementDivider with Point template -based Nodes") {
 
 	SECTION("Generating map of midnodes should succeed") {//OK!
 		map<array<int, 2>, Point<2, double> > points_map = element.get_midpoints_map();
-		map<array<int, 2>, Node<2,Point<2, double> >* > m_p_node_map = divider.get_mid_nodes_map(element);
+		map<array<int, 2>, Node<2, Point<2, double> >* > commons;
+		map<array<int, 2>, Node<2,Point<2, double> >* > m_p_node_map = divider.get_mid_nodes_map(element, commons);
 		REQUIRE(m_p_node_map.size() == 3);
 		for (NodesMapIter iter = m_p_node_map.begin(); iter != m_p_node_map.end(); iter++) {
 			REQUIRE(bool(iter->first[0] < iter->first[1]));//For this special case of indexing of nodes, not generally!!!
-			iter->second->show();
+			//iter->second->show();
 			REQUIRE(iter->second->get_location() == points_map[iter->first]);
 		}
+
+		map<array<int, 2>, Point<2, double> > points_map2 = el2.get_midpoints_map();
+		commons = m_p_node_map;
+		map<array<int, 2>, Node<2, Point<2, double> >* > m_p_node_map2 = divider.get_mid_nodes_map(el2, commons);
+		
+		for (NodesMapIter iter = m_p_node_map2.begin(); iter != m_p_node_map2.end(); iter++) {
+			iter->second->show();
+			points_map2[iter->first].show();
+			//REQUIRE(iter->second->get_location() == points_map2[iter->first]);
+		}
+
 	}
 
 	/*SECTION("Generating new mid nodes from midpoints map should succeed") {

@@ -196,22 +196,21 @@ double Element<Dim,N,T>::get_volume() const{
 template <int Dim, int N, typename T>//OK
 map<array<int, 2>, T> Element<Dim, N, T>::get_midpoints_map() {
 	map<array<int, 2>, T> midpoints_map;
-	int I,J,index = 0;
+	int I,J = 0;
 	T loc;
 	for (int i = 0; i < N; i++) {
 		I = nodes[i]->get_index();
 		for (int j = i + 1; j < N; j++) {
 			J = nodes[j]->get_index();
 			loc = 0.5*(nodes[i]->get_location() + nodes[j]->get_location());
-			midpoints_map.insert(pair<array<int, 2>, T>({ i, j }, loc));
-			index++;
+			midpoints_map.insert(pair<array<int, 2>, T>({ I, J }, loc));
 		}
 	}
 	return midpoints_map;
 }
 
 //1. item of pair gives the original point indices and the second in the midpoint
-template <int Dim, int N, typename T>//OK
+template <int Dim, int N, typename T>//OK  Local map, indices are not node indices!!!
 vector <pair <int[2], T > > Element<Dim, N, T>::get_midpoints() {
 	vector <pair <int[2], T> >mid_points;
 	pair <int[2], T> mid_point;
@@ -353,7 +352,7 @@ public:
 
 	map<array<int, 2>, T> get_midlocation_map(Element<Dim, N, T> &el);
 
-	map< array<int, 2>, Node<Dim, T>* > get_mid_nodes_map(Element<Dim, N, T> &el);
+	map< array<int, 2>, Node<Dim, T>* > get_mid_nodes_map(Element<Dim, N, T> &el, map< array<int, 2>, Node<Dim, T>* > commons);
 
 	map< array<int, 2>, Node<Dim, T>* > get_common_nodes(Element<Dim, N, T> &current_el, vector <Node <Dim, T>* > new_nodes, map< array<int, 2>, Node<Dim, T>* > commons, Function bound_fn);
 
@@ -388,14 +387,23 @@ map<array<int, 2>, T>  ElementDivider<Dim, N, T>::get_midlocation_map(Element<Di
 
 
 template <int Dim, int N, typename T>
-map< array<int, 2>, Node<Dim, T>* > ElementDivider<Dim, N, T>::get_mid_nodes_map(Element<Dim, N, T> &el) {
+map< array<int, 2>, Node<Dim, T>* > ElementDivider<Dim, N, T>::get_mid_nodes_map(Element<Dim, N, T> &el, map< array<int, 2>, Node<Dim, T>* > commons) {
 	map< array<int, 2>, Node<Dim, T>* > nodes_map;
 	map<array<int, 2>, T> m_map = el.get_midpoints_map();
 	T loc;
+	int I,J;
 	for (int i = 0; i < N; i++) {
+		I = el[i].get_index();
 		for (int j = i + 1; j < N; j++) {
+			J = el[j].get_index();
 			loc = m_map[{i, j}];
-			nodes_map.insert(pair<array<int, 2>, Node<Dim, T>* >({ i,j }, new Node<Dim, T>(loc)));
+			if (commons.find({ I,J }) != commons.end()) {
+				cout << "Commons found for key " << I << ", " << J << endl;
+				nodes_map[{I, J}] = commons[{I, J}];
+			}
+			else {
+				nodes_map.insert(pair<array<int, 2>, Node<Dim, T>* >({ I,J }, new Node<Dim, T>(loc)));
+			}
 		}
 	}
 	return nodes_map;
