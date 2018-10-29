@@ -152,9 +152,10 @@ void Mesh<Dim, N, T>::refine() {
 	MeshNode<Element<Dim, N, T> >* previous = top;
 	MeshNode<Element<Dim, N, T> >* before_original_node = nullptr;
 	vector<Element<Dim, N, T>* > new_els;
+	map< array<int, 2>, Node<Dim, T>* > commons;
 
 	while(original_node != nullptr){
-		new_els = divider.divide(original_node->data);
+		new_els = divider.divide(original_node->data, commons);
 		for (int i = 0; i < new_els.size(); i++) {
 			push(previous, *new_els[i]);
 			previous = previous->next;

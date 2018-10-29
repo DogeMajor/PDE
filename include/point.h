@@ -10,6 +10,7 @@ public:
     Point(vector <T> &val);
     Point(const Point & p);
     int get_dimension() const;
+	const int size() const { return value.size(); }
     vector <T> get_value() const;
     bool operator==(const Point &p) const;
     bool operator!=(const Point &p) const;
@@ -68,7 +69,7 @@ vector <T> Point<Dim,T>::get_value() const{
 
 template <int Dim, typename T>
 bool Point<Dim,T>::operator==(const Point &p) const{
-    return (value == p.value);
+	return (size() == p.size()) && (value == p.value);
 }
 
 template <int Dim, typename T>

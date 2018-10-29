@@ -284,14 +284,10 @@ public:
 
 template <int Dim, int N, typename T>
 vector <Node <Dim, T> > ElementFactory<Dim, N, T>::build_nodes(vector <T> &locations) {
-	cout << locations.size();
-	vector <Node <Dim, T> > nodes_vec(N);
-	T loc;
+	vector <Node <Dim, T> > nodes_vec;
+	NodeFactory<Dim, T> node_factory;
 	for (int i = 0; i < locations.size(); i++) {
-		loc = locations[i];
-		cout << "node for location number "<< i << endl;
-		nodes_vec[i] = Node<Dim, T>(loc);
-		nodes_vec[i].show();
+		nodes_vec.push_back(node_factory.build(locations[i]));
 	}
 	return nodes_vec;
 }
@@ -299,7 +295,7 @@ vector <Node <Dim, T> > ElementFactory<Dim, N, T>::build_nodes(vector <T> &locat
 template <int Dim, int N, typename T>
 Element<Dim, N, T> ElementFactory<Dim, N, T>::build(vector <T> locations) {
 	vector <Node <Dim, T>* > nodes_vec(N, nullptr);
-	for (int i = 0; i < location.size(); i++) {
+	for (int i = 0; i < locations.size(); i++) {
 		nodes_vec[i] = new Node<Dim, T>(locations[i]);
 	}
 	vector <SimplexFunction <T> > funcs = build_functions(nodes_vec);
@@ -357,13 +353,13 @@ public:
 
 	map<array<int, 2>, T> get_midlocation_map(Element<Dim, N, T> &el);
 
+	map< array<int, 2>, Node<Dim, T>* > get_common_nodes(Element<Dim, N, T> &current_el, vector <Node <Dim, T>* > nodes, Function bound_fn);
+
 	vector <Element <Dim, N, T>* > divide(Element <Dim, N, T>& el, map< array<int, 2>, Node<Dim, T>* > common_nodes);
 	vector <Element <Dim, N, T>* > divide(Element <Dim, N, T>& el);
 	Element<Dim, N, T> get_vertex_element(int I, vector <Node <Dim, T>* >  midpoint_nodes, map<array<int, 2>, int> midpoints_map, Element <Dim, N, T>& el);
 	Element<Dim, N, T> get_inner_element(int I, vector <Node <Dim, T>* >  midpoint_nodes, map<array<int, 2>, int> midpoints_map);
 	map<array<int, 2>, int> get_midpoints_map();
-	T average_location(vector <Node <Dim, T>* >  chosen_nodes);
-	Node <Dim, T>& nearest_node(T location, vector <Node <Dim, T>* >  nodes);
 
 private:
 	ElementFactory <Dim, N, T> factory;
@@ -392,6 +388,13 @@ map<array<int, 2>, T>  ElementDivider<Dim, N, T>::get_midlocation_map(Element<Di
 	return m_map;
 }
 
+template <int Dim, int N, typename T>
+map< array<int, 2>, Node<Dim, T>* > ElementDivider<Dim, N, T>::get_common_nodes(Element<Dim, N, T> &current_el, vector <Node <Dim, T>* > nodes, Function bound_fn) {
+	map< array<int, 2>, Node<Dim, T>* > commons;
+	for (int i = 0; i < nodes.size(); i++) {
+		if(bound_fn(nodes[i]->get_location()) == true){}
+	}
+}
 
 template <int Dim, int N, typename T>
 map<array<int, 2>, int> ElementDivider<Dim, N, T>::get_midpoints_map() {
@@ -467,23 +470,5 @@ Element<Dim, N, T> ElementDivider<Dim, N, T>::get_inner_element(int I, vector<No
 	return factory.build(new_nodes);
 }
 
-template <int Dim, int N, typename T>
-T ElementDivider<Dim, N, T>::average_location(vector <Node <Dim, T>* >  chosen_nodes) {
-	T loc = chosen_nodes[0]->get_location();
-	for (int i = 1; i < chosen_nodes.size(); i++) {
-		loc = loc + chosen_nodes[i]->get_location();
-	}
-	return loc * (1 / double(chosen_nodes.size()));
-}
-
-template <int Dim, int N, typename T>
-Node <Dim, T>& ElementDivider<Dim, N, T>::nearest_node(T location, vector <Node <Dim, T>* >  nodes) {
-	vector<double> distances;
-	for (int i = 0; i < nodes.size(); i++) {
-		distances.push_back(dist_squared<Dim, T>(nodes[i]->get_location(), location));
-	}
-	pair<int, double> smallest = find_smallest<vector<double> >(distances, nodes.size());
-	return *nodes[smallest.first];
-}
 
 #endif

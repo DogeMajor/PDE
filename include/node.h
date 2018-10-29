@@ -5,7 +5,7 @@
 using namespace std;
 
 
-template <int Dim, typename T>
+template <int Dim, typename T>//It is assumed that class T has a function int size() const!
 class Node: Counter<Node<Dim, T> >{
 
 public:
@@ -20,7 +20,7 @@ public:
     int get_shared_elements() const;
 	int how_many() const;
     Node<Dim,T>& operator=(const Node &a);
-    bool operator== (const Node<Dim, T> &a) const;
+    bool operator==(const Node<Dim, T> &a) const;
     bool operator!=(const Node<Dim, T> &a) const;
     void show() const;
 
@@ -113,14 +113,30 @@ template <int Dim, typename T>//Does not show location when T = VectorXd!!!
 void Node<Dim,T>::show() const{
     cout <<"index: " << index << endl;
     cout <<"location: " << endl;
-    if(index != -1){
-        T loc = get_location();
-        for(int i=0; i<Dim; i++){cout << location[i] << ", ";}
-		cout << endl;
-    }
-	
-    //cout <<"Amount of shared elements: " << shared_elements << endl;
-    //cout <<"Amount of all nodes: " << how_many() << endl;
+    T loc = get_location();
+	if(loc.size()==Dim){
+		for (int i = 0; i < Dim; i++) { cout << loc[i] << ", "; }
+	}
+	cout << endl;
+    cout <<"Amount of shared elements: " << shared_elements << endl;
 }
+
+
+template <int Dim, typename T>
+class NodeFactory{
+
+public:
+	NodeFactory() {}
+	~NodeFactory() {}
+	Node<Dim, T> build(T loc);
+
+};
+
+template <int Dim, typename T>
+Node<Dim, T>  NodeFactory<Dim, T>::build(T loc) {
+	Node<Dim, T> node(loc);
+	return node;
+}
+
 
 #endif
