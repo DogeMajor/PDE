@@ -20,6 +20,17 @@ void show_nodes_map(NodesMap &n_map) {
 	}
 }
 
+typedef map<array<int, 2>, Point<2, double> >::const_iterator PointsMapIter;
+typedef map<array<int, 2>, Point<2, double> > PointsMap;
+
+void show_points_map(PointsMap &p_map) {
+	for (PointsMapIter iter = p_map.begin(); iter != p_map.end(); iter++) {
+		cout << "Key and value" << endl;
+		cout << iter->first[0] << ", " << iter->first[1] << endl;
+		cout << iter->second[0] << ", " << iter->second[1] << endl;
+	}
+}
+
 
 #define CATCH_CONFIG_MAIN
 #include "../C++ libs/catch/catch.hpp"
@@ -56,8 +67,8 @@ TEST_CASE("Test ElementDivider with Point template -based Nodes") {
 	ElementDivider<2, 3, Point <2,double> > divider;
 	element.set_indices(-1);
 	el2.set_indices(2);
-
-	REQUIRE(n_1.how_many() == 7);
+	
+	//REQUIRE(n_1.how_many() == 7);
 
 	map< array<int, 2>, int> MIDPOINTS_MAP;
 	int I = 0;
@@ -67,9 +78,6 @@ TEST_CASE("Test ElementDivider with Point template -based Nodes") {
 			I++;
 		}
 	}
-
-	typedef map<array<int, 2>, Point<2, double> >::const_iterator PointsMapIter;
-
 
 
 	/*SECTION("dist_squared template function should work") {
@@ -139,32 +147,32 @@ TEST_CASE("Test ElementDivider with Point template -based Nodes") {
 
 	SECTION("Generating map of midnodes should succeed") {//OK!
 		map<array<int, 2>, Point<2, double> > points_map = element.get_midpoints_map();
-		cout << "How many Nodes are alive " << n_1.how_many();
 		int nodes_no = n_1.how_many();
 		map<array<int, 2>, Node<2, Point<2, double> >* > commons;
 		map<array<int, 2>, Node<2,Point<2, double> >* > m_p_node_map = divider.get_mid_nodes_map(element, commons);
 		REQUIRE(m_p_node_map.size() == 3);
-		REQUIRE(nodes_no + 2 == n_1.how_many() );
+		REQUIRE(nodes_no + 3 == n_1.how_many() );
 		for (NodesMapIter iter = m_p_node_map.begin(); iter != m_p_node_map.end(); iter++) {
 			REQUIRE(bool(iter->first[0] < iter->first[1]));//For this special case of indexing of nodes, not generally!!!
 			//iter->second->show();
 			REQUIRE(iter->second->get_location() == points_map[iter->first]);
 		}
-		cout << "How many Nodes are alive " << n_1.how_many();
+		show_nodes_map(m_p_node_map);
+		REQUIRE(commons == m_p_node_map);//First element, at t_0 commons is empty!!
 		map<array<int, 2>, Point<2, double> > points_map2 = el2.get_midpoints_map();
-		//commons = m_p_node_map;
 		map<array<int, 2>, Node<2, Point<2, double> >* > m_p_node_map2 = divider.get_mid_nodes_map(el2, commons);
 		REQUIRE(nodes_no + 5 == n_1.how_many());
 		/*for (NodesMapIter iter = m_p_node_map2.begin(); iter != m_p_node_map2.end(); iter++) {
 			iter->second->show();
 			points_map2[iter->first].show();
-			//REQUIRE(iter->second->get_location() == points_map2[iter->first]);
-		}*/
-
-		cout << commons.size() << endl;
+			*/
+		REQUIRE(commons.size() == 5);
+		map<array<int, 2>, Point<2,double> > m_map2 = el2.get_midpoints_map();
+		show_points_map(m_map2);
+		show_nodes_map(m_p_node_map2);
+		//el2.show();
 		//show_nodes_map(commons);
-		cout << "How many Nodes are alive " << commons[{0, 1}]->how_many();
-
+		//show_nodes_map(m_p_node_map2);
 	}
 
 	/*SECTION("Generating new mid nodes from midpoints map should succeed") {
