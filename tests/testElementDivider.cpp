@@ -12,7 +12,7 @@ double fn(VectorXd coords) {
 typedef map<array<int, 2>, Node<2, Point<2, double> >* >::const_iterator NodesMapIter;
 typedef map<array<int, 2>, Node<2, Point<2, double> >* > NodesMap;
 
-void show_nodes_map(NodesMap &n_map) {
+void show_map(NodesMap &n_map) {
 	for (NodesMapIter iter = n_map.begin(); iter != n_map.end(); iter++) {
 		cout << "Key and value" << endl;
 		cout << iter->first[0] << ", " << iter->first[1] << endl;
@@ -23,7 +23,7 @@ void show_nodes_map(NodesMap &n_map) {
 typedef map<array<int, 2>, Point<2, double> >::const_iterator PointsMapIter;
 typedef map<array<int, 2>, Point<2, double> > PointsMap;
 
-void show_points_map(PointsMap &p_map) {
+void show_map(PointsMap &p_map) {
 	for (PointsMapIter iter = p_map.begin(); iter != p_map.end(); iter++) {
 		cout << "Key and value" << endl;
 		cout << iter->first[0] << ", " << iter->first[1] << endl;
@@ -80,7 +80,7 @@ TEST_CASE("Test ElementDivider with Point template -based Nodes") {
 	}
 
 
-	/*SECTION("dist_squared template function should work") {
+	SECTION("dist_squared template function should work") {
 			VectorXd a(3);
 			a << 0, 1, 2;
 			VectorXd b(3);
@@ -105,43 +105,16 @@ TEST_CASE("Test ElementDivider with Point template -based Nodes") {
 
 		SECTION( "Test constructing ElementDivider" ) {
 			ElementDivider <2, 3, Point<2, double> > new_divider;
-		}*/
+		}
 
-	//SECTION("Generating midpoint nodes when some are already generated should succeed") {
-		//vector <Node <2, Point<2,double> > * > m_nods = element.get_midpoint_nodes();
-		
-		//vector<double> loc = m_nods[0]->get_location();
-		//cout << loc[0] << endl;
-		//Point<double> locations;
-		
-		//vector <Node<2, VectorXd> > xtr_nodes = factory.build_nodes(locations);
-		//xtr_nodes[0].show();
-
-		//Element<2, 3, VectorXd> inner_el = factory.build(m_nods);
-		//inner_el.show();
-		//typedef vector <Node<2, VectorXd>* > (Element <2, 3, VectorXd>::*ELPTR) ();
-		//typedef vector <Node<2, Point<double> >* >(Element <2, 3, Point<double> >::*ELPTR) ();
-		/*ELPTR el_ptr = &Element<2, 3, VectorXd>::get_nodes;
-		vector <Node<2, VectorXd>* > new_nodes = (element.*el_ptr)();
-		cout << "Hehe " << endl;
-		new_nodes[0]->show();
-		cout << new_nodes[0]->get_location();
-		m_nods[0]->show();
-		cout << "Hehe " << endl;
-		cout << new_nodes.size() << endl;
-		//for (int i = 0; i < m_nods.size(); i++) {
-			//m_nods[i]->show();
-		//}
-		REQUIRE(m_nods.size() == 3);*/
-	//}
-
+	
 	SECTION( "Generating map of midpoints should succeed" ) {
 		map<array<int, 2>, Point<2, double> > m_nods_map = element.get_midpoints_map();
-		REQUIRE(m_nods_map.size() == 3);
+		REQUIRE(m_nods_map.size() == 3 );
 		for (PointsMapIter iter = m_nods_map.begin(); iter != m_nods_map.end(); iter++) {
 			REQUIRE(bool(iter->first[0] < iter->first[1]));//For this special case of indexing of nodes, not generally!!!
-			REQUIRE(iter->second[0] >= 0);
-			REQUIRE(iter->second[0] <= 1);
+			REQUIRE(iter->second[0] >= 0 );
+			REQUIRE(iter->second[0] <= 1 );
 		}
 	}
 
@@ -150,32 +123,27 @@ TEST_CASE("Test ElementDivider with Point template -based Nodes") {
 		int nodes_no = n_1.how_many();
 		map<array<int, 2>, Node<2, Point<2, double> >* > commons;
 		map<array<int, 2>, Node<2,Point<2, double> >* > m_p_node_map = divider.get_mid_nodes_map(element, commons);
-		REQUIRE(m_p_node_map.size() == 3);
+		REQUIRE(m_p_node_map.size() == 3 );
 		REQUIRE(nodes_no + 3 == n_1.how_many() );
 		for (NodesMapIter iter = m_p_node_map.begin(); iter != m_p_node_map.end(); iter++) {
-			REQUIRE(bool(iter->first[0] < iter->first[1]));//For this special case of indexing of nodes, not generally!!!
-			//iter->second->show();
-			REQUIRE(iter->second->get_location() == points_map[iter->first]);
+			REQUIRE(bool(iter->first[0] < iter->first[1]) );//For this special case of indexing of nodes, not generally!!!
+			REQUIRE(iter->second->get_location() == points_map[iter->first] );
 		}
-		show_nodes_map(m_p_node_map);
-		REQUIRE(commons == m_p_node_map);//First element, at t_0 commons is empty!!
+		show_map(m_p_node_map);
+		REQUIRE(commons == m_p_node_map );//First element, at t_0 commons is empty!!
 		map<array<int, 2>, Point<2, double> > points_map2 = el2.get_midpoints_map();
 		map<array<int, 2>, Node<2, Point<2, double> >* > m_p_node_map2 = divider.get_mid_nodes_map(el2, commons);
 		REQUIRE(nodes_no + 5 == n_1.how_many());
-		/*for (NodesMapIter iter = m_p_node_map2.begin(); iter != m_p_node_map2.end(); iter++) {
-			iter->second->show();
-			points_map2[iter->first].show();
-			*/
-		REQUIRE(commons.size() == 5);
-		map<array<int, 2>, Point<2,double> > m_map2 = el2.get_midpoints_map();
-		show_points_map(m_map2);
-		show_nodes_map(m_p_node_map2);
-		//el2.show();
-		//show_nodes_map(commons);
-		//show_nodes_map(m_p_node_map2);
+		for (NodesMapIter iter = m_p_node_map2.begin(); iter != m_p_node_map2.end(); iter++) {
+			REQUIRE( iter->second->get_location() == points_map2[iter->first] );
+		}
+		for (NodesMapIter iter = m_p_node_map2.begin(); iter != m_p_node_map2.end(); iter++) {
+			REQUIRE( iter->second == commons[iter->first] );
+		}
+		REQUIRE(commons.size() == 5 );
 	}
 
-	/*SECTION("Generating new mid nodes from midpoints map should succeed") {
+	SECTION("Generating new mid nodes from midpoints map should succeed") {
 		map<array<int, 2>, Point<2, double> > m_p_map = element.get_midpoints_map();
 		vector <Node<2, Point<2, double> >* > mid_nods = element.get_midpoint_nodes(m_p_map);
 		//for (int i = 0; i < mid_nods.size(); i++) {
@@ -183,12 +151,11 @@ TEST_CASE("Test ElementDivider with Point template -based Nodes") {
 		//}
 		cout << "Showing midpoint of type Point <2, double> between nodes 0 and 1" << endl;
 		m_p_map[{0, 1}].show();
-		REQUIRE(mid_nods.size() == 3);
+		REQUIRE(mid_nods.size() == 3 );
 	}
 
 	SECTION("Generating midpoint_map should succeed") {//OK!
 		map<array<int, 2>, Point <2, double> > m_loc_map = divider.get_midlocation_map(element);
-		cout << "Showing midlocations_map {0,1}" << endl;
 		REQUIRE(m_loc_map.size() == 3);
 		REQUIRE(m_loc_map[{0, 1}] == 0.5*(point1 + point2) );
 		REQUIRE(m_loc_map[{0, 2}] == 0.5*(point1 + point3) );
@@ -219,28 +186,13 @@ TEST_CASE("Test ElementDivider with Point template -based Nodes") {
 	}
 
 	SECTION("Generating new Elements should succeed") {
-		vector <Element <2, 3, Point <2,double> >* > els = divider.divide(element);
-		cout << els.size() << endl;
-		els[0]->show();
+		map< array<int, 2>, Node<2, Point <2, double> >* >  coms;
+		vector <Element <2, 3, Point <2,double> >* > els = divider.divide(element, coms);
 		REQUIRE(els.size() == 4);
 		REQUIRE(divider.get_inner_element(0, element.get_midpoint_nodes(), MIDPOINTS_MAP)[1].get_location() == (*els[3])[1].get_location());
 		REQUIRE(divider.get_vertex_element(1, element.get_midpoint_nodes(), MIDPOINTS_MAP, element)[2].get_location() == (*els[1])[2].get_location());
 	}
 
-	SECTION("Calculating average location should succeed") {
-		vector <Node <2, VectorXd >* > el_nodes = element.get_nodes();
-		VectorXd avg_loc = divider.average_location(el_nodes);
-		REQUIRE(limit_decimals(avg_loc[0],4) == 0.6666);
-		REQUIRE(limit_decimals(avg_loc[1],4) == 0.3333);
-	}
-
-	SECTION("Finding nearest node should succeed") {
-		vector <Node <2, VectorXd >* > el_nodes = element.get_nodes();
-		VectorXd z(2);
-		z << 0.9, 0.9;
-		Node <2, VectorXd > nearest_node = divider.nearest_node(z, el_nodes);
-		REQUIRE(nearest_node.get_location() == el_nodes[2]->get_location());
-	}*/
 }
 
 

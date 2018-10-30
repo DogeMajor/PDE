@@ -18,32 +18,33 @@ TEST_CASE("Test the real Mesh with Elements based on Points") {
 	vector <double> vec4 = { 0.0, 1.0 };
 	vector <double> vec5 = { 2.0, 0.0 };
 	vector <double> vec6 = { 2.0, 1.0 };
-	Point <double> point1(vec1);
-	Point <double> point2(vec2);
-	Point <double> point3(vec3);
-	Point <double> point4(vec4);
-	Point <double> point5(vec5);
-	Point <double> point6(vec6);
-	Node <2, Point <double> > n_1(point1);
-	Node <2, Point <double> > n_2(point2);
-	Node <2, Point <double> > n_3(point3);
-	vector<Node <2, Point <double>  > * > node_vec(3, nullptr);
-	node_vec[0] = new Node<2, Point <double> >(point1);
-	node_vec[1] = new Node<2, Point <double> >(point2);
-	node_vec[2] = new Node<2, Point <double> >(point3);
-	ElementFactory<2, 3, Point <double> > factory;
-	Element<2, 3, Point <double> > el1 = factory.build(node_vec);
-	vector<Node <2, Point <double> > *> node_vec2;//(3, nullptr);
+	Point <2, double> point1(vec1);
+	Point <2, double> point2(vec2);
+	Point <2, double> point3(vec3);
+	Point <2, double> point4(vec4);
+	Point <2, double> point5(vec5);
+	Point <2, double> point6(vec6);
+	Node <2, Point <2, double> > n_1(point1);
+	Node <2, Point <2, double> > n_2(point2);
+	Node <2, Point <2, double> > n_3(point3);
+	vector<Node <2, Point <2, double>  > * > node_vec(3, nullptr);
+	node_vec[0] = new Node<2, Point <2, double> >(point1);
+	node_vec[1] = new Node<2, Point <2, double> >(point2);
+	node_vec[2] = new Node<2, Point <2, double> >(point3);
+	ElementFactory<2, 3, Point <2, double> > factory;
+	Element<2, 3, Point <2, double> > el1 = factory.build(node_vec);
+	vector<Node <2, Point <2, double> > *> node_vec2;//(3, nullptr);
 	node_vec2.push_back(node_vec[0]);
 	node_vec2.push_back(node_vec[2]);
-	node_vec2.push_back(new Node<2, Point <double> >(point4));
-	Element<2, 3, Point <double> > el2 = factory.build(node_vec2);
-	Mesh<2, 3, Point <double> > el_mesh(el1);
+	node_vec2.push_back(new Node<2, Point <2, double> >(point4));
+	Element<2, 3, Point <2, double> > el2 = factory.build(node_vec2);
+	Mesh<2, 3, Point <2, double> > el_mesh(el1);
 	el_mesh.push(el2);
+	el_mesh.reset_indices();
 
 
 	/*SECTION("Mesh can be initialized with default constructor") {//OK
-		Mesh<2, 3, Point <double> > empty_mesh;
+		Mesh<2, 3, Point <2, double> > empty_mesh;
 		REQUIRE(empty_mesh.how_many() == 2);
 	}
 
@@ -64,7 +65,7 @@ TEST_CASE("Test the real Mesh with Elements based on Points") {
 	}
 
 	SECTION("One can pop a MeshNode from anywhere in the Mesh") {//OK!!
-		MeshNode<Element<2, 3, Point <double> > >* top_mesh_node = el_mesh.get_top_mesh_node();
+		MeshNode<Element<2, 3, Point <2, double> > >* top_mesh_node = el_mesh.get_top_mesh_node();
 		REQUIRE(el_mesh.pop(top_mesh_node));
 		REQUIRE(el_mesh.get_last() == el2);
 		top_mesh_node = el_mesh.get_top_mesh_node();
@@ -78,9 +79,9 @@ TEST_CASE("Test the real Mesh with Elements based on Points") {
 	}
 
 	SECTION("One can push a MeshNode from anywhere in the Mesh") {//OK!!
-		MeshNode<Element<2, 3, Point <double> > >* top_mesh_node = el_mesh.get_top_mesh_node();
+		MeshNode<Element<2, 3, Point <2, double> > >* top_mesh_node = el_mesh.get_top_mesh_node();
 		REQUIRE(el_mesh.push(top_mesh_node, el2));//Should be pushed at the middle place
-		Element<2, 3, Point <double> > new_el(el1);
+		Element<2, 3, Point <2, double> > new_el(el1);
 		REQUIRE(el_mesh.push(nullptr, new_el));
 		REQUIRE(el_mesh.how_many_nodes() == 4);
 		el_mesh.show();
@@ -92,19 +93,19 @@ TEST_CASE("Test the real Mesh with Elements based on Points") {
 	}
 
 	SECTION("One can push and pop a MeshNode from anywhere in the Mesh") {//OK!!
-		vector<Node <2, Point <double>  > * > node_vec_D;
-		node_vec_D.push_back(new Node<2, Point <double> >(point6));
+		vector<Node <2, Point <2, double>  > * > node_vec_D;
+		node_vec_D.push_back(new Node<2, Point <2, double> >(point6));
 		node_vec_D.push_back(node_vec[1]);
 		node_vec_D.push_back(node_vec[2]);
-		Element<2, 3, Point <double> > el4 = factory.build(node_vec_D);
+		Element<2, 3, Point <2, double> > el4 = factory.build(node_vec_D);
 		
-		vector<Node <2, Point <double>  > * > node_vec_C;
-		node_vec_C.push_back(new Node<2, Point <double> >(point5));
+		vector<Node <2, Point <2, double>  > * > node_vec_C;
+		node_vec_C.push_back(new Node<2, Point <2, double> >(point5));
 		node_vec_C.push_back(node_vec[1]);
 		node_vec_C.push_back(node_vec_D[0]);
-		Element<2, 3, Point <double> > el3 = factory.build(node_vec_C);
+		Element<2, 3, Point <2, double> > el3 = factory.build(node_vec_C);
 
-		Mesh<2, 3, Point <double> > large_mesh(el1);
+		Mesh<2, 3, Point <2, double> > large_mesh(el1);
 
 		SECTION("Pushing and popping mesh nodes succeeds everywhere in the mesh") {
 			large_mesh.push(el4);
@@ -138,7 +139,9 @@ TEST_CASE("Test the real Mesh with Elements based on Points") {
 
 	SECTION("Refining the mesh should succeed") {
 		REQUIRE(el_mesh.how_many_nodes() == 2);
+		cout << "How many nodes totally exist" << el1.how_many() <<endl;
 		el_mesh.refine();
+		cout << "How many nodes totally exist after refinement" << el1.how_many() << endl;
 		el_mesh.reset_indices();
 		el_mesh.show();
 		REQUIRE(el_mesh.how_many_nodes() == 8);

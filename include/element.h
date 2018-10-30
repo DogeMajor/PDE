@@ -354,9 +354,7 @@ public:
 
 	map< array<int, 2>, Node<Dim, T>* > get_mid_nodes_map(Element<Dim, N, T> &el, map< array<int, 2>, Node<Dim, T>* > &commons);
 
-	map< array<int, 2>, Node<Dim, T>* > get_common_nodes(Element<Dim, N, T> &current_el, vector <Node <Dim, T>* > new_nodes, map< array<int, 2>, Node<Dim, T>* > commons, Function bound_fn);
-
-	vector <Element <Dim, N, T>* > divide(Element <Dim, N, T>& el, map< array<int, 2>, Node<Dim, T>* > common_nodes);
+	vector <Element <Dim, N, T>* > divide(Element <Dim, N, T>& el, map< array<int, 2>, Node<Dim, T>* > &commons);
 	vector <Element <Dim, N, T>* > divide(Element <Dim, N, T>& el);
 	Element<Dim, N, T> get_vertex_element(int I, vector <Node <Dim, T>* >  midpoint_nodes, map<array<int, 2>, int> midpoints_map, Element <Dim, N, T>& el);
 	Element<Dim, N, T> get_inner_element(int I, vector <Node <Dim, T>* >  midpoint_nodes, map<array<int, 2>, int> midpoints_map);
@@ -411,13 +409,6 @@ map< array<int, 2>, Node<Dim, T>* > ElementDivider<Dim, N, T>::get_mid_nodes_map
 	return nodes_map;
 }
 
-template <int Dim, int N, typename T>
-map< array<int, 2>, Node<Dim, T>* > ElementDivider<Dim, N, T>::get_common_nodes(Element<Dim, N, T> &current_el, vector <Node <Dim, T>* > new_nodes, map< array<int, 2>, Node<Dim, T>* > commons, Function bound_fn) {
-	map< array<int, 2>, Node<Dim, T>* > commons;
-	for (int i = 0; i < nodes.size(); i++) {
-		if(bound_fn(nodes[i]->get_location()) == true){}
-	}
-}
 
 template <int Dim, int N, typename T>
 map<array<int, 2>, int> ElementDivider<Dim, N, T>::get_midpoints_map() {
@@ -433,9 +424,16 @@ map<array<int, 2>, int> ElementDivider<Dim, N, T>::get_midpoints_map() {
 }
 
 template <int Dim, int N, typename T>
-vector <Element <Dim, N, T>* > ElementDivider<Dim, N, T>::divide(Element <Dim, N, T>& el, map< array<int, 2>, Node<Dim,T>* > common_nodes) {
+vector <Element <Dim, N, T>* > ElementDivider<Dim, N, T>::divide(Element <Dim, N, T>& el, map< array<int, 2>, Node<Dim,T>* >  &commons) {
 	vector <Element <Dim, N, T>* > els;//( Dim*(Dim + 1)) / 2, nullptr);
-	vector <Node <Dim, T>* >  midpoint_nodes = el.get_midpoint_nodes();
+
+	vector <Node <Dim, T>* >  midpoint_nodes;
+	map< array<int, 2>, Node<Dim, T>* > m_nodes_map = get_mid_nodes_map(el, commons);
+	for (map< array<int, 2>, Node<Dim, T>* >::const_iterator iter = m_nodes_map.begin(); iter != m_nodes_map.end(); iter++) {
+		midpoint_nodes.push_back(iter->second);
+	}
+
+	//vector <Node <Dim, T>* >  midpoint_nodes = el.get_midpoint_nodes();
 	map< array<int, 2>, int> midpoints_map = get_midpoints_map();
 	//Diverse grejer
 	for (int i = 0; i < N; i++) {

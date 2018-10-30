@@ -165,6 +165,8 @@ void Mesh<Dim, N, T>::refine() {
 		original_node = previous->next;
 		previous = previous->next;
 	}
+
+	commons.erase(commons.begin(), commons.end());
 	//reset_indices();
 }
 
