@@ -352,7 +352,7 @@ public:
 
 	map<array<int, 2>, T> get_midlocation_map(Element<Dim, N, T> &el);
 
-	map< array<int, 2>, Node<Dim, T>* > get_mid_nodes_map(Element<Dim, N, T> &el, map< array<int, 2>, Node<Dim, T>* > commons);
+	map< array<int, 2>, Node<Dim, T>* > get_mid_nodes_map(Element<Dim, N, T> &el, map< array<int, 2>, Node<Dim, T>* > &commons);
 
 	map< array<int, 2>, Node<Dim, T>* > get_common_nodes(Element<Dim, N, T> &current_el, vector <Node <Dim, T>* > new_nodes, map< array<int, 2>, Node<Dim, T>* > commons, Function bound_fn);
 
@@ -386,8 +386,8 @@ map<array<int, 2>, T>  ElementDivider<Dim, N, T>::get_midlocation_map(Element<Di
 }
 
 
-template <int Dim, int N, typename T>
-map< array<int, 2>, Node<Dim, T>* > ElementDivider<Dim, N, T>::get_mid_nodes_map(Element<Dim, N, T> &el, map< array<int, 2>, Node<Dim, T>* > commons) {
+template <int Dim, int N, typename T>//Also addss new mid nodes to commons!!
+map< array<int, 2>, Node<Dim, T>* > ElementDivider<Dim, N, T>::get_mid_nodes_map(Element<Dim, N, T> &el, map< array<int, 2>, Node<Dim, T>* > &commons) {
 	map< array<int, 2>, Node<Dim, T>* > nodes_map;
 	map<array<int, 2>, T> m_map = el.get_midpoints_map();
 	T loc;
@@ -403,6 +403,8 @@ map< array<int, 2>, Node<Dim, T>* > ElementDivider<Dim, N, T>::get_mid_nodes_map
 			}
 			else {
 				nodes_map.insert(pair<array<int, 2>, Node<Dim, T>* >({ I,J }, new Node<Dim, T>(loc)));
+				commons[{I, J}] = nodes_map[{I, J}];
+				cout << "put a node into commons with key " << I << ", " << J << endl;
 			}
 		}
 	}

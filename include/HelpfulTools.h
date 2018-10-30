@@ -38,7 +38,7 @@ template <typename T>
 pair<int, double> find_smallest(const T &container, int size) {
 	int index = 0;
 	for (int i = 1; i < size; i++) {
-		if (container[i] < container[index]) {
+		if (container[i] < container[index]) {s
 			index = i;
 		}
 	}
