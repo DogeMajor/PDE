@@ -152,19 +152,29 @@ void Mesh<Dim, N, T>::refine() {
 	MeshNode<Element<Dim, N, T> >* previous = top;
 	MeshNode<Element<Dim, N, T> >* before_original_node = nullptr;
 	vector<Element<Dim, N, T>* > new_els;
+	map< array<int, 2>, Node<Dim, T>* > commons;
 
 	while(original_node != nullptr){
-		new_els = divider.divide(original_node->data);
+		new_els = divider.divide(original_node->data, commons);
 		for (int i = 0; i < new_els.size(); i++) {
 			push(previous, *new_els[i]);
 			previous = previous->next;
 		}
 		pop(before_original_node);
+
+		cout << "Amount of nodes after refining one element: " << new_els[0]->how_many() << endl;
+		
 		before_original_node = previous;
 		original_node = previous->next;
 		previous = previous->next;
 	}
-	reset_indices();
+	map< array<int, 2>, Node<Dim, T>* >::iterator map_iter = commons.begin();
+	commons.erase(map_iter, commons.end());
+	cout << "length of commons: " << commons.size() << endl;
+	before_original_node = nullptr;
+	original_node = nullptr;
+	previous = nullptr;
+	//reset_indices();
 }
 
 template <int Dim, int N, typename T>

@@ -42,7 +42,7 @@ PDE<Dim, T>::PDE() {}
 template <int Dim, typename T>
 const double PDE<Dim, T>::A(Element<Dim, Dim+1, T> el, SimplexFunction<T> a, SimplexFunction<T> b) const{
     VectorXd coords = VectorXd::Zero(Dim);
-	return A_kernel(a.gradient(), b.gradient());// *el.get_volume();
+	return A_kernel(a.gradient(), b.gradient())*el.get_volume();
 }
 
 template <int Dim, typename T>//Chooses one point in the middle of simplex, returns f(P_mid)*a(P_mid)*el.volume()

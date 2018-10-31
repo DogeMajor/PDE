@@ -14,8 +14,9 @@ TEST_CASE( "Test Node template with 3-D double vector from Eigen lib" ) {
     VectorXd location(3);
     location << 1.0, 2.0, 3.0;
     Node <3,VectorXd> node(location);
-    location << 1.0, 2.0, 3.0;
-    Node <3,VectorXd> similar_node(location);
+	VectorXd sim_location(3);
+    sim_location << 1.0, 2.0, 3.0;
+    Node <3,VectorXd> similar_node(sim_location);
 
 	SECTION("Test default constructor") {
 		Node <3, VectorXd> empty_node;
@@ -28,11 +29,14 @@ TEST_CASE( "Test Node template with 3-D double vector from Eigen lib" ) {
 	
     SECTION( "Test get_location" ){
         VectorXd value = node.get_location();
+		cout << value[0] << endl;
+		cout << value[1] << endl;
+		cout << value[2] << endl;
         REQUIRE( value == location );
     }
 
     SECTION( "Test get_index" ){
-        REQUIRE( node.get_index() == 0 );
+        REQUIRE( node.get_index() == -1 );
     }
 
     SECTION( "Test get_shared_elements" ){
@@ -41,6 +45,7 @@ TEST_CASE( "Test Node template with 3-D double vector from Eigen lib" ) {
 
 
     SECTION( "Test show()" ){
+		cout << "Showing Node <3,VectorXd>" << endl;
         node.show();
     }
 
@@ -49,7 +54,7 @@ TEST_CASE( "Test Node template with 3-D double vector from Eigen lib" ) {
     }
 
     SECTION( "Test set_index" ){
-        REQUIRE( node.get_index() == 0 );
+        REQUIRE( node.get_index() == -1 );
         node.set_index(2);
         REQUIRE( node.get_index() == 2 );
     }
@@ -65,7 +70,7 @@ TEST_CASE( "Test Node template with 3-D double vector from Eigen lib" ) {
         node.set_shared_elements(2);
         REQUIRE( node != similar_node );
         similar_node.set_shared_elements(2);
-        node.set_index(0);
+        node.set_index(-1);
         REQUIRE( similar_node == node );
     }
 
@@ -91,10 +96,18 @@ TEST_CASE( "Test Node template with 3-D double vector from Eigen lib" ) {
         REQUIRE( node.get_location() == copyed_node.get_location() );
     }
 
-    SECTION( "Testing constructing with Point <double>" ){
+    SECTION( "Testing constructing withPoint <3,double>" ){
         vector <double> coords = {1.0, 2.0, 3.0};
-        Point <double> point1(coords);
-        Node <3, Point<double> > node1(point1);
+        Point <3,double> point1(coords);
+
+        Node <3, Point<3,double> > node1(point1);
+		cout << "Showing Node <3, Point<3,double> >" << endl;
+		Point<3, double> point_loc = node1.get_location();
+		for (int i = 0; i < 3; i++) {
+			cout << point_loc[i] << endl;
+		}
+		
+		node1.show();
         REQUIRE( node1.get_location().get_value() == point1.get_value() );
         REQUIRE( node1.get_location() == point1 );
     }

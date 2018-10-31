@@ -187,19 +187,19 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D do
 
 
 
-TEST_CASE( "Test Element template containing Node template initiated with 2-D Point <double> template objects" ) {
+TEST_CASE( "Test Element template containing Node template initiated with 2-D Point <2 ,double> template objects" ) {
 
     vector <double> vec1 = {0.0, 0.0};
     vector <double> vec2 = {1.0, 0.0};
     vector <double> vec3 = {1.0, 1.0};
-    Point <double> point1(vec1);
-    Point <double> point2(vec2);
-    Point <double> point3(vec3);
-	vector < Node <2, Point <double> >* > node_vec;
-	node_vec.push_back(new Node <2, Point <double> >(point1));//delete is utilized by ~Element afters the tests are run
-	node_vec.push_back(new Node <2, Point <double> >(point2));
-	node_vec.push_back(new Node <2, Point <double> >(point3));
-    vector <SimplexFunction <Point <double> > > fns(3);
+    Point <2 ,double> point1(vec1);
+    Point <2 ,double> point2(vec2);
+    Point <2 ,double> point3(vec3);
+	vector < Node <2, Point <2 ,double> >* > node_vec;
+	node_vec.push_back(new Node <2, Point <2 ,double> >(point1));//delete is utilized by ~Element afters the tests are run
+	node_vec.push_back(new Node <2, Point <2 ,double> >(point2));
+	node_vec.push_back(new Node <2, Point <2 ,double> >(point3));
+    vector <SimplexFunction <Point <2 ,double> > > fns(3);
     VectorXd coeff(3);
     coeff << -1,0,1;
     fns[0].coeff = coeff;
@@ -207,7 +207,7 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D Po
     fns[1].coeff = coeff;
     coeff << 0,1,0;
     fns[2].coeff = coeff;
-    Element <2, 3, Point <double> > el(node_vec, fns);
+    Element <2, 3, Point <2 ,double> > el(node_vec, fns);
 
 	map< array<int, 2>, int> MIDPOINTS_MAP;
 	for (int i = 0; i < 3; i++) {
@@ -217,6 +217,8 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D Po
 	}
 
 	SECTION("Test operator []") {
+		cout << "Showing location in the Element based on Point<.,.>" << endl;
+		node_vec[0]->show();
 		REQUIRE(el[0].get_location() == node_vec[0]->get_location());
 		REQUIRE(el[0].get_location() != node_vec[1]->get_location());
 		REQUIRE(el[0].get_location()[0] == 0.0);
@@ -240,7 +242,7 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D Po
     }
 
     SECTION( "Test copy constructor" ){
-        Element <2, 3, Point <double> > copyed_el(el);
+        Element <2, 3, Point <2 ,double> > copyed_el(el);
         REQUIRE( copyed_el[0] == el[0] );
         REQUIRE( copyed_el[1] == el[1] );
         REQUIRE( copyed_el[2] == el[2] );
@@ -259,7 +261,7 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D Po
     }
 
     SECTION( "Test assignment operator" ){
-        Element <2, 3, Point <double> > assigned_el = el;
+        Element <2, 3, Point <2 ,double> > assigned_el = el;
         REQUIRE( assigned_el[0] == el[0] );
         REQUIRE( assigned_el[1] == el[1] );
         REQUIRE( assigned_el[2] == el[2] );
@@ -267,7 +269,7 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D Po
     }
 
     SECTION( "Test get_function(int)" ){
-        SimplexFunction< Point <double> > func_1 = el.get_function(0);
+        SimplexFunction< Point <2 ,double> > func_1 = el.get_function(0);
         REQUIRE( func_1(node_vec[0]->get_location()) == 1 );
         REQUIRE( func_1(node_vec[1]->get_location()) == 0 );
         REQUIRE( func_1(node_vec[2]->get_location()) == 0 );
@@ -277,8 +279,8 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D Po
 		VectorXd loc(2);
 		loc << 0.5, 0.0;
 		int node_no = el[0].how_many();
-		vector <pair <int[2], Point <double> > > m_points = el.get_midpoints();
-		vector <Node <2, Point <double> >* > m_nodes = el.get_midpoint_nodes();
+		vector <pair <int[2], Point <2 ,double> > > m_points = el.get_midpoints();
+		vector <Node <2, Point <2 ,double> >* > m_nodes = el.get_midpoint_nodes();
 		REQUIRE(el[0].how_many() == node_no + 3);
 		REQUIRE(m_nodes[0]->get_location()[0] == 0.5*(vec1[0]+ vec2[0]));
 		REQUIRE(m_nodes[1]->get_location()[1] == 0.5*(vec1[1] + vec3[1]));

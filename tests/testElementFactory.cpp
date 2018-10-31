@@ -74,5 +74,26 @@ TEST_CASE( "Test ElementFactory" ) {
         REQUIRE( fns[2](node2.get_location()) == 0 );
     }
 
-}
+	SECTION("Building nodes out of locations vector should succeed" ) {
+		vector<VectorXd> locations;
+		locations.push_back(node1.get_location());
+		locations.push_back(node2.get_location());
+		vector<Node<2, VectorXd> > xtr_nodes = factory.build_nodes(locations);
+		REQUIRE(xtr_nodes[0].get_location() == locations[0]);
+		REQUIRE(xtr_nodes[1].get_location() == locations[1]);
+	}
 
+	SECTION("Building Element from locations vector should succeed") {
+		vector<VectorXd> locs;
+		locs.push_back(node1.get_location());
+		locs.push_back(node2.get_location());
+		locs.push_back(node3.get_location());
+		Element <2, 3, VectorXd> el3 = factory.build(locs);
+		el3[0].show();
+		node1.show();
+		REQUIRE(el3[0].get_location() == locs[0]);
+		REQUIRE(el3[1].get_location() == locs[1]);
+		REQUIRE(el3[2].get_location() == locs[2]);
+	}
+
+}

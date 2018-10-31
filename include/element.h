@@ -16,7 +16,6 @@
 using namespace std;
 using namespace Eigen;
 
-
 int factorial(int n){
     return (n != 0)? n*factorial(n-1) : 1;
 }
@@ -42,8 +41,12 @@ public:
     bool operator==(const Element &el) const;
     bool operator!=(const Element &el) const;
     Matrix<double, Dim, Dim> get_simplex_matrix(Element &el) const;
+
+	map<array<int, 2>, T> get_midpoints_map();
+
 	vector <pair <int[2], T> > get_midpoints();
 	vector <Node <Dim, T>* >  get_midpoint_nodes();
+	vector <Node <Dim, T>* >  get_midpoint_nodes(map<array<int, 2>, T> m_points_map);
     double get_volume() const;
     void show() const;
 
@@ -51,6 +54,7 @@ private:
 	vector <Node <Dim, T>* > nodes; // with pointers #nodes does not increase when new element is added provided that nodes have already been built
     vector <SimplexFunction <T> > functions;
 };
+
 
 template <int Dim, int N, typename T>
 Element<Dim,N,T>::Element()
@@ -189,8 +193,24 @@ double Element<Dim,N,T>::get_volume() const{
     return simplex_mat.determinant()/factorial(Dim);
 }
 
-//1. item of pair gives the original point indices and the second in the midpoint
 template <int Dim, int N, typename T>//OK
+map<array<int, 2>, T> Element<Dim, N, T>::get_midpoints_map() {
+	map<array<int, 2>, T> midpoints_map;
+	int I,J = 0;
+	T loc;
+	for (int i = 0; i < N; i++) {
+		I = nodes[i]->get_index();
+		for (int j = i + 1; j < N; j++) {
+			J = nodes[j]->get_index();
+			loc = 0.5*(nodes[i]->get_location() + nodes[j]->get_location());
+			midpoints_map.insert(pair<array<int, 2>, T>({ I, J }, loc));
+		}
+	}
+	return midpoints_map;
+}
+
+//1. item of pair gives the original point indices and the second in the midpoint
+template <int Dim, int N, typename T>//OK  Local map, indices are not node indices!!!
 vector <pair <int[2], T > > Element<Dim, N, T>::get_midpoints() {
 	vector <pair <int[2], T> >mid_points;
 	pair <int[2], T> mid_point;
@@ -212,7 +232,23 @@ vector <Node <Dim, T>* >  Element<Dim, N, T>::get_midpoint_nodes() {
 	vector <Node <Dim, T>* >  midpoint_nodes((Dim*(Dim+1))/2, nullptr);
 	for (int i = 0; i < mid_points.size(); i++) {
 		midpoint_nodes[i] = new Node<Dim, T>(mid_points[i].second);
+		midpoint_nodes[i]->show();
 	}
+	return midpoint_nodes;
+}
+template <int Dim, int N, typename T> //OK
+vector <Node <Dim, T>* >  Element<Dim, N, T>::get_midpoint_nodes(map<array<int, 2>, T> m_points_map) {
+	typedef map<array<int, 2>, T>::const_iterator PointsMapIter;
+	//vector <pair <int[2], T> >mid_points = get_midpoints();
+	vector <Node <Dim, T>* >  midpoint_nodes;
+	T loc;
+	for (PointsMapIter iter = m_points_map.begin();  iter != m_points_map.end(); iter++) {
+		loc = iter->second;
+		midpoint_nodes.push_back(new Node<Dim, T>(loc));
+	}
+	//for (int i = 0; i < midpoint_nodes.size(); i++) {
+		//midpoint_nodes[i]->show();
+	//}
 	return midpoint_nodes;
 }
 
@@ -221,13 +257,13 @@ void Element<Dim,N,T>::show() const{
     //cout <<"#elements: " << N << endl;
     for(int i=0; i<nodes.size(); i++){nodes[i]->show();}
     //cout <<"#elements: " << functions.size() << endl;
-    for(int i=0; i<functions.size(); i++){
+    /*for(int i=0; i<functions.size(); i++){
         cout << "Function coefficients for node no " << i <<endl;
         for(int j=0; j<functions[i].coeff.rows(); j++){
             cout << functions[i].coeff[j] <<" " <<endl;
         }
         cout << endl;
-    }
+    }*/
 }
 
 
@@ -237,11 +273,34 @@ class ElementFactory{
 public:
     ElementFactory(){}
     ~ElementFactory(){}
+	vector <Node <Dim, T> > build_nodes(vector <T> &locations);
+	Element<Dim, N, T> build(vector <T> locations);
     Element<Dim, N, T> build(vector <Node <Dim, T>* > nodes_vec);
     MatrixXd get_inv_matrix(vector <Node <Dim, T>* > nodes_vec);
     SimplexFunction<T> build_function(MatrixXd M, int node_no);
     vector <SimplexFunction <T> > build_functions(vector <Node <Dim, T>* > nodes_vec);
 };
+
+template <int Dim, int N, typename T>
+vector <Node <Dim, T> > ElementFactory<Dim, N, T>::build_nodes(vector <T> &locations) {
+	vector <Node <Dim, T> > nodes_vec;
+	NodeFactory<Dim, T> node_factory;
+	for (int i = 0; i < locations.size(); i++) {
+		nodes_vec.push_back(node_factory.build(locations[i]));
+	}
+	return nodes_vec;
+}
+
+template <int Dim, int N, typename T>
+Element<Dim, N, T> ElementFactory<Dim, N, T>::build(vector <T> locations) {
+	vector <Node <Dim, T>* > nodes_vec(N, nullptr);
+	for (int i = 0; i < locations.size(); i++) {
+		nodes_vec[i] = new Node<Dim, T>(locations[i]);
+	}
+	vector <SimplexFunction <T> > funcs = build_functions(nodes_vec);
+	Element<Dim, N, T> el(nodes_vec, funcs);
+	return el;
+}
 
 template <int Dim, int N, typename T>
 Element<Dim, N, T> ElementFactory<Dim,N,T>::build(vector <Node <Dim, T>* > nodes_vec){
@@ -289,17 +348,65 @@ class ElementDivider {
 public:
 	ElementDivider() { factory = ElementFactory <Dim, N, T>(); }
 	~ElementDivider() {}
+	vector <Node <Dim, T>* >  get_midpoint_nodes(Element<Dim, N, T> &el);
+
+	map<array<int, 2>, T> get_midlocation_map(Element<Dim, N, T> &el);
+
+	map< array<int, 2>, Node<Dim, T>* > get_mid_nodes_map(Element<Dim, N, T> &el, map< array<int, 2>, Node<Dim, T>* > &commons);
+
+	vector <Element <Dim, N, T>* > divide(Element <Dim, N, T>& el, map< array<int, 2>, Node<Dim, T>* > &commons);
 	vector <Element <Dim, N, T>* > divide(Element <Dim, N, T>& el);
 	Element<Dim, N, T> get_vertex_element(int I, vector <Node <Dim, T>* >  midpoint_nodes, map<array<int, 2>, int> midpoints_map, Element <Dim, N, T>& el);
 	Element<Dim, N, T> get_inner_element(int I, vector <Node <Dim, T>* >  midpoint_nodes, map<array<int, 2>, int> midpoints_map);
 	map<array<int, 2>, int> get_midpoints_map();
-	T average_location(vector <Node <Dim, T>* >  chosen_nodes);
-	Node <Dim, T>& nearest_node(T location, vector <Node <Dim, T>* >  nodes);
 
 private:
 	ElementFactory <Dim, N, T> factory;
 
 };
+
+
+template <int Dim, int N, typename T> //OK
+vector <Node <Dim, T>* >  ElementDivider<Dim, N, T>::get_midpoint_nodes(Element<Dim, N, T> &el) {
+	vector <pair <int[2], T> >mid_points = el.get_midpoints();
+	vector <Node <Dim, T>* >  midpoint_nodes((Dim*(Dim + 1)) / 2, nullptr);
+	for (int i = 0; i < mid_points.size(); i++) {
+		midpoint_nodes[i] = new Node<Dim, T>(mid_points[i].second);
+	}
+	return midpoint_nodes;
+}
+
+
+template <int Dim, int N, typename T>
+map<array<int, 2>, T>  ElementDivider<Dim, N, T>::get_midlocation_map(Element<Dim, N, T> &el) {
+	map<array<int, 2>, T> m_map = el.get_midpoints_map();
+	return m_map;
+}
+
+
+template <int Dim, int N, typename T>//Also addss new mid nodes to commons!!
+map< array<int, 2>, Node<Dim, T>* > ElementDivider<Dim, N, T>::get_mid_nodes_map(Element<Dim, N, T> &el, map< array<int, 2>, Node<Dim, T>* > &commons) {
+	map< array<int, 2>, Node<Dim, T>* > nodes_map;
+	map<array<int, 2>, T> m_map = el.get_midpoints_map();
+	T loc;
+	int I,J;
+	for (int i = 0; i < N; i++) {
+		I = el[i].get_index();
+		for (int j = i + 1; j < N; j++) {
+			J = el[j].get_index();
+			loc = m_map[{I, J}];
+			if (commons.find({ I,J }) != commons.end()) {
+				//cout << "Commons found for key " << I << ", " << J << endl;
+				nodes_map[{I, J}] = commons[{I, J}];
+			}
+			else {
+				nodes_map.insert(pair<array<int, 2>, Node<Dim, T>* >({ I,J }, new Node<Dim, T>(loc)));
+				commons[{I, J}] = nodes_map[{I, J}];
+			}
+		}
+	}
+	return nodes_map;
+}
 
 
 template <int Dim, int N, typename T>
@@ -313,6 +420,29 @@ map<array<int, 2>, int> ElementDivider<Dim, N, T>::get_midpoints_map() {
 		}
 	}
 	return midpoints_map;
+}
+
+template <int Dim, int N, typename T>
+vector <Element <Dim, N, T>* > ElementDivider<Dim, N, T>::divide(Element <Dim, N, T>& el, map< array<int, 2>, Node<Dim,T>* >  &commons) {
+	vector <Element <Dim, N, T>* > els;//( Dim*(Dim + 1)) / 2, nullptr);
+
+	vector <Node <Dim, T>* >  midpoint_nodes;
+	map< array<int, 2>, Node<Dim, T>* > m_nodes_map = get_mid_nodes_map(el, commons);
+	for (map< array<int, 2>, Node<Dim, T>* >::const_iterator iter = m_nodes_map.begin(); iter != m_nodes_map.end(); iter++) {
+		midpoint_nodes.push_back(iter->second);
+	}
+
+	//vector <Node <Dim, T>* >  midpoint_nodes = el.get_midpoint_nodes();
+	map< array<int, 2>, int> midpoints_map = get_midpoints_map();
+	//Diverse grejer
+	for (int i = 0; i < N; i++) {
+		els.push_back(new Element <Dim, N, T>(get_vertex_element(i, midpoint_nodes, midpoints_map, el)));
+	}
+	int inner_els_amount = pow(2, Dim) - N;
+	for (int i = 0; i < inner_els_amount; i++) {
+		els.push_back(new Element <Dim, N, T>(get_inner_element(i, midpoint_nodes, midpoints_map)));
+	}
+	return els;
 }
 
 template <int Dim, int N, typename T>
@@ -334,7 +464,8 @@ vector <Element <Dim, N, T>* > ElementDivider<Dim, N, T>::divide(Element <Dim, N
 template <int Dim, int N, typename T>
 Element<Dim, N, T> ElementDivider<Dim, N, T>::get_vertex_element(int I, vector <Node <Dim, T>* >  midpoint_nodes, map< array<int, 2>, int> midpoints_map, Element <Dim, N, T>& el) {
 	vector <Node <Dim, T>* > added_nodes;
-	added_nodes.push_back(new Node <Dim, T>(el[I]));//Not clear if new should be used...
+	//added_nodes.push_back(new Node <Dim, T>(el[I]));//Not clear if new should be used...
+	added_nodes.push_back(&el[I]);
 	for (int i = 0; i < N; i++) {
 		for (int j = i + 1; j < N; j++) {
 			if (i == I || j == I) {
@@ -359,23 +490,5 @@ Element<Dim, N, T> ElementDivider<Dim, N, T>::get_inner_element(int I, vector<No
 	return factory.build(new_nodes);
 }
 
-template <int Dim, int N, typename T>
-T ElementDivider<Dim, N, T>::average_location(vector <Node <Dim, T>* >  chosen_nodes) {
-	T loc = chosen_nodes[0]->get_location();
-	for (int i = 1; i < chosen_nodes.size(); i++) {
-		loc = loc + chosen_nodes[i]->get_location();
-	}
-	return loc * (1 / double(chosen_nodes.size()));
-}
-
-template <int Dim, int N, typename T>
-Node <Dim, T>& ElementDivider<Dim, N, T>::nearest_node(T location, vector <Node <Dim, T>* >  nodes) {
-	vector<double> distances;
-	for (int i = 0; i < nodes.size(); i++) {
-		distances.push_back(dist_squared<Dim, T>(nodes[i]->get_location(), location));
-	}
-	pair<int, double> smallest = find_smallest<vector<double> >(distances, nodes.size());
-	return *nodes[smallest.first];
-}
 
 #endif
