@@ -127,6 +127,7 @@ TEST_CASE("Test Solver with Point -based Mesh") {
 
 	BilinearFunction bl_fn;
 	bl_fn.mat = MatrixXd::Identity(2, 2);
+	cout << bl_fn.mat << endl;
 	PDE<2, Point <2, double> > pde(bl_fn, f_kern_sin);
 	cout << pde.A(el1, el1.get_function(0), el1.get_function(1));
 	//Solver<2, VectorXd> solver;
@@ -163,9 +164,13 @@ TEST_CASE("Test Solver with Point -based Mesh") {
 
 	SECTION("Solving the PDE after refinement should succeed") {
 		solver.refine();
-		solver.show();
+		solver.refine();
+		//solver.show();
 		VectorXd solution = solver.solve();
+		cout << "Showing solution" << endl;
 		cout << solution << endl;
+		//Element<2, 3, Point <2, double> > temp_el = solver.get_mesh().get_top_mesh_node()->data;
+		//temp_el.show();
 		//cout << "Show the refined mesh" << endl;
 		//solver.show();
 		//VectorXd sol_should_be(4);

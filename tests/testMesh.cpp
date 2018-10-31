@@ -145,8 +145,10 @@ TEST_CASE("Test the real Mesh with Elements based on Points") {
 		cout << "How many nodes totally exist" << el1.how_many() <<endl;
 		el_mesh.refine();
 		cout << "How many nodes totally exist after refinement" << el1.how_many() << endl;
-		el_mesh.reset_indices();
-		//el_mesh.show();
+		
+		el_mesh.reset_indices(3);//Old max index is three!!!
+		el_mesh.show();
+		
 		REQUIRE(el_mesh.how_many_nodes() == 8);
 		REQUIRE(el_mesh.get_element(2)[0].get_location()[0] == 0);
 		REQUIRE(el_mesh.get_element(2)[0].get_location()[1] == 1.0);
