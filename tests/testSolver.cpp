@@ -97,46 +97,46 @@ TEST_CASE("Test Solver with Point -based Mesh") {
 	vector <double> vec4 = { 0.0, 1.0 };
 	vector <double> vec5 = { 2.0, 0.0 };
 	vector <double> vec6 = { 2.0, 1.0 };
-	Point <double> point1(vec1);
-	Point <double> point2(vec2);
-	Point <double> point3(vec3);
-	Point <double> point4(vec4);
-	Point <double> point5(vec5);
-	Point <double> point6(vec6);
-	Node <2, Point <double> > n_1(point1);
-	Node <2, Point <double> > n_2(point2);
-	Node <2, Point <double> > n_3(point3);
-	vector<Node <2, Point <double>  > * > node_vec(3, nullptr);
-	node_vec[0] = new Node<2, Point <double> >(point1);
-	node_vec[1] = new Node<2, Point <double> >(point2);
-	node_vec[2] = new Node<2, Point <double> >(point3);
-	ElementFactory<2, 3, Point <double> > factory;
-	Element<2, 3, Point <double> > el1 = factory.build(node_vec);
-	vector<Node <2, Point <double> > *> node_vec2;//(3, nullptr);
+	Point <2, double> point1(vec1);
+	Point <2, double> point2(vec2);
+	Point <2, double> point3(vec3);
+	Point <2, double> point4(vec4);
+	Point <2, double> point5(vec5);
+	Point <2, double> point6(vec6);
+	Node <2, Point <2, double> > n_1(point1);
+	Node <2, Point <2, double> > n_2(point2);
+	Node <2, Point <2, double> > n_3(point3);
+	vector<Node <2, Point <2, double>  > * > node_vec(3, nullptr);
+	node_vec[0] = new Node<2, Point <2, double> >(point1);
+	node_vec[1] = new Node<2, Point <2, double> >(point2);
+	node_vec[2] = new Node<2, Point <2, double> >(point3);
+	ElementFactory<2, 3, Point <2, double> > factory;
+	Element<2, 3, Point <2, double> > el1 = factory.build(node_vec);
+	vector<Node <2, Point <2, double> > *> node_vec2;//(3, nullptr);
 	node_vec2.push_back(node_vec[0]);
 	node_vec2.push_back(node_vec[2]);
-	node_vec2.push_back(new Node<2, Point <double> >(point4));
-	Element<2, 3, Point <double> > el2 = factory.build(node_vec2);
-	Mesh<2, 3, Point <double> > mesh(el1);
+	node_vec2.push_back(new Node<2, Point <2, double> >(point4));
+	Element<2, 3, Point <2, double> > el2 = factory.build(node_vec2);
+	Mesh<2, 3, Point <2, double> > mesh(el1);
 	mesh.push(el2);
 	//mesh.get_top().show();
-	//Element<2, 3, Point <double> > element2 = factory.build(node_vec);//Too lazy to find out what the funcs would be...
+	//Element<2, 3, Point <2, double> > element2 = factory.build(node_vec);//Too lazy to find out what the funcs would be...
 
-	Mesh<2, 3, Point <double> >* mesh_ptr;
+	Mesh<2, 3, Point <2, double> >* mesh_ptr;
 	mesh_ptr = &mesh;
 
 	BilinearFunction bl_fn;
 	bl_fn.mat = MatrixXd::Identity(2, 2);
-	PDE<2, Point <double> > pde(bl_fn, f_kern_sin);
+	PDE<2, Point <2, double> > pde(bl_fn, f_kern_sin);
 	cout << pde.A(el1, el1.get_function(0), el1.get_function(1));
 	//Solver<2, VectorXd> solver;
 	//solver.set_pde(pde);
 	//solver.set_mesh(&mesh);
-	Solver<2, Point <double> > solver(pde, mesh_ptr);
+	Solver<2, Point <2, double> > solver(pde, mesh_ptr);
 	//solver.show();
 	
-	/*SECTION("Test default constructor") {
-		Solver<2, Point <double>>  new_solver;
+	SECTION("Test default constructor") {
+		Solver<2, Point <2, double>>  new_solver;
 	}
 
 	SECTION("Test get_stiffness matrix(MatrixXd)") {
@@ -159,14 +159,15 @@ TEST_CASE("Test Solver with Point -based Mesh") {
 		//sol_should_be << 0.185185, 0.185185, 0.092592, 0.092592;
 		sol_should_be << 0.453125, 0.3125, 0.125, 0.28125;
 		for (int i = 0; i < 4; i++) { REQUIRE(limit_decimals(solution(i), 6) == sol_should_be(i)); }
-	}*/
+	}
 
 	SECTION("Solving the PDE after refinement should succeed") {
 		solver.refine();
-		//VectorXd solution = solver.solve();
-		//cout << solution << endl;
-		//cout << "Show the refined mesh" << endl;
 		solver.show();
+		VectorXd solution = solver.solve();
+		cout << solution << endl;
+		//cout << "Show the refined mesh" << endl;
+		//solver.show();
 		//VectorXd sol_should_be(4);
 		//sol_should_be << 0.185185, 0.185185, 0.092592, 0.092592;
 		//sol_should_be << 0.453125, 0.3125, 0.125, 0.28125;

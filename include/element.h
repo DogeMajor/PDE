@@ -396,13 +396,12 @@ map< array<int, 2>, Node<Dim, T>* > ElementDivider<Dim, N, T>::get_mid_nodes_map
 			J = el[j].get_index();
 			loc = m_map[{I, J}];
 			if (commons.find({ I,J }) != commons.end()) {
-				cout << "Commons found for key " << I << ", " << J << endl;
+				//cout << "Commons found for key " << I << ", " << J << endl;
 				nodes_map[{I, J}] = commons[{I, J}];
 			}
 			else {
 				nodes_map.insert(pair<array<int, 2>, Node<Dim, T>* >({ I,J }, new Node<Dim, T>(loc)));
 				commons[{I, J}] = nodes_map[{I, J}];
-				cout << "put a node into commons with key " << I << ", " << J << endl;
 			}
 		}
 	}

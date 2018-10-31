@@ -38,9 +38,12 @@ TEST_CASE("Test the real Mesh with Elements based on Points") {
 	node_vec2.push_back(node_vec[2]);
 	node_vec2.push_back(new Node<2, Point <2, double> >(point4));
 	Element<2, 3, Point <2, double> > el2 = factory.build(node_vec2);
+	el1.show();
+	el2.show();
 	Mesh<2, 3, Point <2, double> > el_mesh(el1);
 	el_mesh.push(el2);
 	el_mesh.reset_indices();
+	//el_mesh.show();
 
 
 	/*SECTION("Mesh can be initialized with default constructor") {//OK
@@ -143,7 +146,7 @@ TEST_CASE("Test the real Mesh with Elements based on Points") {
 		el_mesh.refine();
 		cout << "How many nodes totally exist after refinement" << el1.how_many() << endl;
 		el_mesh.reset_indices();
-		el_mesh.show();
+		//el_mesh.show();
 		REQUIRE(el_mesh.how_many_nodes() == 8);
 		REQUIRE(el_mesh.get_element(2)[0].get_location()[0] == 0);
 		REQUIRE(el_mesh.get_element(2)[0].get_location()[1] == 1.0);

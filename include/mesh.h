@@ -161,6 +161,9 @@ void Mesh<Dim, N, T>::refine() {
 			previous = previous->next;
 		}
 		pop(before_original_node);
+
+		cout << "Amount of nodes after refining one element: " << new_els[0]->how_many() << endl;
+		
 		before_original_node = previous;
 		original_node = previous->next;
 		previous = previous->next;
@@ -168,6 +171,9 @@ void Mesh<Dim, N, T>::refine() {
 	map< array<int, 2>, Node<Dim, T>* >::iterator map_iter = commons.begin();
 	commons.erase(map_iter, commons.end());
 	cout << "length of commons: " << commons.size() << endl;
+	before_original_node = nullptr;
+	original_node = nullptr;
+	previous = nullptr;
 	//reset_indices();
 }
 
