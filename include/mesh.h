@@ -165,8 +165,9 @@ void Mesh<Dim, N, T>::refine() {
 		original_node = previous->next;
 		previous = previous->next;
 	}
-
-	commons.erase(commons.begin(), commons.end());
+	map< array<int, 2>, Node<Dim, T>* >::iterator map_iter = commons.begin();
+	commons.erase(map_iter, commons.end());
+	cout << "length of commons: " << commons.size() << endl;
 	//reset_indices();
 }
 
