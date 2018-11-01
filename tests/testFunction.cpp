@@ -4,6 +4,30 @@
 using namespace std;
 using namespace Eigen;
 
+//N-dim box's boundary
+bool bound_cond(VectorXd coords) {
+	for (int i = 0; i < coords.size(); i++) {
+		if ((coords[i] == 0.0) || (coords[i] == 1.0)) { return true; }
+	}
+	return false;
+}
+
+double bound_val(VectorXd coords) {
+	if (coords[1] == 1.0) { return 1; }
+	return 0;
+}
+
+bool point_bound_cond(Point<2,double> coords) {
+	for (int i = 0; i < coords.size(); i++) {
+		if ((coords[i] == 0.0) || (coords[i] == 1.0)) { return true; }
+	}
+	return false;
+}
+
+double point_bound_val(Point<2, double> coords) {
+	if (coords[1] == 1.0) { return 1; }
+	return 0;
+}
 
 #define CATCH_CONFIG_MAIN  // This tells Catch to provide a main()
 #include "../C++ libs/catch/catch.hpp"
@@ -108,5 +132,26 @@ TEST_CASE( "Test BilinearFunction" ) {
 
 }
 
+TEST_CASE("Test BoundaryConditions") {
 
+	SECTION("BoundaryConditions can be initialized with VectorXd") {
+		BoundaryConditions<VectorXd> boundaries;
+		boundaries.cond = bound_cond;
+		boundaries.val = bound_val;
+		VectorXd z(2);
+		z << 1, 0;
+		REQUIRE(boundaries.cond(z) == 1);
+		REQUIRE(boundaries.val(z) == 0);
+	}
+	
+	SECTION("BoundaryConditions can be initialized with Point <2, double> point(vec); ") {
+		vector<double> r = { 1,0.5 };
+		Point <2, double> p(r);
+		BoundaryConditions<Point <2, double> > point_boundaries;
+		point_boundaries.cond = point_bound_cond;
+		point_boundaries.val = point_bound_val;
+		REQUIRE(point_boundaries.cond(r)==1);
+		REQUIRE(point_boundaries.val(r)==0);
+	}
+}
 

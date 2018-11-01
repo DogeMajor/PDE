@@ -2,6 +2,7 @@
 #include "../include/Function.h"
 #include "../include/node.h"
 #include "../include/element.h"
+#include "../include/ElementFactory.h"
 #include "../include/PDE.h"
 #include "../include/Solver.h"
 #include "../include/HelpfulTools.h"

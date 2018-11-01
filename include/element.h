@@ -18,6 +18,7 @@ int factorial(int n){
     return (n != 0)? n*factorial(n-1) : 1;
 }
 
+typedef bool(*BoundaryCondition)(VectorXd x);
 
 //We simply want to use the already existing nodes and don't need to worry about garbage collection.
 template <int Dim, int N, typename T>
@@ -31,6 +32,7 @@ public:
     void increase_shared_elements();
 	void decrease_shared_elements();
     int set_indices(int index);//Every unique node gets an index bigger than this
+	int set_inner_node_indices(int index, BoundaryCondition cond);
 	int how_many() const;
 	vector <Node <Dim, T>* > get_nodes();
     SimplexFunction<T> get_function(int node_no);
@@ -117,6 +119,18 @@ int Element<Dim,N,T>::set_indices(int index){
 			index++;
 		}
     }
+	return index;
+}
+
+template <int Dim, int N, typename T>//Not ok!
+int Element<Dim, N, T>::set_inner_node_indices(int index, BoundaryCondition cond) {
+	VectorXd coords(Dim);
+	for (int i = 0; i < N; i++) {
+		if ((nodes[i]->get_index() == -1) && (cond())) {
+			nodes[i]->set_index(index + 1);
+			index++;
+		}
+	}
 	return index;
 }
 

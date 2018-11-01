@@ -13,13 +13,7 @@ using namespace std;
 using namespace Eigen;
 
 typedef double (* Function)(VectorXd x);
-typedef bool (*BoundaryCondition)(VectorXd x);
 typedef Eigen::Triplet<double> Tri;
-
-struct BoundaryConditions {
-	BoundaryCondition condition;
-	Function value;
-};
 
 
 template <int Dim, typename T>
