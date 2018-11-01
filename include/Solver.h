@@ -126,7 +126,7 @@ VectorXd Solver<Dim, T>::solve() {
 	VectorXd f_vec = get_vector_part();
 	cout << "Showing stiffness matrix!" << endl;
 	cout << stiffness << endl;
-	cout << f_vec << endl;
+	//cout << f_vec << endl;
 	return stiffness.inverse()*f_vec;
 }
 
