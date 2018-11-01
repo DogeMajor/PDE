@@ -36,6 +36,12 @@ TEST_CASE( "Test SimplexFunction<T>" ) {
         REQUIRE( funcs[0].gradient(loc) == funcs[0].coeff.head(2) );
     }
 
+	SECTION("Test gradient(coords)") {
+		cout << "Gradient of funcs[0] " << funcs[0].gradient() << endl;
+		REQUIRE(funcs[0].gradient() == funcs[0].coeff.head(2));
+		REQUIRE(funcs[0].gradient() == funcs[0].coeff.head(2));
+	}
+
     SECTION( "Test operator (T coords)" ){
         VectorXd x(2);
         x << 1.0,2.0;
@@ -52,12 +58,12 @@ TEST_CASE( "Test SimplexFunction<T>" ) {
     }
 
     SECTION( "Test default constructor() with T == Point<double>" ){
-        SimplexFunction <Point <double> > point_func;
+        SimplexFunction <Point <2, double> > point_func;
         VectorXd fn_coeff(3);
         fn_coeff << 1.5, 0.5, 1.0;
         point_func.coeff = fn_coeff;
         vector<double> vec = {1,2};
-        Point <double> point(vec);
+        Point <2, double> point(vec);
         REQUIRE( point_func.coeff == fn_coeff );
         REQUIRE( point_func(point) == 3.5 );
         REQUIRE( point_func.gradient(point) == point_func.coeff.head(2) );
@@ -88,6 +94,17 @@ TEST_CASE( "Test BilinearFunction" ) {
         b << 0.0,1.0;
         REQUIRE( form(a,b) == 2 );
     }
+
+	SECTION("Test operator (x,y) with I as mat") {
+		BilinearFunction form2;
+		form2.mat = MatrixXd::Identity(2,2);
+		VectorXd c(2);
+		c << 1.0, -2.0;
+		VectorXd d(2);
+		d << -2.0, 0.0;
+		REQUIRE(form2(c, c) == 5);
+		REQUIRE(form2(d, d) == 4);
+	}
 
 }
 

@@ -29,15 +29,18 @@ public:
 	MatrixXd get_stiffness_matrix(int unique_nodes) const;
 	VectorXd get_vector_part() const;
 	//SparseMatrix<double> get_stiffness_matrix() const;
-	void refine() { mesh->refine(); max_index = mesh->reset_indices(-1); }
+	void refine() { mesh->refine(); max_index = mesh->reset_indices(max_index); }
 	VectorXd solve();
 	MatrixXd get_solution_values(VectorXd solution);//In the same order as indexing of nodes
+
+	Mesh<Dim, Dim + 1, T> get_mesh() { return *mesh; }
+
 	void show() const;
 
 private:
 	PDE<Dim, T> pde;
 	Mesh<Dim, Dim + 1, T>* mesh;
-	int max_index;//Hoe many unique Node<Dim,  T>s exist in the Mesh
+	int max_index;//How many unique Node<Dim,  T>s exist in the Mesh
 
 };
 
@@ -68,6 +71,15 @@ MatrixXd Solver<Dim, T>::get_stiffness_matrix(int unique_nodes) const {
 				J = iter->data[j].get_index();
 				//cout << pde.A(iter->data, fn_i, fn_j) << endl;
 				stiffness(I, J) += pde.A(iter->data, fn_i, fn_j);
+				/*if (I == J && I == 0) {
+					iter->data[i].show();
+					cout << "volume: " << iter->data.get_volume() << endl;
+					cout << fn_i.coeff << endl;
+					cout << fn_j.coeff << endl;
+					cout << "Integration result" << endl;
+					cout << pde.A(iter->data, fn_i, fn_j) << endl;
+					cout << "Diag. el. for index " << I << ": " << stiffness(I, J) << endl; 
+				}*/
 			}
 		}
 		iter = iter->next;
@@ -112,8 +124,9 @@ template <int Dim, typename T>
 VectorXd Solver<Dim, T>::solve() {
 	MatrixXd stiffness = get_stiffness_matrix(max_index);
 	VectorXd f_vec = get_vector_part();
+	cout << "Showing stiffness matrix!" << endl;
 	cout << stiffness << endl;
-	cout << f_vec << endl;
+	//cout << f_vec << endl;
 	return stiffness.inverse()*f_vec;
 }
 

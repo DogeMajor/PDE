@@ -12,6 +12,19 @@ double f_kern(VectorXd coords){
     return coords.transpose()*coords;
 }
 
+//N-dim box's boundary
+bool bound_cond(VectorXd coords) {
+	for (int i = 0; i < coords.size(); i++) {
+		if ((coords[i] == 0.0) || (coords[i] == 1.0)) {return true;}
+	}
+	return false;
+}
+
+double bound_val(VectorXd coords) {
+	return 0;
+}
+
+
 #define CATCH_CONFIG_MAIN  // This tells Catch to provide a main()
 #include "../C++ libs/catch/catch.hpp"
 
@@ -47,8 +60,21 @@ TEST_CASE( "Test PDE" ) {
     bl_fn.mat = MatrixXd::Identity(2,2);
     PDE<2, VectorXd>  pde(bl_fn, f_kern);
 
+	BoundaryConditions boundaries = {bound_cond, bound_val};
+	
+
+	SECTION("BoundaryConditions for 2-D box should work") {
+		PDE<2, VectorXd>  new_pde(BilinearFunction bl_fn, Function f_kernel);
+	}
+
     SECTION( "Test constructing PDE" ){
-        PDE<2, VectorXd>  new_pde(BilinearFunction bl_fn, Function f_kernel);
+		VectorXd temp(2);
+		temp << 0.5, 0.5;
+		REQUIRE(boundaries.condition(temp)==false);
+		REQUIRE(boundaries.value(temp) == 0.0);
+		temp << 0.5, 1;
+		REQUIRE(boundaries.condition(temp) == true);
+		REQUIRE(boundaries.value(temp) == 0.0);
     }
 
     SECTION( "Test inner product A(.,.)" ){

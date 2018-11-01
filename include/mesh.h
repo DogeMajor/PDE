@@ -171,9 +171,9 @@ void Mesh<Dim, N, T>::refine() {
 	map< array<int, 2>, Node<Dim, T>* >::iterator map_iter = commons.begin();
 	commons.erase(map_iter, commons.end());
 	cout << "length of commons: " << commons.size() << endl;
-	before_original_node = nullptr;
-	original_node = nullptr;
-	previous = nullptr;
+	//before_original_node = nullptr;
+	//original_node = nullptr;
+	//previous = nullptr;
 	//reset_indices();
 }
 

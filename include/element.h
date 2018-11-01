@@ -190,7 +190,7 @@ template <int Dim, int N, typename T>
 double Element<Dim,N,T>::get_volume() const{
     Element<Dim,N,T> temp = *this;
     MatrixXd simplex_mat = (Dim == N-1)? get_simplex_matrix(temp): MatrixXd::Zero(Dim,Dim);
-    return simplex_mat.determinant()/factorial(Dim);
+    return abs(simplex_mat.determinant()/factorial(Dim));
 }
 
 template <int Dim, int N, typename T>//OK
@@ -257,13 +257,13 @@ void Element<Dim,N,T>::show() const{
     //cout <<"#elements: " << N << endl;
     for(int i=0; i<nodes.size(); i++){nodes[i]->show();}
     //cout <<"#elements: " << functions.size() << endl;
-    /*for(int i=0; i<functions.size(); i++){
+    for(int i=0; i<functions.size(); i++){
         cout << "Function coefficients for node no " << i <<endl;
         for(int j=0; j<functions[i].coeff.rows(); j++){
             cout << functions[i].coeff[j] <<" " <<endl;
         }
         cout << endl;
-    }*/
+    }
 }
 
 
