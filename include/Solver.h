@@ -20,10 +20,12 @@ class Solver {
 
 public:
 	Solver();
-	Solver(PDE<Dim, T> p, Mesh<Dim, Dim + 1, T> *m);
+	Solver(PDE<Dim, T> p, Mesh<Dim, Dim + 1, T> *m, BoundaryConditions b);
 	~Solver() {}
 	void set_pde(PDE<Dim, T> p) { pde = p; }
 	void set_mesh(Mesh<Dim, Dim + 1, T> *m) { mesh = m; max_index = mesh->reset_indices();}
+	bool is_at_boundary(VectorXd coords) { return boundaries.condition(coords); }
+	double value_at_boundary(VectorXd coords) { return boundaries.value(coords); }
 	//void build_mesh();
 	//void refine();
 	MatrixXd get_stiffness_matrix(int unique_nodes) const;
@@ -41,6 +43,7 @@ private:
 	PDE<Dim, T> pde;
 	Mesh<Dim, Dim + 1, T>* mesh;
 	int max_index;//How many unique Node<Dim,  T>s exist in the Mesh
+	BoundaryConditions boundaries;
 
 };
 
@@ -49,10 +52,11 @@ Solver<Dim, T>::Solver() {
 }
 
 template <int Dim, typename T>
-Solver<Dim, T>::Solver(PDE<Dim, T> p, Mesh<Dim, Dim + 1, T> *m) {
+Solver<Dim, T>::Solver(PDE<Dim, T> p, Mesh<Dim, Dim + 1, T> *m, BoundaryConditions b) {
 	pde = p;
 	mesh = m;
 	max_index = mesh->reset_indices();
+	boundaries = b;
 }
 
 template <int Dim, typename T>
@@ -126,7 +130,7 @@ VectorXd Solver<Dim, T>::solve() {
 	VectorXd f_vec = get_vector_part();
 	cout << "Showing stiffness matrix!" << endl;
 	cout << stiffness << endl;
-	//cout << f_vec << endl;
+	cout << f_vec << endl;
 	return stiffness.inverse()*f_vec;
 }
 

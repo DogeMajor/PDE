@@ -4,7 +4,6 @@
 #include <math.h>
 #include <array>
 #include <map>
-#include <memory>
 //#include <vector>
 
 using namespace std;

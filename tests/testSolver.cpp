@@ -37,15 +37,17 @@ double analytic_sol(VectorXd coords) {//Particle in a N-Dim box...
 
 //N-dim box's boundary
 bool bound_cond(VectorXd coords) {
-	for (int i = 0; i < coords.size(), i++) {
-		if (coords[i] != 0 && coords[i] != 1) { return false; }
+	for (int i = 0; i < coords.size(); i++) {
+		if ((coords[i] == 0.0) || (coords[i] == 1.0)) { return true; }
 	}
-	return true;
+	return false;
 }
 
-bool bound_val(VectorXd coords) {
+double bound_val(VectorXd coords) {
+	if (coords[1] == 1.0) { return 1; }
 	return 0;
 }
+
 
 #define CATCH_CONFIG_MAIN
 #include "../C++ libs/catch/catch.hpp"
@@ -151,6 +153,7 @@ TEST_CASE("Test Solver with Point -based Mesh") {
 	bl_fn.mat = MatrixXd::Identity(2, 2);
 	PDE<2, Point <2, double> > pde(bl_fn, f_kern_sin);
 	PDE<2, Point <2, double> > pde2(bl_fn, f_kern_const);
+	BoundaryConditions boundaries = { bound_cond, bound_val };
 
 	//Solver<2, Point <2, double> > solver(pde, mesh_ptr);
 	//solver.show();
@@ -160,14 +163,14 @@ TEST_CASE("Test Solver with Point -based Mesh") {
 	}
 
 	SECTION("Test solving the pde2") {
-		Solver<2, Point <2, double>>  solver2(pde2, mesh_ptr);
+		Solver<2, Point <2, double>>  solver2(pde2, mesh_ptr, boundaries);
 		solver2.show();
 		//cout << solver.get_stiffness_matrix(10) << endl;
 		VectorXd sol2 = solver2.solve();
 		cout << sol2 << endl;
 
 		solver2.refine();
-		solver2.refine();
+		//solver2.refine();
 		VectorXd sol = solver2.solve();
 		cout << "Max:" << sol.maxCoeff() << " Min: " << sol.minCoeff() << endl;
 

@@ -21,6 +21,7 @@ bool bound_cond(VectorXd coords) {
 }
 
 double bound_val(VectorXd coords) {
+	if (coords[1] == 1.0) { return 1; }
 	return 0;
 }
 
@@ -74,7 +75,7 @@ TEST_CASE( "Test PDE" ) {
 		REQUIRE(boundaries.value(temp) == 0.0);
 		temp << 0.5, 1;
 		REQUIRE(boundaries.condition(temp) == true);
-		REQUIRE(boundaries.value(temp) == 0.0);
+		REQUIRE(boundaries.value(temp) == 1.0);
     }
 
     SECTION( "Test inner product A(.,.)" ){
