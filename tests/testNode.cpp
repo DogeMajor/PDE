@@ -111,14 +111,3 @@ TEST_CASE( "Test Node template with 3-D double vector from Eigen lib" ) {
     }
 
 }
-
-TEST_CASE("Test NodeFactory with 3-D double vector from Eigen lib") {
-	VectorXd loc(3);
-	loc << 1.0, 2.0, 3.0;
-	NodeFactory <3, VectorXd> factory;
-
-	SECTION("New element can be built from location T loc") {
-		Node <3, VectorXd> node_1 = factory.build(loc);
-		REQUIRE(node_1.get_location() == loc);
-	}
-}

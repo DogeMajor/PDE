@@ -18,9 +18,8 @@ int factorial(int n){
     return (n != 0)? n*factorial(n-1) : 1;
 }
 
-typedef bool(*BoundaryCondition)(VectorXd x);
-
 //We simply want to use the already existing nodes and don't need to worry about garbage collection.
+//This is the reason why destructor has delete only for nodes which share 0 elements!
 template <int Dim, int N, typename T>
 class Element : Counter<Element<Dim, N, T> > {
 
@@ -32,7 +31,7 @@ public:
     void increase_shared_elements();
 	void decrease_shared_elements();
     int set_indices(int index);//Every unique node gets an index bigger than this
-	int set_inner_node_indices(int index, BoundaryCondition cond);
+	int set_inner_node_indices(int index, BoundaryConditions<T> conds);
 	int how_many() const;
 	vector <Node <Dim, T>* > get_nodes();
     SimplexFunction<T> get_function(int node_no);
@@ -58,12 +57,7 @@ private:
 
 template <int Dim, int N, typename T>
 Element<Dim,N,T>::Element()
-	: nodes(N, nullptr) {
-    //for(int i=0; i<N; i++){
-        //nodes[i] = new Node<Dim,T>;
-    //}
-    //increase_shared_elements();
-}
+	: nodes(N, nullptr) {}
 
 template <int Dim, int N, typename T>
 Element<Dim, N, T>::Element(vector <Node <Dim, T>* > nodes_vec, vector <SimplexFunction <T> > funcs) {
@@ -74,7 +68,6 @@ Element<Dim, N, T>::Element(vector <Node <Dim, T>* > nodes_vec, vector <SimplexF
 
 template <int Dim, int N, typename T>
 Element<Dim,N,T>::Element(const Element &el){
-    //for(int i=0; i<N; i++){nodes[i] = el.nodes[i];}
 	nodes = el.nodes;
     increase_shared_elements();
     functions = el.functions;
@@ -90,7 +83,6 @@ Element<Dim,N,T>::~Element(){
 	}
 	nodes.clear();
     functions.clear();
-    //cout << "Element destroyed!" << endl;
 }
 
 template <int Dim, int N, typename T>
@@ -123,10 +115,9 @@ int Element<Dim,N,T>::set_indices(int index){
 }
 
 template <int Dim, int N, typename T>//Not ok!
-int Element<Dim, N, T>::set_inner_node_indices(int index, BoundaryCondition cond) {
-	VectorXd coords(Dim);
+int Element<Dim, N, T>::set_inner_node_indices(int index, BoundaryConditions<T> conds) {
 	for (int i = 0; i < N; i++) {
-		if ((nodes[i]->get_index() == -1) && (cond())) {
+		if ((nodes[i]->get_index() == -1) && (conds.cond(nodes[i]->get_location()))) {
 			nodes[i]->set_index(index + 1);
 			index++;
 		}
@@ -188,7 +179,6 @@ bool Element<Dim,N,T>::operator!=(const Element &el) const{
 
 template <int Dim, int N, typename T>
 Matrix<double, Dim, Dim> Element<Dim,N,T>::get_simplex_matrix(Element &el) const{
-    //For a simplex, N == Dim+1
     MatrixXd simplex_mat = MatrixXd::Zero(Dim,Dim);
     for(int col=0; col<Dim; col++){
         for(int row=0; row<Dim; row++){
@@ -244,23 +234,18 @@ vector <Node <Dim, T>* >  Element<Dim, N, T>::get_midpoint_nodes() {
 	vector <Node <Dim, T>* >  midpoint_nodes((Dim*(Dim+1))/2, nullptr);
 	for (int i = 0; i < mid_points.size(); i++) {
 		midpoint_nodes[i] = new Node<Dim, T>(mid_points[i].second);
-		midpoint_nodes[i]->show();
 	}
 	return midpoint_nodes;
 }
 template <int Dim, int N, typename T> //OK
 vector <Node <Dim, T>* >  Element<Dim, N, T>::get_midpoint_nodes(map<array<int, 2>, T> m_points_map) {
 	typedef map<array<int, 2>, T>::const_iterator PointsMapIter;
-	//vector <pair <int[2], T> >mid_points = get_midpoints();
 	vector <Node <Dim, T>* >  midpoint_nodes;
 	T loc;
 	for (PointsMapIter iter = m_points_map.begin();  iter != m_points_map.end(); iter++) {
 		loc = iter->second;
 		midpoint_nodes.push_back(new Node<Dim, T>(loc));
 	}
-	//for (int i = 0; i < midpoint_nodes.size(); i++) {
-		//midpoint_nodes[i]->show();
-	//}
 	return midpoint_nodes;
 }
 

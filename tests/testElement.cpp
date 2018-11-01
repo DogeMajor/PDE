@@ -1,14 +1,9 @@
 #include "../include/point.h"
 #include "../include/node.h"
 #include "../include/element.h"
-#include <math.h>
-#include <array>
-#include <map>
-//#include <vector>
 
 using namespace std;
 using namespace Eigen;
-
 
 #define CATCH_CONFIG_MAIN  // This tells Catch to provide a main()
 #include "../C++ libs/catch/catch.hpp"
@@ -41,17 +36,11 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D do
 	
     Element <2, 3, VectorXd> element(nodes, funcs);
 
-	
     SECTION( "Test default constructor()" ){
         Element <2, 3, VectorXd> empty_element;
 		vector<Node <2, VectorXd> *> empty_nodes = empty_element.get_nodes();
 		REQUIRE(empty_nodes[2] == nullptr);
-        /*REQUIRE( empty_element[0].get_shared_elements() == 0 );
-        REQUIRE( empty_element[0].get_index() == -1 );
-        REQUIRE( empty_element[2].get_shared_elements() == 0 );
-        REQUIRE( empty_element[2].get_index() == -1 );
-		cout << element[0].how_many() << endl;
-		REQUIRE(element[0].how_many() == 9);*/
+		REQUIRE(empty_nodes.size() == 3);
     }
 	
 	SECTION("Test get_nodes") {
@@ -158,16 +147,6 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D do
 		//REQUIRE(midnodes[0].first[1] == 1);
 	}
 
-	SECTION("Test vector of elements") {
-		Element <2, 3, VectorXd> e1(nodes, funcs);
-		Element <2, 3, VectorXd> e2(nodes, funcs);
-		vector < Element <2, 3, VectorXd> > els;
-		els.push_back(e1);
-		els.push_back(e2);
-		els[0].show();
-	}
-	 
-	
 	SECTION("Test map of nodes") {
 		vector <pair <int[2], VectorXd> > m_points = element.get_midpoints();
 		vector< Node<2, VectorXd> * > m_nodes = element.get_midpoint_nodes();
@@ -181,9 +160,6 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D do
 	}
 	
 }
-
-
-
 
 
 TEST_CASE( "Test Element template containing Node template initiated with 2-D Point <2 ,double> template objects" ) {
