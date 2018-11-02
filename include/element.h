@@ -31,8 +31,10 @@ public:
     void increase_shared_elements();
 	void decrease_shared_elements();
     int set_indices(int index);//Every unique node gets an index bigger than this
-	void set_all_indices_to(int index);
+	void set_all_indices_to(const int index);
 	int set_inner_node_indices(int index, BoundaryConditions<T> conds);
+	void set_outer_node_indices_to(const int index, BoundaryConditions<T> conds);
+	//int set_outer_node_indices(int index, BoundaryConditions<T> conds);
 	int how_many() const;
 	vector <Node <Dim, T>* > get_nodes();
     SimplexFunction<T> get_function(int node_no);
@@ -116,11 +118,11 @@ int Element<Dim,N,T>::set_indices(int index){
 }
 
 template <int Dim, int N, typename T>
-void Element<Dim, N, T>::set_all_indices_to(int index) {
+void Element<Dim, N, T>::set_all_indices_to(const int index) {
 	for (int i = 0; i < N; i++) { nodes[i]->set_index(index); }
 }
 
-template <int Dim, int N, typename T>//Not ok!
+template <int Dim, int N, typename T>//Ok!
 int Element<Dim, N, T>::set_inner_node_indices(int index, BoundaryConditions<T> conds) {
 	for (int i = 0; i < N; i++) {
 		if ((nodes[i]->get_index() == -1) && (conds.cond(nodes[i]->get_location())==false)) {
@@ -130,6 +132,27 @@ int Element<Dim, N, T>::set_inner_node_indices(int index, BoundaryConditions<T> 
 	}
 	return index;
 }
+
+template <int Dim, int N, typename T>//Ok!
+void Element<Dim, N, T>::set_outer_node_indices_to(const int index, BoundaryConditions<T> conds) {
+	for (int i = 0; i < N; i++) {
+		if (conds.cond(nodes[i]->get_location()) == true) {
+			nodes[i]->set_index(index);
+		}
+	}
+}
+
+/*template <int Dim, int N, typename T>//Not ok!
+int Element<Dim, N, T>::set_outer_node_indices(int index, BoundaryConditions<T> conds) {
+	for (int i = 0; i < N; i++) {
+		if ((nodes[i]->get_index() == -1) && (conds.cond(nodes[i]->get_location()) == true)) {
+			nodes[i]->set_index(index + 1);
+			index++;
+		}
+	}
+	return index;
+}*/
+
 
 template <int Dim, int N, typename T>
 int Element<Dim, N, T>::how_many() const{
