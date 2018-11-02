@@ -5,6 +5,27 @@
 using namespace std;
 using namespace Eigen;
 
+//N-dim box's boundary
+bool bound_cond(VectorXd coords) {
+	for (int i = 0; i < coords.size(); i++) {
+		if ((coords[i] == 0.0) || (coords[i] == 1.0)) { return true; }
+	}
+	return false;
+}
+
+bool bound_cond_large_box(VectorXd coords) {
+	for (int i = 0; i < coords.size(); i++) {
+		if ((coords[i] == 0.0) || (coords[i] == 2.0)) { return true; }
+	}
+	return false;
+}
+
+double bound_val(VectorXd coords) {
+	if (coords[0] == 1.0) { return 1; }
+	return 0;
+}
+
+
 #define CATCH_CONFIG_MAIN  // This tells Catch to provide a main()
 #include "../C++ libs/catch/catch.hpp"
 
@@ -35,6 +56,11 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D do
     funcs[2].coeff = coeffs;
 	
     Element <2, 3, VectorXd> element(nodes, funcs);
+
+	BoundaryConditions<VectorXd> boundaries;
+	boundaries.cond = bound_cond_large_box;//omega = [0,2]^2
+	boundaries.val = bound_val;
+
 
     SECTION( "Test default constructor()" ){
         Element <2, 3, VectorXd> empty_element;
@@ -84,6 +110,21 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D do
         REQUIRE( 35 == element[0].get_index() );
         REQUIRE( 36 == element[1].get_index() );
     }
+
+	SECTION("Test set_all_indices_to") {
+		element.set_all_indices_to(-3);
+		REQUIRE(element[2].get_index() == -3);
+		REQUIRE(element[0].get_index() == -3);
+		REQUIRE(element[1].get_index() == -3);
+	}
+
+	SECTION("Test set_inner_indices") {
+		element.set_all_indices_to(-1);
+		REQUIRE(element.set_inner_node_indices(-1, boundaries) == 0);
+		REQUIRE(element[2].get_index() == 0);
+		REQUIRE(element[0].get_index() == -1);
+		REQUIRE(element[1].get_index() == -1);
+	}
 
     SECTION( "Test get_function(int)" ){
         SimplexFunction<VectorXd> first_fn = element.get_function(0);

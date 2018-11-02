@@ -19,18 +19,19 @@ int factorial(int n){
 }
 
 //We simply want to use the already existing nodes and don't need to worry about garbage collection.
-//This is the reason why destructor has delete only for nodes which share 0 elements!
+//This is the reason why destructor deletes only for nodes which share 0 elements!
 template <int Dim, int N, typename T>
 class Element : Counter<Element<Dim, N, T> > {
 
 public:
     Element();
 	Element(vector<Node <Dim, T>* > nodes_vec, vector<SimplexFunction <T> > funcs);
-    Element(const Element &el);//copy constructor
+    Element(const Element &el);
     ~Element();
     void increase_shared_elements();
 	void decrease_shared_elements();
     int set_indices(int index);//Every unique node gets an index bigger than this
+	void set_all_indices_to(int index);
 	int set_inner_node_indices(int index, BoundaryConditions<T> conds);
 	int how_many() const;
 	vector <Node <Dim, T>* > get_nodes();
@@ -114,10 +115,15 @@ int Element<Dim,N,T>::set_indices(int index){
 	return index;
 }
 
+template <int Dim, int N, typename T>
+void Element<Dim, N, T>::set_all_indices_to(int index) {
+	for (int i = 0; i < N; i++) { nodes[i]->set_index(index); }
+}
+
 template <int Dim, int N, typename T>//Not ok!
 int Element<Dim, N, T>::set_inner_node_indices(int index, BoundaryConditions<T> conds) {
 	for (int i = 0; i < N; i++) {
-		if ((nodes[i]->get_index() == -1) && (conds.cond(nodes[i]->get_location()))) {
+		if ((nodes[i]->get_index() == -1) && (conds.cond(nodes[i]->get_location())==false)) {
 			nodes[i]->set_index(index + 1);
 			index++;
 		}
@@ -251,9 +257,7 @@ vector <Node <Dim, T>* >  Element<Dim, N, T>::get_midpoint_nodes(map<array<int, 
 
 template <int Dim, int N, typename T>
 void Element<Dim,N,T>::show() const{
-    //cout <<"#elements: " << N << endl;
     for(int i=0; i<nodes.size(); i++){nodes[i]->show();}
-    //cout <<"#elements: " << functions.size() << endl;
     for(int i=0; i<functions.size(); i++){
         cout << "Function coefficients for node no " << i <<endl;
         for(int j=0; j<functions[i].coeff.rows(); j++){
