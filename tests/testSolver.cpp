@@ -49,6 +49,17 @@ double bound_val(VectorXd coords) {
 	return 0;
 }
 
+bool point_bound_cond(Point<2, double> coords) {
+	for (int i = 0; i < coords.size(); i++) {
+		if ((coords[i] == 0.0) || (coords[i] == 1.0)) { return true; }
+	}
+	return false;
+}
+
+double point_bound_val(Point<2, double> coords) {
+	if (coords[1] == 1.0) { return 1; }
+	return 0;
+}
 
 #define CATCH_CONFIG_MAIN
 #include "../C++ libs/catch/catch.hpp"
@@ -144,6 +155,7 @@ TEST_CASE("Test Solver with Point -based Mesh") {
 	Element<2, 3, Point <2, double> > el2 = factory.build(node_vec2);
 	Mesh<2, 3, Point <2, double> > mesh(el1);
 	mesh.push(el2);
+	//mesh.reset_indices(boundaries);
 	//mesh.get_top().show();
 	//Element<2, 3, Point <2, double> > element2 = factory.build(node_vec);//Too lazy to find out what the funcs would be...
 
@@ -154,16 +166,16 @@ TEST_CASE("Test Solver with Point -based Mesh") {
 	bl_fn.mat = MatrixXd::Identity(2, 2);
 	PDE<2, Point <2, double> > pde(bl_fn, f_kern_sin);
 	PDE<2, Point <2, double> > pde2(bl_fn, f_kern_const);
-	BoundaryConditions boundaries = { bound_cond, bound_val };
+	BoundaryConditions<Point <2, double> > boundaries = { point_bound_cond, point_bound_val };
 
-	//Solver<2, Point <2, double> > solver(pde, mesh_ptr);
+	Solver<2, Point <2, double> > solver(pde, mesh_ptr, boundaries);
 	//solver.show();
 	
 	SECTION("Test default constructor") {
 		Solver<2, Point <2, double>>  new_solver;
 	}
 
-	SECTION("Test solving the pde2") {
+	/*SECTION("Test solving the pde2") {
 		Solver<2, Point <2, double>>  solver2(pde2, mesh_ptr, boundaries);
 		solver2.show();
 		//cout << solver.get_stiffness_matrix(10) << endl;
@@ -178,17 +190,18 @@ TEST_CASE("Test Solver with Point -based Mesh") {
 		MatrixXd values = solver2.get_solution_values(sol);
 		cout << "values" << endl;
 		cout << values << endl;
-	}
+	}*/
 
-	/*SECTION("Test get_stiffness matrix(MatrixXd)") {
-		MatrixXd stiffness_mat = solver.get_stiffness_matrix(10);
+	SECTION("Test get_stiffness matrix(MatrixXd)") {
+		MatrixXd stiffness_mat = solver.get_stiffness_matrix(3);
 		MatrixXd mat_should_be(4,4);
 		mat_should_be << 1, 0, -.5, -.5, 0, 1, -.5, 0, 0, 0, 1, 0, 0, -.5, 0, 1;
 		REQUIRE(stiffness_mat == mat_should_be);
 	}
 
+
 	SECTION("Calculating vector f should succeed") {
-		VectorXd f_vec = solver.get_vector_part();
+		VectorXd f_vec = solver.get_vector_part(3);
 		VectorXd vec_should_be(4);
 		vec_should_be << 0.25, 0.25, 0.125, 0.125;
 		for (int i = 0; i < 4; i++) { REQUIRE(limit_decimals(f_vec(i), 6) == vec_should_be(i)); }
@@ -219,6 +232,15 @@ TEST_CASE("Test Solver with Point -based Mesh") {
 		//for (int i = 0; i < 4; i++) { REQUIRE(limit_decimals(solution(i), 6) == sol_should_be(i)); }
 	}
 
+
+	SECTION("Test get_inner_stiffness matrix(MatrixXd)") {
+		int max_index = mesh_ptr->get_max_inner_index();
+		MatrixXd inner_stiffness_mat = solver.get_inner_stiffness_matrix(max_index);
+		cout << "hehehe" << max_index << mesh_ptr->get_max_outer_index() << endl;
+		cout << "hehehe" << mesh.get_max_inner_index() << mesh.get_max_outer_index() << endl;
+		cout << inner_stiffness_mat << endl;
+	}
+
 	SECTION("Getting the total solution points should succeed") {
 		VectorXd solution = solver.solve();
 		MatrixXd sol_values = solver.get_solution_values(solution);
@@ -240,6 +262,6 @@ TEST_CASE("Test Solver with Point -based Mesh") {
 		MatrixXd values = solver.get_solution_values(sol);
 		cout << "values" << endl;
 		cout << values << endl;
-	}*/
+	}
 
 }

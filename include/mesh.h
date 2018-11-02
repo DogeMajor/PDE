@@ -35,8 +35,8 @@ public:
 	bool pop(MeshNode<Element<Dim, N, T> > *previous);//Deletes the next element!!!
 	int how_many() const;// { return objects_alive; }
 	int how_many_nodes() const;
-	int get_max_inner_element() const { return max_inner_element; }
-	int get_max_outer_element() const { return max_outer_element; }
+	int get_max_inner_index() const { return max_inner_index; }
+	int get_max_outer_index() const { return max_outer_index; }
 	MeshNode<Element<Dim, N, T> > * get_top_mesh_node() { return top; }
 	Element<Dim, N, T> get_top() { return top->data; }
 	Element<Dim, N, T> get_last();
