@@ -60,6 +60,7 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D do
 	BoundaryConditions<VectorXd> boundaries;
 	boundaries.cond = bound_cond_large_box;//omega = [0,2]^2
 	boundaries.val = bound_val;
+	
 
 
     SECTION( "Test default constructor()" ){
@@ -224,6 +225,7 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D Po
     coeff << 0,1,0;
     fns[2].coeff = coeff;
     Element <2, 3, Point <2 ,double> > el(node_vec, fns);
+	VolumeCalculator <2, Point <2, double> > volume_calculator;
 
 	map< array<int, 2>, int> MIDPOINTS_MAP;
 	for (int i = 0; i < 3; i++) {
@@ -249,7 +251,7 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D Po
     }
 
     SECTION( "Test get_simplex_matrix(T &el)" ){
-        Matrix<double, 2, 2> s_mat = el.get_simplex_matrix(el);
+        Matrix<double, 2, 2> s_mat = volume_calculator.get_simplex_matrix(el.get_nodes());
         REQUIRE( s_mat == MatrixXd::Identity(2,2) );
     }
 

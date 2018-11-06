@@ -10,13 +10,14 @@
 #include <math.h>
 #include "Function.h"
 #include "HelpfulTools.h"
+#include "VolumeCalculator.h"
 
 using namespace std;
 using namespace Eigen;
 
-int factorial(int n){
-    return (n != 0)? n*factorial(n-1) : 1;
-}
+//int factorial(int n){
+    //return (n != 0)? n*factorial(n-1) : 1;
+//}
 
 //We simply want to use the already existing nodes and don't need to worry about garbage collection.
 //This is the reason why destructor deletes only for nodes which share 0 elements!
@@ -42,7 +43,7 @@ public:
     Element<Dim,N,T>& operator=(const Element &el);
     bool operator==(const Element &el) const;
     bool operator!=(const Element &el) const;
-    Matrix<double, Dim, Dim> get_simplex_matrix(Element &el) const;
+    //Matrix<double, Dim, Dim> get_simplex_matrix(Element &el) const;
 
 	map<array<int, 2>, T> get_midpoints_map();
 
@@ -55,18 +56,22 @@ public:
 private:
 	vector <Node <Dim, T>* > nodes; // with pointers #nodes does not increase when new element is added provided that nodes have already been built
     vector <SimplexFunction <T> > functions;
+	VolumeCalculator<Dim, T> volume_calculator;
 };
 
 
 template <int Dim, int N, typename T>
 Element<Dim,N,T>::Element()
-	: nodes(N, nullptr) {}
+	: nodes(N, nullptr) {
+	volume_calculator = VolumeCalculator<Dim, T>();
+}
 
 template <int Dim, int N, typename T>
 Element<Dim, N, T>::Element(vector <Node <Dim, T>* > nodes_vec, vector <SimplexFunction <T> > funcs) {
 	nodes = nodes_vec;
 	increase_shared_elements();
 	functions = funcs;
+	volume_calculator = VolumeCalculator<Dim, T>();
 }
 
 template <int Dim, int N, typename T>
@@ -206,7 +211,7 @@ bool Element<Dim,N,T>::operator!=(const Element &el) const{
     return !(*this == el);
 }
 
-template <int Dim, int N, typename T>
+/*template <int Dim, int N, typename T>
 Matrix<double, Dim, Dim> Element<Dim,N,T>::get_simplex_matrix(Element &el) const{
     MatrixXd simplex_mat = MatrixXd::Zero(Dim,Dim);
     for(int col=0; col<Dim; col++){
@@ -215,13 +220,14 @@ Matrix<double, Dim, Dim> Element<Dim,N,T>::get_simplex_matrix(Element &el) const
         }
     }
     return simplex_mat;
-}
+}*/
 
 template <int Dim, int N, typename T>
 double Element<Dim,N,T>::get_volume() const{
-    Element<Dim,N,T> temp = *this;
+	return volume_calculator.get_volume(nodes);
+    /*Element<Dim,N,T> temp = *this;
     MatrixXd simplex_mat = (Dim == N-1)? get_simplex_matrix(temp): MatrixXd::Zero(Dim,Dim);
-    return abs(simplex_mat.determinant()/factorial(Dim));
+    return abs(simplex_mat.determinant()/factorial(Dim));*/
 }
 
 template <int Dim, int N, typename T>//OK
