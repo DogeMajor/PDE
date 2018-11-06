@@ -17,6 +17,18 @@ double bound_val(VectorXd coords) {
 	return 0;
 }
 
+VectorXd bound_normal(VectorXd coords) {
+	int sz = coords.size();
+	VectorXd result = VectorXd::Zero(sz);
+	for (int i = 0; i < coords.size(); i++) {
+		if ((coords[i] == 0.0) || (coords[i] == 1.0)) {
+			result(i) = (coords[i] == 0.0) ? -1 : 1;
+			return result;
+		}
+	}
+	return result;
+}
+
 bool point_bound_cond(Point<2,double> coords) {
 	for (int i = 0; i < coords.size(); i++) {
 		if ((coords[i] == 0.0) || (coords[i] == 1.0)) { return true; }
@@ -27,6 +39,17 @@ bool point_bound_cond(Point<2,double> coords) {
 double point_bound_val(Point<2, double> coords) {
 	if (coords[1] == 1.0) { return 1; }
 	return 0;
+}
+
+Point<2, double> point_bound_normal(Point<2, double> coords) {
+	vector<double> normal = { 0.0,0.0 };
+	for (int i = 0; i < coords.size(); i++) {
+		if ((coords[i] == 0.0) || (coords[i] == 1.0)) {
+			normal[i] = (coords[i] == 0.0) ? -1 : 1;
+			return Point<2, double>(normal);
+		}
+	}
+	return Point<2, double>(normal);
 }
 
 #define CATCH_CONFIG_MAIN  // This tells Catch to provide a main()
@@ -138,10 +161,14 @@ TEST_CASE("Test BoundaryConditions") {
 		BoundaryConditions<VectorXd> boundaries;
 		boundaries.cond = bound_cond;
 		boundaries.val = bound_val;
+		boundaries.normal = bound_normal;
 		VectorXd z(2);
 		z << 1, 0;
+		VectorXd normal(2);
+		normal << 1, 0;
 		REQUIRE(boundaries.cond(z) == 1);
 		REQUIRE(boundaries.val(z) == 0);
+		REQUIRE(boundaries.normal(z) == normal);
 	}
 	
 	SECTION("BoundaryConditions can be initialized with Point <2, double> point(vec); ") {
@@ -150,8 +177,16 @@ TEST_CASE("Test BoundaryConditions") {
 		BoundaryConditions<Point <2, double> > point_boundaries;
 		point_boundaries.cond = point_bound_cond;
 		point_boundaries.val = point_bound_val;
+		point_boundaries.normal = point_bound_normal;
 		REQUIRE(point_boundaries.cond(r)==1);
 		REQUIRE(point_boundaries.val(r)==0);
+		Point <2, double> normal_p = point_boundaries.normal(p);
+		
+		REQUIRE(normal_p[0] == 1);
+		REQUIRE(normal_p[1] == 0);
+		normal_p = point_boundaries.normal(0.5*p);
+		REQUIRE(normal_p[0] == 0);
+		REQUIRE(normal_p[1] == 0);
 	}
 }
 

@@ -49,6 +49,18 @@ double bound_val(VectorXd coords) {
 	return 0;
 }
 
+VectorXd bound_normal(VectorXd coords) {
+	int sz = coords.size();
+	VectorXd result = VectorXd::Zero(sz);
+	for (int i = 0; i < coords.size(); i++) {
+		if ((coords[i] == 0.0) || (coords[i] == 1.0)) {
+			result(i) = (coords[i] == 0.0)? -1: 1;
+			return result;
+		}
+	}
+	return result;
+}
+
 bool point_bound_cond(Point<2, double> coords) {
 	for (int i = 0; i < coords.size(); i++) {
 		if ((coords[i] == 0.0) || (coords[i] == 1.0)) { return true; }
@@ -57,8 +69,36 @@ bool point_bound_cond(Point<2, double> coords) {
 }
 
 double point_bound_val(Point<2, double> coords) {
-	if (coords[1] == 1.0) { return 1; }
+	//if (coords[1] == 1.0) { return 1; }
 	return 0;
+}
+
+Point<2, double> point_bound_normal(Point<2, double> coords) {
+	vector<double> normal = { 0.0,0.0 };
+	for (int i = 0; i < coords.size(); i++) {
+		if ((coords[i] == 0.0) || (coords[i] == 1.0)) {
+			normal[i] = (coords[i] == 0.0) ? -1 : 1;
+			return Point<2, double>(normal);
+		}
+	}
+	return Point<2, double>(normal);
+}
+
+
+double error_norm(MatrixXd sol_values) {
+	double norm = 0;
+	int sz = sol_values.cols() - 1;
+	VectorXd loc;
+	cout << sol_values.rows() << endl;
+	for (int i = 0; i < sol_values.rows(); i++) {
+		loc = sol_values.row(i).head(sz);
+		cout << loc << endl;
+		cout << analytic_sol(loc) << endl;
+		cout << sol_values(i, sz) << endl;
+		cout << analytic_sol(loc) - sol_values(i, sz)  << "difference" << endl;
+		norm = norm + pow(sol_values(i,sz) - analytic_sol(loc), 2);
+	}
+	return norm;
 }
 
 #define CATCH_CONFIG_MAIN
@@ -208,14 +248,25 @@ TEST_CASE("Test Solver with Point -based Mesh") {
 	}
 
 	SECTION("Solving the PDE should succeed") {
+		solver.refine();
+		//solver.refine();
+		//solver.refine();
 		VectorXd solution = solver.solve();
-		VectorXd sol_should_be(4);
+		cout << solution << endl;
+		MatrixXd calc_values = solver.get_solution_values(solution);
+		cout << calc_values << endl;
+		cout << "Max:" << solution.maxCoeff() << " Min: " << solution.minCoeff() << endl;
+		double error_squared = error_norm(calc_values);
+		cout << error_squared / calc_values.rows() << endl;
+		double avg = solution.mean();
+		cout << "Avg. error norm in %" << 100 * sqrt(error_squared) / avg;
+		//VectorXd sol_should_be(4);
 		//sol_should_be << 0.185185, 0.185185, 0.092592, 0.092592;
-		sol_should_be << 0.453125, 0.3125, 0.125, 0.28125;
-		for (int i = 0; i < 4; i++) { REQUIRE(limit_decimals(solution(i), 6) == sol_should_be(i)); }
+		//sol_should_be << 0.453125, 0.3125, 0.125, 0.28125;
+		//for (int i = 0; i < 4; i++) { REQUIRE(limit_decimals(solution(i), 6) == sol_should_be(i)); }
 	}
 
-	SECTION("Solving the PDE after refinement should succeed") {
+	/*SECTION("Solving the PDE after refinement should succeed") {
 		solver.refine();
 		solver.refine();
 		//solver.show();
@@ -230,18 +281,19 @@ TEST_CASE("Test Solver with Point -based Mesh") {
 		//sol_should_be << 0.185185, 0.185185, 0.092592, 0.092592;
 		//sol_should_be << 0.453125, 0.3125, 0.125, 0.28125;
 		//for (int i = 0; i < 4; i++) { REQUIRE(limit_decimals(solution(i), 6) == sol_should_be(i)); }
-	}
+	}*/
 
 
 	SECTION("Test get_inner_stiffness matrix(MatrixXd)") {
+		solver.refine();
 		int max_index = mesh_ptr->get_max_inner_index();
 		MatrixXd inner_stiffness_mat = solver.get_inner_stiffness_matrix(max_index);
-		cout << "hehehe" << max_index << mesh_ptr->get_max_outer_index() << endl;
-		cout << "hehehe" << mesh.get_max_inner_index() << mesh.get_max_outer_index() << endl;
-		cout << inner_stiffness_mat << endl;
+		REQUIRE(inner_stiffness_mat.rows() == 1);
+		REQUIRE(inner_stiffness_mat.cols() == 1);
+		REQUIRE(inner_stiffness_mat(0, 0) == 4);
 	}
 
-	SECTION("Getting the total solution points should succeed") {
+	/*SECTION("Getting the total solution points should succeed") {
 		VectorXd solution = solver.solve();
 		MatrixXd sol_values = solver.get_solution_values(solution);
 		cout << "values" << endl;
@@ -262,6 +314,6 @@ TEST_CASE("Test Solver with Point -based Mesh") {
 		MatrixXd values = solver.get_solution_values(sol);
 		cout << "values" << endl;
 		cout << values << endl;
-	}
+	}*/
 
 }
