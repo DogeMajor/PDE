@@ -211,23 +211,9 @@ bool Element<Dim,N,T>::operator!=(const Element &el) const{
     return !(*this == el);
 }
 
-/*template <int Dim, int N, typename T>
-Matrix<double, Dim, Dim> Element<Dim,N,T>::get_simplex_matrix(Element &el) const{
-    MatrixXd simplex_mat = MatrixXd::Zero(Dim,Dim);
-    for(int col=0; col<Dim; col++){
-        for(int row=0; row<Dim; row++){
-            simplex_mat(row, col) = el[row+1].get_location()[col] - el[row].get_location()[col];
-        }
-    }
-    return simplex_mat;
-}*/
-
 template <int Dim, int N, typename T>
 double Element<Dim,N,T>::get_volume() const{
 	return volume_calculator.get_volume(nodes);
-    /*Element<Dim,N,T> temp = *this;
-    MatrixXd simplex_mat = (Dim == N-1)? get_simplex_matrix(temp): MatrixXd::Zero(Dim,Dim);
-    return abs(simplex_mat.determinant()/factorial(Dim));*/
 }
 
 template <int Dim, int N, typename T>//OK
