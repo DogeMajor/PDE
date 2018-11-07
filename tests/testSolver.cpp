@@ -237,6 +237,7 @@ TEST_CASE("Test Solver with Point -based Mesh") {
 		MatrixXd mat_should_be(4,4);
 		mat_should_be << 1, 0, -.5, -.5, 0, 1, -.5, 0, 0, 0, 1, 0, 0, -.5, 0, 1;
 		REQUIRE(stiffness_mat == mat_should_be);
+
 	}
 
 
@@ -291,6 +292,23 @@ TEST_CASE("Test Solver with Point -based Mesh") {
 		REQUIRE(inner_stiffness_mat.rows() == 1);
 		REQUIRE(inner_stiffness_mat.cols() == 1);
 		REQUIRE(inner_stiffness_mat(0, 0) == 4);
+		MatrixXd stiff_mat = solver.get_stiffness_matrix(8);
+		MatrixXd boundary = solver.get_boundary_matrix(stiff_mat);
+		//cout << stiffness_mat.block(0, 0, 4, 4) << endl;
+		cout << stiff_mat << endl;
+		cout << "Bound matrix: " << endl;
+		cout << boundary << endl;
+		REQUIRE(boundary == stiff_mat.block(0, 1, 1, 8));
+		
+	}
+
+	SECTION("Test get_boundary_coeffs") {
+		solver.refine();
+		VectorXd d = solver.get_boundary_coeffs();
+		cout << d << endl;
+		for (int i = 0; i < d.size(); i++) {
+			REQUIRE(d(i) == 0);
+		}
 	}
 
 	/*SECTION("Getting the total solution points should succeed") {

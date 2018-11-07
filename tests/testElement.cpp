@@ -30,7 +30,7 @@ double bound_val(VectorXd coords) {
 #include "../C++ libs/catch/catch.hpp"
 
 
-/*TEST_CASE( "Test Element template containing Node template initiated with 2-D double vector from Eigen lib" ){
+TEST_CASE( "Test Element template containing Node template initiated with 2-D double vector from Eigen lib" ){
 
     VectorXd location(2);
     location << 0.0, 0.0;
@@ -84,7 +84,7 @@ double bound_val(VectorXd coords) {
         REQUIRE( element[0].get_location() != nodes[1]->get_location() );
     }
 
-    /*SECTION( "Test show()" ){
+    SECTION( "Test show()" ){
         cout << "showing element[0]" << endl;
         element[0].show();
         cout << "showing node1" << endl;
@@ -201,7 +201,7 @@ double bound_val(VectorXd coords) {
 		node_map[{0, 1}]->show();
 	}
 	
-}*/
+}
 
 
 TEST_CASE( "Test Element template containing Node template initiated with 2-D Point <2 ,double> template objects" ) {
@@ -243,12 +243,12 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D Po
 		REQUIRE(el[0].get_location()[1] == 0.0);
 	}
 
-    /*SECTION( "Test show()" ){
+    SECTION( "Test show()" ){
         cout << "showing element[0]" << endl;
         el[0].show();
         cout << "showing node1" << endl;
         node_vec[0]->show();
-    }*/
+    }
 
 	SECTION("Test get_squared_dist_mat()") {
 		MatrixXd D = volume_calculator.get_distance_squared_matrix(el.get_nodes());
@@ -262,8 +262,6 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D Po
 
     SECTION( "Test get_volume()" ){
         REQUIRE( el.get_volume() == 0.5 );
-		double vol = volume_calculator.get_dist_volume(el.get_nodes());
-		REQUIRE(vol == 0.5);
     }
 
     SECTION( "Test copy constructor" ){

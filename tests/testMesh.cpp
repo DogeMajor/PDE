@@ -67,7 +67,7 @@ TEST_CASE("Test the real Mesh with Elements based on Points") {
 	//el_mesh.show();
 
 
-	/*SECTION("Mesh can be initialized with default constructor") {//OK
+	SECTION("Mesh can be initialized with default constructor") {//OK
 		Mesh<2, 3, Point <2, double> > empty_mesh;
 		REQUIRE(empty_mesh.how_many() == 2);
 	}
@@ -159,7 +159,7 @@ TEST_CASE("Test the real Mesh with Elements based on Points") {
 
 			REQUIRE(large_mesh.pop() == false);
 		}
-	}*/
+	}
 
 	SECTION("Refining the mesh should succeed") {
 		REQUIRE(el_mesh.how_many_nodes() == 2);
@@ -170,7 +170,6 @@ TEST_CASE("Test the real Mesh with Elements based on Points") {
 		el_mesh.reset_indices(boundaries);
 		REQUIRE(el_mesh.get_max_inner_index() == 0);
 		REQUIRE(el_mesh.get_max_outer_index() == 8);
-		//el_mesh.show();
 		
 		REQUIRE(el_mesh.how_many_nodes() == 8);
 		REQUIRE(el_mesh.get_element(2)[0].get_location()[0] == 0);

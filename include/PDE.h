@@ -33,12 +33,15 @@ public:
  private:
      BilinearFunction A_kernel;
      Function f_kernel;
+	 VolumeCalculator<Dim, T> volume_calculator;
      //vector <double> boundary_conds;
 
 };
 
 template <int Dim, typename T>
-PDE<Dim, T>::PDE() {}
+PDE<Dim, T>::PDE() {
+	volume_calculator = VolumeCalculator<Dim, T>();
+}
 
 template <int Dim, typename T>
 const double PDE<Dim, T>::A(Element<Dim, Dim+1, T> el, SimplexFunction<T> a, SimplexFunction<T> b) const{
@@ -65,18 +68,19 @@ double PDE<Dim, T>::f(Element<Dim, Dim+1, T> &el, SimplexFunction<T> a) const{
     return f_kernel(to_VectorXd(avg_location))*a(avg_location)*el.get_volume();
 }
 
-template <int Dim, typename T>//Assumption: Element has nodes at boundary!!
+template <int Dim, typename T>//Assumption: Element has nodes at the boundary!!
 double PDE<Dim, T>::b(Element<Dim, Dim + 1, T> &el, SimplexFunction<T> a, SimplexFunction<T> b, BoundaryConditions<T> boundaries) const {
 	cout << "To be coded" << endl;
 	vector <Node<Dim, T>* > old_nodes = el.get_nodes();
 	vector <Node<Dim, T>* > surface_nodes;
+	T avg_loc;
 	for (int i = 0; i < old_nodes.size(); i++) {
 		if (boundaries.cond(old_nodes[i]->get_location())) {
 			surface_nodes.push_back(old_nodes[i]);
 		}
 	}
 
-	return 0;
+	double vol = volume_calculator.get_dist_volume(old_nodes);
 }
 
 template <int Dim, typename T>

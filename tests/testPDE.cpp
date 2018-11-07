@@ -25,6 +25,17 @@ double bound_val(VectorXd coords) {
 	return 0;
 }
 
+VectorXd bound_normal(VectorXd coords) {
+	int sz = coords.size();
+	VectorXd result = VectorXd::Zero(sz);
+	for (int i = 0; i < coords.size(); i++) {
+		if ((coords[i] == 0.0) || (coords[i] == 1.0)) {
+			result(i) = (coords[i] == 0.0) ? -1 : 1;
+			return result;
+		}
+	}
+	return result;
+}
 
 #define CATCH_CONFIG_MAIN  // This tells Catch to provide a main()
 #include "../C++ libs/catch/catch.hpp"
@@ -61,7 +72,7 @@ TEST_CASE( "Test PDE" ) {
     bl_fn.mat = MatrixXd::Identity(2,2);
     PDE<2, VectorXd>  pde(bl_fn, f_kern);
 
-	BoundaryConditions boundaries = {bound_cond, bound_val};
+	BoundaryConditions<VectorXd> boundaries = {bound_cond, bound_val, bound_normal };
 	
 
 	SECTION("BoundaryConditions for 2-D box should work") {
@@ -71,11 +82,11 @@ TEST_CASE( "Test PDE" ) {
     SECTION( "Test constructing PDE" ){
 		VectorXd temp(2);
 		temp << 0.5, 0.5;
-		REQUIRE(boundaries.condition(temp)==false);
-		REQUIRE(boundaries.value(temp) == 0.0);
+		REQUIRE(boundaries.cond(temp)==false);
+		REQUIRE(boundaries.val(temp) == 0.0);
 		temp << 0.5, 1;
-		REQUIRE(boundaries.condition(temp) == true);
-		REQUIRE(boundaries.value(temp) == 1.0);
+		REQUIRE(boundaries.cond(temp) == true);
+		REQUIRE(boundaries.val(temp) == 1.0);
     }
 
     SECTION( "Test inner product A(.,.)" ){
@@ -86,6 +97,13 @@ TEST_CASE( "Test PDE" ) {
         REQUIRE( pde.A(element, funcs[1], funcs[2]) == -0.5 );
         REQUIRE( pde.A(element, funcs[2], funcs[2]) == 0.5 );
     }
+
+	SECTION("Test f(.,.)") {
+		//cout << pde.f(element, funcs[0]) << endl;
+		//cout << pde.f(element, funcs[1]) << endl;
+		cout << pde.f(element, funcs[2]) << endl;
+
+	}
 
 
     SECTION( "Test inner product with f" ){
