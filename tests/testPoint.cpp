@@ -28,6 +28,13 @@ TEST_CASE( "Test Point class" ) {
         REQUIRE( copied_point.get_value() == val );
     }
 
+	SECTION("Test equal to unequal to operators") {
+		Point <2, double> same_point(point);
+		Point <2, double> not_same_point;
+		REQUIRE(same_point == point);
+		REQUIRE(not_same_point != point);
+	}
+
     SECTION( "Test assignment operator" ){
         Point <2,double> assigned_point = point;
         REQUIRE( assigned_point.get_value() == val );
@@ -36,22 +43,14 @@ TEST_CASE( "Test Point class" ) {
         REQUIRE( fresh_point.get_value() == val );
     }
 
-    SECTION( "Test equal to unequal to operators" ){
-        Point <2,double> same_point(point);
-        Point <2,double> not_same_point;
-        REQUIRE( same_point == point );
-        REQUIRE( not_same_point != point );
-    }
-
     SECTION( "Test get_functions" ){
         vector <double> value = point.get_value();
         REQUIRE( value[0] == 1.0 );
         REQUIRE( value[1] == 2.0 );
-        REQUIRE( point.get_dimension() == 2 );
+		REQUIRE(point.size() == 2);
     }
 
     SECTION( "Test [] operator" ){
-
         REQUIRE( point[0] == 1.0 );
         REQUIRE( point[1] == 2.0 );
     }

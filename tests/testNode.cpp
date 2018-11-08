@@ -27,6 +27,27 @@ TEST_CASE( "Test Node template with 3-D double vector from Eigen lib" ) {
 		REQUIRE(empty_nodes[1].get_index() == -1);
 	}
 	
+	SECTION("Test copy constructor") {
+		int node_number = node.how_many();
+		Node <3, VectorXd> copyed_node(node);
+		REQUIRE(node.how_many() == node_number + 1);
+		REQUIRE(node.get_index() == copyed_node.get_index());
+		REQUIRE(node.get_shared_elements() == copyed_node.get_shared_elements());
+		REQUIRE(node.get_location() == copyed_node.get_location());
+	}
+
+	SECTION("Test set_index") {
+		REQUIRE(node.get_index() == -1);
+		node.set_index(2);
+		REQUIRE(node.get_index() == 2);
+	}
+
+	SECTION("Test set_shared_elements") {
+		REQUIRE(node.get_shared_elements() == 0);
+		node.set_shared_elements(1);
+		REQUIRE(node.get_shared_elements() == 1);
+	}
+
     SECTION( "Test get_location" ){
         VectorXd value = node.get_location();
 		cout << value[0] << endl;
@@ -43,27 +64,9 @@ TEST_CASE( "Test Node template with 3-D double vector from Eigen lib" ) {
         REQUIRE( node.get_shared_elements() == 0 );
     }
 
-
-    SECTION( "Test show()" ){
-		cout << "Showing Node <3,VectorXd>" << endl;
-        node.show();
-    }
-
-    SECTION( "Test how_many()" ){
-        REQUIRE( 2 == node.how_many() );
-    }
-
-    SECTION( "Test set_index" ){
-        REQUIRE( node.get_index() == -1 );
-        node.set_index(2);
-        REQUIRE( node.get_index() == 2 );
-    }
-
-    SECTION( "Test set_shared_elements" ){
-        REQUIRE( node.get_shared_elements() == 0 );
-        node.set_shared_elements(1);
-        REQUIRE( node.get_shared_elements() == 1 );
-    }
+	SECTION("Test how_many()") {
+		REQUIRE(2 == node.how_many());
+	}
 
     SECTION( "Test == and != operators" ){
         REQUIRE( node == node );
@@ -73,7 +76,6 @@ TEST_CASE( "Test Node template with 3-D double vector from Eigen lib" ) {
         node.set_index(-1);
         REQUIRE( similar_node == node );
     }
-
 
     SECTION( "Test assignment operator" ){
         int node_no = node.how_many();
@@ -87,14 +89,10 @@ TEST_CASE( "Test Node template with 3-D double vector from Eigen lib" ) {
         REQUIRE( assigned_node.get_index() == 666 );
     }
 
-    SECTION( "Test copy constructor" ){
-        int node_number = node.how_many();
-        Node <3,VectorXd> copyed_node(node);
-        REQUIRE( node.how_many() == node_number+1 );
-        REQUIRE( node.get_index() == copyed_node.get_index() );
-        REQUIRE( node.get_shared_elements() == copyed_node.get_shared_elements() );
-        REQUIRE( node.get_location() == copyed_node.get_location() );
-    }
+	SECTION("Test show()") {
+		cout << "Showing Node <3,VectorXd>" << endl;
+		node.show();
+	}
 
     SECTION( "Testing constructing withPoint <3,double>" ){
         vector <double> coords = {1.0, 2.0, 3.0};

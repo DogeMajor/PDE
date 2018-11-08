@@ -1,10 +1,26 @@
 #include "../include/point.h"
-#include "../include/element.h"
+//#include "../include/element.h"
+//#include "../include/ElementFactory.h"
 #include "../include/mesh.h"
 
 #include <math.h>
 
 using namespace std;
+
+//N-dim box's boundary [0,1]^N where N == coords.size()
+bool point_bound_cond(Point<2, double> coords) {
+	for (int i = 0; i < coords.size(); i++) {
+		if ((coords[i] == 0.0) || (coords[i] == 1.0)) { return true; }
+	}
+	return false;
+}
+
+double point_bound_val(Point<2, double> coords) {
+	if (coords[1] == 1.0) { return 1; }
+	return 0;
+}
+
+
 
 #define CATCH_CONFIG_MAIN  // This tells Catch to provide a main()
 #include "../C++ libs/catch/catch.hpp"
@@ -42,11 +58,16 @@ TEST_CASE("Test the real Mesh with Elements based on Points") {
 	el2.show();
 	Mesh<2, 3, Point <2, double> > el_mesh(el1);
 	el_mesh.push(el2);
-	el_mesh.reset_indices();
+	
+
+	BoundaryConditions<Point<2, double> > boundaries;
+	boundaries.cond = point_bound_cond;
+	boundaries.val = point_bound_val;
+	el_mesh.reset_indices(boundaries);
 	//el_mesh.show();
 
 
-	/*SECTION("Mesh can be initialized with default constructor") {//OK
+	SECTION("Mesh can be initialized with default constructor") {//OK
 		Mesh<2, 3, Point <2, double> > empty_mesh;
 		REQUIRE(empty_mesh.how_many() == 2);
 	}
@@ -138,7 +159,7 @@ TEST_CASE("Test the real Mesh with Elements based on Points") {
 
 			REQUIRE(large_mesh.pop() == false);
 		}
-	}*/
+	}
 
 	SECTION("Refining the mesh should succeed") {
 		REQUIRE(el_mesh.how_many_nodes() == 2);
@@ -146,8 +167,9 @@ TEST_CASE("Test the real Mesh with Elements based on Points") {
 		el_mesh.refine();
 		cout << "How many nodes totally exist after refinement" << el1.how_many() << endl;
 		
-		el_mesh.reset_indices(3);//Old max index is three!!!
-		el_mesh.show();
+		el_mesh.reset_indices(boundaries);
+		REQUIRE(el_mesh.get_max_inner_index() == 0);
+		REQUIRE(el_mesh.get_max_outer_index() == 8);
 		
 		REQUIRE(el_mesh.how_many_nodes() == 8);
 		REQUIRE(el_mesh.get_element(2)[0].get_location()[0] == 0);

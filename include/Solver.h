@@ -20,27 +20,25 @@ class Solver {
 
 public:
 	Solver();
-	Solver(PDE<Dim, T> p, Mesh<Dim, Dim + 1, T> *m);
+	Solver(PDE<Dim, T> p, Mesh<Dim, Dim + 1, T> *m, BoundaryConditions<T> b);
 	~Solver() {}
 	void set_pde(PDE<Dim, T> p) { pde = p; }
-	void set_mesh(Mesh<Dim, Dim + 1, T> *m) { mesh = m; max_index = mesh->reset_indices();}
-	//void build_mesh();
-	//void refine();
-	MatrixXd get_stiffness_matrix(int unique_nodes) const;
-	VectorXd get_vector_part() const;
-	//SparseMatrix<double> get_stiffness_matrix() const;
-	void refine() { mesh->refine(); max_index = mesh->reset_indices(max_index); }
+	void set_mesh(Mesh<Dim, Dim + 1, T> *m) { mesh = m; mesh->reset_indices();}
+	MatrixXd get_stiffness_matrix(int n) const;
+	MatrixXd get_inner_stiffness_matrix(MatrixXd stiffness);
+	MatrixXd get_boundary_matrix(MatrixXd stiffness);
+	VectorXd get_f_vec(int n) const;
+	VectorXd get_boundary_coeffs();
+	void refine() { mesh->refine(); mesh->reset_indices(boundaries); }
 	VectorXd solve();
 	MatrixXd get_solution_values(VectorXd solution);//In the same order as indexing of nodes
-
 	Mesh<Dim, Dim + 1, T> get_mesh() { return *mesh; }
-
 	void show() const;
 
 private:
 	PDE<Dim, T> pde;
 	Mesh<Dim, Dim + 1, T>* mesh;
-	int max_index;//How many unique Node<Dim,  T>s exist in the Mesh
+	BoundaryConditions<T> boundaries;
 
 };
 
@@ -49,17 +47,17 @@ Solver<Dim, T>::Solver() {
 }
 
 template <int Dim, typename T>
-Solver<Dim, T>::Solver(PDE<Dim, T> p, Mesh<Dim, Dim + 1, T> *m) {
+Solver<Dim, T>::Solver(PDE<Dim, T> p, Mesh<Dim, Dim + 1, T> *m, BoundaryConditions<T> b) {
 	pde = p;
 	mesh = m;
-	max_index = mesh->reset_indices();
+	boundaries = b;
+	mesh->reset_indices(boundaries);
 }
 
 template <int Dim, typename T>
-MatrixXd Solver<Dim, T>::get_stiffness_matrix(int unique_nodes) const {
+MatrixXd Solver<Dim, T>::get_stiffness_matrix(int n) const {
 	MeshNode <Element<Dim, Dim + 1, T> >* iter = mesh->get_top_mesh_node();
-	//cout << "max_index" <<max_index << endl;
-	MatrixXd stiffness = MatrixXd::Zero(max_index+1, max_index+1);
+	MatrixXd stiffness = MatrixXd::Zero(n+1, n+1);
 	int I, J;
 	SimplexFunction<T> fn_i, fn_j;
 	while (iter != nullptr) {
@@ -69,17 +67,7 @@ MatrixXd Solver<Dim, T>::get_stiffness_matrix(int unique_nodes) const {
 			for (int j = i; j < Dim + 1; j++) {
 				fn_j = iter->data.get_function(j);
 				J = iter->data[j].get_index();
-				//cout << pde.A(iter->data, fn_i, fn_j) << endl;
 				stiffness(I, J) += pde.A(iter->data, fn_i, fn_j);
-				/*if (I == J && I == 0) {
-					iter->data[i].show();
-					cout << "volume: " << iter->data.get_volume() << endl;
-					cout << fn_i.coeff << endl;
-					cout << fn_j.coeff << endl;
-					cout << "Integration result" << endl;
-					cout << pde.A(iter->data, fn_i, fn_j) << endl;
-					cout << "Diag. el. for index " << I << ": " << stiffness(I, J) << endl; 
-				}*/
 			}
 		}
 		iter = iter->next;
@@ -88,46 +76,74 @@ MatrixXd Solver<Dim, T>::get_stiffness_matrix(int unique_nodes) const {
 }
 
 template <int Dim, typename T>
-VectorXd Solver<Dim, T>::get_vector_part() const {
+MatrixXd Solver<Dim, T>::get_inner_stiffness_matrix(MatrixXd stiffness) {
+	int sz = mesh->get_max_inner_index() + 1;
+	return stiffness.block(0, 0, sz, sz);
+}
+
+template <int Dim, typename T>
+MatrixXd Solver<Dim, T>::get_boundary_matrix(MatrixXd stiffness) {
+	int rows = mesh->get_max_inner_index() + 1;
+	int cols = mesh->get_max_outer_index() - mesh->get_max_inner_index();
+	return stiffness.block(0, rows, rows, cols);
+}
+
+template <int Dim, typename T>
+VectorXd Solver<Dim, T>::get_f_vec(int n) const {
 	MeshNode <Element<Dim, Dim + 1, T> >* iter = mesh->get_top_mesh_node();
-	//cout << "max_index" <<max_index << endl;
-	VectorXd f_vec = VectorXd::Zero(max_index + 1);
+	VectorXd f_vec = VectorXd::Zero(n + 1);
 	int I;
+	int max_index = mesh->get_max_inner_index();
 	SimplexFunction<T> fn_i;
 	while (iter != nullptr) {
 		for (int i = 0; i < Dim + 1; i++) {
 			I = iter->data[i].get_index();
 			fn_i = iter->data.get_function(i);
-			f_vec(I) += pde.f(iter->data, fn_i);
+			if (I <= max_index) {f_vec(I) += pde.f(iter->data, fn_i);}
 		}
 		iter = iter->next;
 	}
 	return f_vec;
 }
 
-/*template <int Dim, typename T>
-SparseMatrix<double> Solver<Dim, T>::get_stiffness_matrix() const {
-	MeshNode <Element<Dim, Dim+1, T> >* iter = mesh.get_top_mesh_node();
-	std::vector<Tri> tripletList;
-	tripletList.reserve((2 * dimensions.rows() + 1)*all_dims);
-	while (iter->next != nullptr) {
-
-		
-		tripletList.push_back(Tri(n, n, 2 * h_factor));
+template <int Dim, typename T>
+VectorXd Solver<Dim, T>::get_boundary_coeffs() {
+	MeshNode <Element<Dim, Dim + 1, T> >* iter = mesh->get_top_mesh_node();
+	int sz = mesh->get_max_outer_index() - mesh->get_max_inner_index();
+	int min_I = mesh->get_max_inner_index() + 1;
+	VectorXd coeffs(sz);
+	int I;
+	T loc;
+	while (iter != nullptr) {
+		for (int i = 0; i < Dim + 1; i++) {
+			I = iter->data[i].get_index();
+			loc = iter->data[i].get_location();
+			if (boundaries.cond(loc)) {
+				coeffs(I - min_I) = boundaries.val(loc);
+			}
+		}
+		iter = iter->next;
 	}
-	SparseMatrix<double> stiffness(all_dims, all_dims);
-	stiffness.setFromTriplets(tripletList.begin(), tripletList.end());
-	return stiffness;
-}*/
+	return coeffs;
+}
 
 template <int Dim, typename T>
 VectorXd Solver<Dim, T>::solve() {
-	MatrixXd stiffness = get_stiffness_matrix(max_index);
-	VectorXd f_vec = get_vector_part();
-	cout << "Showing stiffness matrix!" << endl;
-	cout << stiffness << endl;
-	//cout << f_vec << endl;
-	return stiffness.inverse()*f_vec;
+	int sol_size = mesh->get_max_outer_index() + 1;
+	int inner_nodes = mesh->get_max_inner_index() + 1;
+	MatrixXd total_stiffness = get_stiffness_matrix(mesh->get_max_outer_index());
+	MatrixXd stiffness = get_inner_stiffness_matrix(total_stiffness);
+	VectorXd f_vec = get_f_vec(mesh->get_max_inner_index());
+
+	MatrixXd bound_mat = get_boundary_matrix(total_stiffness);
+	VectorXd bound_coeffs = get_boundary_coeffs();
+	VectorXd b_vec = bound_mat * bound_coeffs;
+
+	VectorXd inner_coeffs = stiffness.inverse()*(f_vec-b_vec);
+	VectorXd sol(sol_size);
+	sol.head(inner_nodes) = inner_coeffs;
+	sol.tail(sol_size - inner_nodes) = bound_coeffs;
+	return sol;
 }
 
 template <int Dim, typename T>

@@ -1,14 +1,29 @@
 #include "../include/point.h"
 #include "../include/node.h"
 #include "../include/element.h"
-#include <math.h>
-#include <array>
-#include <map>
-#include <memory>
-//#include <vector>
 
 using namespace std;
 using namespace Eigen;
+
+//N-dim box's boundary
+bool bound_cond(VectorXd coords) {
+	for (int i = 0; i < coords.size(); i++) {
+		if ((coords[i] == 0.0) || (coords[i] == 1.0)) { return true; }
+	}
+	return false;
+}
+
+bool bound_cond_large_box(VectorXd coords) {
+	for (int i = 0; i < coords.size(); i++) {
+		if ((coords[i] == 0.0) || (coords[i] == 2.0)) { return true; }
+	}
+	return false;
+}
+
+double bound_val(VectorXd coords) {
+	if (coords[0] == 1.0) { return 1; }
+	return 0;
+}
 
 
 #define CATCH_CONFIG_MAIN  // This tells Catch to provide a main()
@@ -42,17 +57,17 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D do
 	
     Element <2, 3, VectorXd> element(nodes, funcs);
 
+	BoundaryConditions<VectorXd> boundaries;
+	boundaries.cond = bound_cond_large_box;//omega = [0,2]^2
+	boundaries.val = bound_val;
 	
+
+
     SECTION( "Test default constructor()" ){
         Element <2, 3, VectorXd> empty_element;
 		vector<Node <2, VectorXd> *> empty_nodes = empty_element.get_nodes();
 		REQUIRE(empty_nodes[2] == nullptr);
-        /*REQUIRE( empty_element[0].get_shared_elements() == 0 );
-        REQUIRE( empty_element[0].get_index() == -1 );
-        REQUIRE( empty_element[2].get_shared_elements() == 0 );
-        REQUIRE( empty_element[2].get_index() == -1 );
-		cout << element[0].how_many() << endl;
-		REQUIRE(element[0].how_many() == 9);*/
+		REQUIRE(empty_nodes.size() == 3);
     }
 	
 	SECTION("Test get_nodes") {
@@ -69,12 +84,12 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D do
         REQUIRE( element[0].get_location() != nodes[1]->get_location() );
     }
 
-    /*SECTION( "Test show()" ){
+    SECTION( "Test show()" ){
         cout << "showing element[0]" << endl;
         element[0].show();
         cout << "showing node1" << endl;
         nodes[0]->show();
-    }*/
+    }
 
     SECTION( "Test copy constructor" ){
         Element <2, 3, VectorXd> copyed_element(element);
@@ -96,6 +111,21 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D do
         REQUIRE( 35 == element[0].get_index() );
         REQUIRE( 36 == element[1].get_index() );
     }
+
+	SECTION("Test set_all_indices_to") {
+		element.set_all_indices_to(-3);
+		REQUIRE(element[2].get_index() == -3);
+		REQUIRE(element[0].get_index() == -3);
+		REQUIRE(element[1].get_index() == -3);
+	}
+
+	SECTION("Test set_inner_indices") {
+		element.set_all_indices_to(-1);
+		REQUIRE(element.set_inner_node_indices(-1, boundaries) == 0);
+		REQUIRE(element[2].get_index() == 0);
+		REQUIRE(element[0].get_index() == -1);
+		REQUIRE(element[1].get_index() == -1);
+	}
 
     SECTION( "Test get_function(int)" ){
         SimplexFunction<VectorXd> first_fn = element.get_function(0);
@@ -159,16 +189,6 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D do
 		//REQUIRE(midnodes[0].first[1] == 1);
 	}
 
-	SECTION("Test vector of elements") {
-		Element <2, 3, VectorXd> e1(nodes, funcs);
-		Element <2, 3, VectorXd> e2(nodes, funcs);
-		vector < Element <2, 3, VectorXd> > els;
-		els.push_back(e1);
-		els.push_back(e2);
-		els[0].show();
-	}
-	 
-	
 	SECTION("Test map of nodes") {
 		vector <pair <int[2], VectorXd> > m_points = element.get_midpoints();
 		vector< Node<2, VectorXd> * > m_nodes = element.get_midpoint_nodes();
@@ -182,9 +202,6 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D do
 	}
 	
 }
-
-
-
 
 
 TEST_CASE( "Test Element template containing Node template initiated with 2-D Point <2 ,double> template objects" ) {
@@ -208,6 +225,7 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D Po
     coeff << 0,1,0;
     fns[2].coeff = coeff;
     Element <2, 3, Point <2 ,double> > el(node_vec, fns);
+	VolumeCalculator <2, Point <2, double> > volume_calculator;
 
 	map< array<int, 2>, int> MIDPOINTS_MAP;
 	for (int i = 0; i < 3; i++) {
@@ -232,8 +250,13 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D Po
         node_vec[0]->show();
     }
 
+	SECTION("Test get_squared_dist_mat()") {
+		MatrixXd D = volume_calculator.get_distance_squared_matrix(el.get_nodes());
+		cout << D << endl;
+	}
+
     SECTION( "Test get_simplex_matrix(T &el)" ){
-        Matrix<double, 2, 2> s_mat = el.get_simplex_matrix(el);
+        Matrix<double, 2, 2> s_mat = volume_calculator.get_simplex_matrix(el.get_nodes());
         REQUIRE( s_mat == MatrixXd::Identity(2,2) );
     }
 

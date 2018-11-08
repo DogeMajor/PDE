@@ -1,6 +1,6 @@
-#include "../include/element.h"
-#include "../include/point.h"
-#include "../include/HelpfulTools.h"
+#include "../include/ElementFactory.h"
+//#include "../include/point.h"
+//#include "../include/HelpfulTools.h"
 
 using namespace std;
 

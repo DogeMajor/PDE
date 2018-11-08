@@ -46,4 +46,15 @@ struct BilinearFunction{
         }
 };
 
+
+template <typename T>
+struct BoundaryConditions {
+	typedef bool(*ConditionFn)(T x);
+	typedef double(*ValueFn)(T x);
+	typedef T (*NormalFn)(T x);
+	ConditionFn cond;
+	ValueFn val;
+	NormalFn normal;
+};
+
 #endif

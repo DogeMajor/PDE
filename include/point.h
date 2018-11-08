@@ -9,14 +9,12 @@ public:
     Point();
     Point(vector <T> &val);
     Point(const Point & p);
-    int get_dimension() const;
 	const int size() const { return value.size(); }
     vector <T> get_value() const;
     bool operator==(const Point &p) const;
     bool operator!=(const Point &p) const;
     Point <Dim,T>& operator=(const Point &p);
     const T& operator[](int i) const;
-	const T& operator()(int i) const;
 	friend const Point<Dim,T> operator+(const Point<Dim,T> &p, const Point<Dim,T> &q) {
 		vector<T> loc(p.value.size());
 		for (int i = 0; i < p.value.size(); i++) {loc[i] = p.value[i] + q.value[i];}
@@ -43,9 +41,7 @@ private:
 
 
 template <int Dim, typename T>
-Point<Dim,T>::Point() : value(Dim, 0) {
-    //value = {0};
-}
+Point<Dim,T>::Point() : value(Dim, 0) {}
 
 template <int Dim, typename T>
 Point<Dim,T>::Point(vector <T> &val){
@@ -55,11 +51,6 @@ Point<Dim,T>::Point(vector <T> &val){
 template <int Dim, typename T>
 Point<Dim,T>::Point(const Point &p){
     value = p.value;
-}
-
-template <int Dim, typename T>
-int Point<Dim,T>::get_dimension() const{
-    return value.size();
 }
 
 template <int Dim, typename T>
@@ -79,21 +70,13 @@ bool Point<Dim,T>::operator!=(const Point &p) const{
 
 template <int Dim, typename T>
 Point <Dim,T>& Point<Dim,T>::operator=(const Point &p){
-    if(p!=*this){
-        //value.resize(p.size());
-        value = p.value;
-    }
+    if(p!=*this){value = p.value;}
     return *this;
 }
 
 template <int Dim, typename T>
 const T& Point<Dim,T>::operator[](int i) const{
     return value[i];
-}
-
-template <int Dim, typename T>
-const T& Point<Dim, T>::operator()(int i) const {
-	return value[i];
 }
 
 template <int Dim, typename T>

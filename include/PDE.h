@@ -7,19 +7,13 @@
 #include "mesh.h"
 
 #include "../C++ libs/eigen/Eigen/IterativeLinearSolvers"
-#include "Function.h"
+//#include "Function.h"
 
 using namespace std;
 using namespace Eigen;
 
 typedef double (* Function)(VectorXd x);
-typedef bool (*BoundaryCondition)(VectorXd x);
 typedef Eigen::Triplet<double> Tri;
-
-struct BoundaryConditions {
-	BoundaryCondition condition;
-	Function value;
-};
 
 
 template <int Dim, typename T>
@@ -31,6 +25,7 @@ public:
 	const BilinearFunction & get_bilinear_func() const { return A_kernel; }
     const double A(Element<Dim, Dim+1,T> el, SimplexFunction<T> a, SimplexFunction<T> b) const;//Integrates A_kernel*a*b over Element simplex
     double f(Element<Dim, Dim+1, T> &el, SimplexFunction<T> a) const;//Integrates f_kernel*a over Element simplex
+	double b(Element<Dim, Dim + 1, T> &el, SimplexFunction<T> a, SimplexFunction<T> b, BoundaryConditions<T> boundaries) const;//Surface integral of phi_i * grad(boundary_fn) on element's edge
 	VectorXd to_VectorXd(T &location) const;
 	PDE<Dim, T>& operator=(const PDE<Dim, T> &p);
 	//void show() const;
@@ -38,12 +33,15 @@ public:
  private:
      BilinearFunction A_kernel;
      Function f_kernel;
+	 VolumeCalculator<Dim, T> volume_calculator;
      //vector <double> boundary_conds;
 
 };
 
 template <int Dim, typename T>
-PDE<Dim, T>::PDE() {}
+PDE<Dim, T>::PDE() {
+	volume_calculator = VolumeCalculator<Dim, T>();
+}
 
 template <int Dim, typename T>
 const double PDE<Dim, T>::A(Element<Dim, Dim+1, T> el, SimplexFunction<T> a, SimplexFunction<T> b) const{
@@ -68,6 +66,21 @@ double PDE<Dim, T>::f(Element<Dim, Dim+1, T> &el, SimplexFunction<T> a) const{
     }
     avg_location = (1.0/double(Dim+1))*avg_location;
     return f_kernel(to_VectorXd(avg_location))*a(avg_location)*el.get_volume();
+}
+
+template <int Dim, typename T>//Assumption: Element has nodes at the boundary!!
+double PDE<Dim, T>::b(Element<Dim, Dim + 1, T> &el, SimplexFunction<T> a, SimplexFunction<T> b, BoundaryConditions<T> boundaries) const {
+	cout << "To be coded" << endl;
+	vector <Node<Dim, T>* > old_nodes = el.get_nodes();
+	vector <Node<Dim, T>* > surface_nodes;
+	T avg_loc;
+	for (int i = 0; i < old_nodes.size(); i++) {
+		if (boundaries.cond(old_nodes[i]->get_location())) {
+			surface_nodes.push_back(old_nodes[i]);
+		}
+	}
+
+	double vol = volume_calculator.get_dist_volume(old_nodes);
 }
 
 template <int Dim, typename T>
