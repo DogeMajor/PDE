@@ -24,23 +24,15 @@ public:
 	~Solver() {}
 	void set_pde(PDE<Dim, T> p) { pde = p; }
 	void set_mesh(Mesh<Dim, Dim + 1, T> *m) { mesh = m; mesh->reset_indices();}
-	bool is_at_boundary(VectorXd coords) { return boundaries.cond(coords); }
-	double value_at_boundary(VectorXd coords) { return boundaries.val(coords); }
-	//void build_mesh();
 	MatrixXd get_stiffness_matrix(int n) const;
-	MatrixXd get_inner_stiffness_matrix(int n) const;
-	MatrixXd get_boundary_matrix(MatrixXd stiffness) const;
-	VectorXd get_vector_part(int n) const;
-	VectorXd get_inner_vector_part(int n) const;
-	VectorXd set_boundary_vals(VectorXd &sol);
+	MatrixXd get_inner_stiffness_matrix(MatrixXd stiffness);
+	MatrixXd get_boundary_matrix(MatrixXd stiffness);
+	VectorXd get_f_vec(int n) const;
 	VectorXd get_boundary_coeffs();
-	//SparseMatrix<double> get_stiffness_matrix() const;
 	void refine() { mesh->refine(); mesh->reset_indices(boundaries); }
 	VectorXd solve();
 	MatrixXd get_solution_values(VectorXd solution);//In the same order as indexing of nodes
-
 	Mesh<Dim, Dim + 1, T> get_mesh() { return *mesh; }
-
 	void show() const;
 
 private:
@@ -84,24 +76,20 @@ MatrixXd Solver<Dim, T>::get_stiffness_matrix(int n) const {
 }
 
 template <int Dim, typename T>
-VectorXd Solver<Dim, T>::get_vector_part(int n) const {
-	MeshNode <Element<Dim, Dim + 1, T> >* iter = mesh->get_top_mesh_node();
-	VectorXd f_vec = VectorXd::Zero(n + 1);
-	int I;
-	SimplexFunction<T> fn_i;
-	while (iter != nullptr) {
-		for (int i = 0; i < Dim + 1; i++) {
-			I = iter->data[i].get_index();
-			fn_i = iter->data.get_function(i);
-			f_vec(I) += pde.f(iter->data, fn_i);
-		}
-		iter = iter->next;
-	}
-	return f_vec;
+MatrixXd Solver<Dim, T>::get_inner_stiffness_matrix(MatrixXd stiffness) {
+	int sz = mesh->get_max_inner_index() + 1;
+	return stiffness.block(0, 0, sz, sz);
 }
 
 template <int Dim, typename T>
-VectorXd Solver<Dim, T>::get_inner_vector_part(int n) const {
+MatrixXd Solver<Dim, T>::get_boundary_matrix(MatrixXd stiffness) {
+	int rows = mesh->get_max_inner_index() + 1;
+	int cols = mesh->get_max_outer_index() - mesh->get_max_inner_index();
+	return stiffness.block(0, rows, rows, cols);
+}
+
+template <int Dim, typename T>
+VectorXd Solver<Dim, T>::get_f_vec(int n) const {
 	MeshNode <Element<Dim, Dim + 1, T> >* iter = mesh->get_top_mesh_node();
 	VectorXd f_vec = VectorXd::Zero(n + 1);
 	int I;
@@ -116,24 +104,6 @@ VectorXd Solver<Dim, T>::get_inner_vector_part(int n) const {
 		iter = iter->next;
 	}
 	return f_vec;
-}
-
-template <int Dim, typename T>
-VectorXd Solver<Dim, T>::set_boundary_vals(VectorXd &sol) {
-	MeshNode <Element<Dim, Dim + 1, T> >* iter = mesh->get_top_mesh_node();
-	int I;
-	T loc;
-	while (iter != nullptr) {
-		for (int i = 0; i < Dim + 1; i++) {
-			I = iter->data[i].get_index();
-			loc = iter->data[i].get_location();
-			if (boundaries.cond(loc)) {
-				sol(I) = boundaries.val(loc);
-			}
-		}
-		iter = iter->next;
-	}
-	return sol;
 }
 
 template <int Dim, typename T>
@@ -158,52 +128,22 @@ VectorXd Solver<Dim, T>::get_boundary_coeffs() {
 }
 
 template <int Dim, typename T>
-MatrixXd Solver<Dim, T>::get_inner_stiffness_matrix(int n) const {//The rigth one!!!
-	MeshNode <Element<Dim, Dim + 1, T> >* iter = mesh->get_top_mesh_node();
-	MatrixXd stiffness = MatrixXd::Zero(n + 1, n + 1);
-	int I, J;
-	T loc_i, loc_j;
-	SimplexFunction<T> fn_i, fn_j;
-	int max_index = mesh->get_max_inner_index();
-	while (iter != nullptr) {
-		for (int i = 0; i < Dim + 1; i++) {
-			I = iter->data[i].get_index();
-			fn_i = iter->data.get_function(i);
-			loc_i = iter->data[i].get_location();
-			for (int j = i; j < Dim + 1; j++) {
-				fn_j = iter->data.get_function(j);
-				J = iter->data[j].get_index();
-				loc_j = iter->data[j].get_location();
-				if ((I <= max_index) && (J <= max_index)) {
-					stiffness(I, J) += pde.A(iter->data, fn_i, fn_j);
-				}
-			}
-		}
-		iter = iter->next;
-	}
-	return stiffness;
-}
-
-template <int Dim, typename T>
-MatrixXd Solver<Dim, T>::get_boundary_matrix(MatrixXd stiffness) const {
-	int rows = mesh->get_max_inner_index() + 1;
-	int cols = mesh->get_max_outer_index() - mesh->get_max_inner_index();
-	return stiffness.block(0, rows, rows, cols);
-}
-
-template <int Dim, typename T>
 VectorXd Solver<Dim, T>::solve() {
-	//MatrixXd stiffness = get_stiffness_matrix(mesh->get_max_outer_index());
 	int sol_size = mesh->get_max_outer_index() + 1;
 	int inner_nodes = mesh->get_max_inner_index() + 1;
-	MatrixXd stiffness = get_inner_stiffness_matrix(mesh->get_max_inner_index());
-	VectorXd f_vec = get_inner_vector_part(mesh->get_max_inner_index());
-	VectorXd inner_coeffs = stiffness.inverse()*f_vec;
+	MatrixXd total_stiffness = get_stiffness_matrix(mesh->get_max_outer_index());
+	MatrixXd stiffness = get_inner_stiffness_matrix(total_stiffness);
+	VectorXd f_vec = get_f_vec(mesh->get_max_inner_index());
+
+	MatrixXd bound_mat = get_boundary_matrix(total_stiffness);
+	VectorXd bound_coeffs = get_boundary_coeffs();
+	VectorXd b_vec = bound_mat * bound_coeffs;
+
+	VectorXd inner_coeffs = stiffness.inverse()*(f_vec-b_vec);
 	VectorXd sol(sol_size);
 	sol.head(inner_nodes) = inner_coeffs;
-	sol = set_boundary_vals(sol);
+	sol.tail(sol_size - inner_nodes) = bound_coeffs;
 	return sol;
-	//return stiffness.inverse()*f_vec;
 }
 
 template <int Dim, typename T>
