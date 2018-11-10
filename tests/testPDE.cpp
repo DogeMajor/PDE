@@ -8,8 +8,17 @@
 using namespace std;
 using namespace Eigen;
 
+double PI = 3.14159;
 double f_kern(VectorXd coords){
     return coords.transpose()*coords;
+}
+
+double f_kern_sin(VectorXd coords) {//Particle in a N-Dim box...
+	double result = sin(coords[0] * PI);
+	for (int i = 1; i < coords.rows(); i++) {
+		result *= sin(coords[i] * PI);
+	}
+	return result;
 }
 
 //N-dim box's boundary
@@ -70,10 +79,23 @@ TEST_CASE( "Test PDE" ) {
 
     BilinearFunction bl_fn;
     bl_fn.mat = MatrixXd::Identity(2,2);
-    PDE<2, VectorXd>  pde(bl_fn, f_kern);
+    PDE<2, VectorXd>  pde(bl_fn, f_kern_sin);
 
 	BoundaryConditions<VectorXd> boundaries = {bound_cond, bound_val, bound_normal };
 	
+	srand(time(NULL));
+
+	SECTION("Random_prob funtions should work") {
+		for (int i = 0; i < 30; i++) {
+			cout << random_prob() << endl;
+		}
+		vector<double> coeffs = get_convex_coeffs(5);
+		cout << "sum" << sum(coeffs) << endl;
+		show_vector<vector<double> >(coeffs);
+		vector<double> items = randomize_items(coeffs);
+		cout << "Rand" << endl;
+		show_vector<vector<double> >(items);
+	}
 
 	SECTION("BoundaryConditions for 2-D box should work") {
 		PDE<2, VectorXd>  new_pde(BilinearFunction bl_fn, Function f_kernel);
@@ -101,7 +123,33 @@ TEST_CASE( "Test PDE" ) {
 	SECTION("Test f(.,.)") {
 		//cout << pde.f(element, funcs[0]) << endl;
 		//cout << pde.f(element, funcs[1]) << endl;
+
 		cout << pde.f(element, funcs[2]) << endl;
+
+	}
+
+	SECTION("Getting random location should succeed") {
+		VectorXd rand_loc = pde.get_random_location(element);
+		cout << rand_loc << endl;
+		for (int i = 0; i > rand_loc.size(); i++) {
+			REQUIRE(rand_loc[i] <= 1);
+			REQUIRE(rand_loc[i] >= 0);
+		}
+		
+	}
+
+	SECTION("Test f_monte_carlo(.,.)") {//More accurate integration!!
+		//cout << pde.f(element, funcs[0]) << endl;
+		//cout << pde.f(element, funcs[1]) << endl;
+		element.show();
+		cout << funcs[2].coeff << endl;
+		cout << "Monte carlo intergals" << endl;
+		//cout << pde.f_monte_carlo(element, funcs[2], 20) << endl;
+		REQUIRE(pde.f_monte_carlo(element, funcs[2], 20) < 0.08);
+		//cout << pde.f_monte_carlo(element, funcs[2], 30) << endl;
+		cout << pde.f_monte_carlo(element, funcs[2], 300) << endl;
+		//cout << pde.f_monte_carlo(element, funcs[2], 1000) << endl;
+		//cout << pde.f_monte_carlo(element, funcs[2], 5000) << endl;
 
 	}
 

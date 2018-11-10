@@ -51,6 +51,8 @@ public:
 	vector <Node <Dim, T>* >  get_midpoint_nodes();
 	vector <Node <Dim, T>* >  get_midpoint_nodes(map<array<int, 2>, T> m_points_map);
     double get_volume() const;
+	T get_avg_location();
+	int nodes_size() const { return nodes.size(); }
     void show() const;
 
 private:
@@ -268,6 +270,15 @@ vector <Node <Dim, T>* >  Element<Dim, N, T>::get_midpoint_nodes(map<array<int, 
 		midpoint_nodes.push_back(new Node<Dim, T>(loc));
 	}
 	return midpoint_nodes;
+}
+
+template <int Dim, int N, typename T>
+T Element<Dim, N, T>::get_avg_location() {
+	T loc = nodes[0]->get_location();
+	for (int i = 1; i < N; i++) {
+		loc = loc + nodes[i]->get_location();
+	}
+	return (1 / double(N))*loc;
 }
 
 template <int Dim, int N, typename T>

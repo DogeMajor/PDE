@@ -24,6 +24,18 @@ void show_map(map< array<int, 2>, int> &m){
 	}
 }
 
+void show_map(map< array<int, 2>, double> &m) {
+	for (map< array<int, 2>, double>::const_iterator iter = m.begin(); iter != m.end(); iter++) {
+		cout << "Key: " << iter->first[0] << ", " << iter->first[1] << endl << "Value:" << endl;
+		cout << iter->second << endl;
+	}
+}
+
+template <typename T>
+void show_vector(T vec) {
+	for (int i = 0; i < vec.size(); i++) { cout << vec[i] <<" "; }
+	cout << endl;
+}
 
 template <int Dim, typename T>
 double dist_squared(const T &a, const T &b){

@@ -5,6 +5,7 @@
 #include "mesh.h"
 #include <math.h>
 
+#include "../C++ libs/eigen/Eigen/Sparse"
 #include "../C++ libs/eigen/Eigen/IterativeLinearSolvers"
 
 
@@ -12,7 +13,7 @@ using namespace std;
 using namespace Eigen;
 
 //typedef double(*Function)(VectorXd x);
-typedef Eigen::Triplet<double> Tri;
+//typedef Eigen::Triplet<double> Tri;
 
 
 template <int Dim, typename T>
@@ -24,8 +25,11 @@ public:
 	~Solver() {}
 	void set_pde(PDE<Dim, T> p) { pde = p; }
 	void set_mesh(Mesh<Dim, Dim + 1, T> *m) { mesh = m; mesh->reset_indices();}
+	map<array<int, 2>, double> get_sparse_stiffness_map() const;
+	SparseMatrix<double> get_sparse_stiffness_matrix(int n) const;
 	MatrixXd get_stiffness_matrix(int n) const;
 	MatrixXd get_inner_stiffness_matrix(MatrixXd stiffness);
+	SparseMatrix<double> get_sparse_inner_stiffness_matrix(map<array<int, 2>, double> stiffness_map);
 	MatrixXd get_boundary_matrix(MatrixXd stiffness);
 	VectorXd get_f_vec(int n) const;
 	VectorXd get_boundary_coeffs();
@@ -53,6 +57,43 @@ Solver<Dim, T>::Solver(PDE<Dim, T> p, Mesh<Dim, Dim + 1, T> *m, BoundaryConditio
 	boundaries = b;
 	mesh->reset_indices(boundaries);
 }
+
+
+template <int Dim, typename T>
+map<array<int, 2>, double> Solver<Dim, T>::get_sparse_stiffness_map() const{
+	MeshNode <Element<Dim, Dim + 1, T> >* iter = mesh->get_top_mesh_node();
+	map<array<int, 2>, double> stiffness_map;
+	int I, J;
+	SimplexFunction<T> fn_i, fn_j;
+	while (iter != nullptr) {
+		for (int i = 0; i < Dim + 1; i++) {
+			I = iter->data[i].get_index();
+			fn_i = iter->data.get_function(i);
+			for (int j = i; j < Dim + 1; j++) {
+				fn_j = iter->data.get_function(j);
+				J = iter->data[j].get_index();
+				stiffness_map[{I, J}] += pde.A(iter->data, fn_i, fn_j);
+			}
+		}
+		iter = iter->next;
+	}
+	return stiffness_map;
+}
+
+template <int Dim, typename T>
+SparseMatrix<double> Solver<Dim, T>::get_sparse_stiffness_matrix(int n) const{
+	
+	map<array<int, 2>, double> stiffness_map = get_sparse_stiffness_map();
+	SparseMatrix<double> stiffness(n + 1, n + 1);
+	stiffness.reserve(VectorXi::Constant(n+1, factorial(n)));
+	typedef map< array<int, 2>, double>::iterator Map_iter;
+	for (Map_iter map_iter = stiffness_map.begin(); map_iter != stiffness_map.end(); map_iter++) {
+		stiffness.coeffRef(map_iter->first[0], map_iter->first[1]) = map_iter->second;
+	}
+	//stiffness.makeCompressed();
+	return stiffness;
+}
+
 
 template <int Dim, typename T>
 MatrixXd Solver<Dim, T>::get_stiffness_matrix(int n) const {
@@ -82,6 +123,20 @@ MatrixXd Solver<Dim, T>::get_inner_stiffness_matrix(MatrixXd stiffness) {
 }
 
 template <int Dim, typename T>
+SparseMatrix<double> Solver<Dim, T>::get_sparse_inner_stiffness_matrix(map<array<int,2>, double> stiffness_map) {
+	int sz = mesh->get_max_inner_index() + 1;
+	SparseMatrix<double> inner_stiffness(sz, sz);
+	inner_stiffness.reserve(VectorXi::Constant(sz, factorial(sz)));
+	typedef map< array<int, 2>, double>::iterator Map_iter;
+	for (Map_iter map_iter = stiffness_map.begin(); map_iter != stiffness_map.end(); map_iter++) {
+		if ((map_iter->first[0] < sz) && (map_iter->first[1] < sz)) {
+			inner_stiffness.coeffRef(map_iter->first[0], map_iter->first[1]) = map_iter->second;
+		}
+	}
+	return inner_stiffness;
+}
+
+template <int Dim, typename T>
 MatrixXd Solver<Dim, T>::get_boundary_matrix(MatrixXd stiffness) {
 	int rows = mesh->get_max_inner_index() + 1;
 	int cols = mesh->get_max_outer_index() - mesh->get_max_inner_index();
@@ -100,6 +155,7 @@ VectorXd Solver<Dim, T>::get_f_vec(int n) const {
 			I = iter->data[i].get_index();
 			fn_i = iter->data.get_function(i);
 			if (I <= max_index) {f_vec(I) += pde.f(iter->data, fn_i);}
+			//if (I <= max_index) { f_vec(I) += pde.f_monte_carlo(iter->data, fn_i); }
 		}
 		iter = iter->next;
 	}
