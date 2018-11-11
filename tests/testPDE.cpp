@@ -144,11 +144,14 @@ TEST_CASE( "Test PDE" ) {
 		element.show();
 		cout << funcs[2].coeff << endl;
 		cout << "Monte carlo intergals" << endl;
-		//cout << pde.f_monte_carlo(element, funcs[2], 20) << endl;
+		cout << pde.f_monte_carlo(element, funcs[2], 10) << endl;
+		cout << pde.f_monte_carlo(element, funcs[2], 20) << endl;
 		REQUIRE(pde.f_monte_carlo(element, funcs[2], 20) < 0.08);
 		//cout << pde.f_monte_carlo(element, funcs[2], 30) << endl;
-		cout << pde.f_monte_carlo(element, funcs[2], 300) << endl;
-		//cout << pde.f_monte_carlo(element, funcs[2], 1000) << endl;
+		cout << pde.f_monte_carlo(element, funcs[2], 50) << endl;
+		cout << pde.f_monte_carlo(element, funcs[2], 100) << endl;
+		cout << pde.f_monte_carlo(element, funcs[2], 600) << endl;
+		//cout << pde.f_monte_carlo(element, funcs[2], 4000) << endl;
 		//cout << pde.f_monte_carlo(element, funcs[2], 5000) << endl;
 
 	}

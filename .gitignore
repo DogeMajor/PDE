@@ -40,3 +40,6 @@ PDE
 *.exe
 *.out
 *.app
+
+# Execution results
+*.txt

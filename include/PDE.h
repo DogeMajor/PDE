@@ -10,6 +10,12 @@
 #include "mesh.h"
 
 #include "../C++ libs/eigen/Eigen/IterativeLinearSolvers"
+
+//#include <boost/random/variate_generator.hpp>
+//#include <boost/random/mersenne_twister.hpp>
+#include <../C++ libs/boost_1_67_0/boost/random/normal_distribution.hpp>
+#include <../C++ libs/boost_1_67_0/boost/random.hpp>
+
 //#include "Function.h"
 
 using namespace std;
@@ -57,6 +63,22 @@ double sum(vector<double> x) {
 	for (int i = 0; i < x.size(); i++) {sum += x[i];}
 	return sum;
 }
+//using namespace boost;
+double just_a_test() {
+	
+	boost::mt19937 rng; // I don't seed it on purpouse (it's not relevant)
+
+	boost::normal_distribution<> nd(0.0, 1.0);
+
+	boost::variate_generator<boost::mt19937&,
+	boost::normal_distribution<> > var_nor(rng, nd);
+
+	int i = 0; for (; i < 10; ++i){
+		double d = var_nor();
+		std::cout << d << std::endl;
+	}
+	return var_nor();
+}
 
 template <int Dim, typename T>
 class PDE{
@@ -68,7 +90,7 @@ public:
     const double A(Element<Dim, Dim+1,T> el, SimplexFunction<T> a, SimplexFunction<T> b) const;//Integrates A_kernel*a*b over Element simplex
     double f(Element<Dim, Dim+1, T> &el, SimplexFunction<T> a) const;//Integrates f_kernel*a over Element simplex
 	T get_random_location(Element<Dim, Dim + 1, T> &el) const;
-	double f_monte_carlo(Element<Dim, Dim + 1, T> &el, SimplexFunction<T> a, int n=10) const;//Integrates f_kernel*a over Element simplex
+	double f_monte_carlo(Element<Dim, Dim + 1, T> &el, SimplexFunction<T> a, int n=20) const;//Integrates f_kernel*a over Element simplex
 
 	double b(Element<Dim, Dim + 1, T> &el, SimplexFunction<T> a, SimplexFunction<T> b, BoundaryConditions<T> boundaries) const;//Surface integral of phi_i * grad(boundary_fn) on element's edge
 	VectorXd to_VectorXd(T &location) const;

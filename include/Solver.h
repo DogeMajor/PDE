@@ -30,11 +30,13 @@ public:
 	MatrixXd get_stiffness_matrix(int n) const;
 	MatrixXd get_inner_stiffness_matrix(MatrixXd stiffness);
 	SparseMatrix<double> get_sparse_inner_stiffness_matrix(map<array<int, 2>, double> stiffness_map);
+	SparseMatrix<double> get_sparse_boundary_matrix(map<array<int, 2>, double> stiffness_map);
 	MatrixXd get_boundary_matrix(MatrixXd stiffness);
 	VectorXd get_f_vec(int n) const;
 	VectorXd get_boundary_coeffs();
 	void refine() { mesh->refine(); mesh->reset_indices(boundaries); }
 	VectorXd solve();
+	VectorXd vana_hea_solve();
 	MatrixXd get_solution_values(VectorXd solution);//In the same order as indexing of nodes
 	Mesh<Dim, Dim + 1, T> get_mesh() { return *mesh; }
 	void show() const;
@@ -144,6 +146,21 @@ MatrixXd Solver<Dim, T>::get_boundary_matrix(MatrixXd stiffness) {
 }
 
 template <int Dim, typename T>
+SparseMatrix<double> Solver<Dim, T>::get_sparse_boundary_matrix(map<array<int, 2>, double> stiffness_map) {
+	int max_inner = mesh->get_max_inner_index() + 1;
+	int max_outer = mesh->get_max_outer_index() + 1;
+	SparseMatrix<double> bound_mat(max_inner, max_outer - max_inner);
+	bound_mat.reserve(max_inner* factorial(Dim+1));
+	typedef map< array<int, 2>, double>::iterator Map_iter;
+	for (Map_iter map_iter = stiffness_map.begin(); map_iter != stiffness_map.end(); map_iter++) {
+		if ((map_iter->first[1] >= max_inner) && (map_iter->first[0] < max_inner)) {
+			bound_mat.coeffRef(map_iter->first[0], map_iter->first[1] - max_inner) = map_iter->second;
+		}
+	}
+	return bound_mat;
+}
+
+template <int Dim, typename T>
 VectorXd Solver<Dim, T>::get_f_vec(int n) const {
 	MeshNode <Element<Dim, Dim + 1, T> >* iter = mesh->get_top_mesh_node();
 	VectorXd f_vec = VectorXd::Zero(n + 1);
@@ -155,7 +172,7 @@ VectorXd Solver<Dim, T>::get_f_vec(int n) const {
 			I = iter->data[i].get_index();
 			fn_i = iter->data.get_function(i);
 			if (I <= max_index) {f_vec(I) += pde.f(iter->data, fn_i);}
-			//if (I <= max_index) { f_vec(I) += pde.f_monte_carlo(iter->data, fn_i); }
+			//if (I <= max_index) { f_vec(I) += pde.f_monte_carlo(iter->data, fn_i, 10); }
 		}
 		iter = iter->next;
 	}
@@ -185,6 +202,35 @@ VectorXd Solver<Dim, T>::get_boundary_coeffs() {
 
 template <int Dim, typename T>
 VectorXd Solver<Dim, T>::solve() {
+	int inner_size = mesh->get_max_inner_index() + 1;
+	int outer_size = mesh->get_max_outer_index() + 1;
+	map<array<int, 2>, double> stiffness_map = get_sparse_stiffness_map();
+	SparseMatrix<double> stiffness = get_sparse_inner_stiffness_matrix(stiffness_map);
+	VectorXd f_vec = get_f_vec(inner_size - 1);
+	VectorXd bound_coeffs = get_boundary_coeffs();
+	SparseMatrix<double> bound_mat = get_sparse_boundary_matrix(stiffness_map);
+	VectorXd b_vec(inner_size);
+	b_vec = bound_mat.toDense() * bound_coeffs;
+	VectorXd vec = f_vec - b_vec;
+
+	VectorXd inner_coeffs(inner_size);
+
+	/*ConjugateGradient<SparseMatrix<double>, Lower | Upper> cg;
+	cg.compute(stiffness);
+	inner_coeffs = cg.solve(vec);
+	vec = stiffness * inner_coeffs;
+	inner_coeffs = cg.solve(vec);*/
+	inner_coeffs = stiffness.toDense().inverse()*vec;
+	cout << "f_vec" << endl;
+	cout << f_vec << endl;
+	VectorXd coeffs(outer_size);
+	coeffs.head(inner_size) = inner_coeffs;
+	coeffs.tail(outer_size - inner_size) = bound_coeffs;
+	return coeffs;
+}
+
+template <int Dim, typename T>
+VectorXd Solver<Dim, T>::vana_hea_solve() {
 	int sol_size = mesh->get_max_outer_index() + 1;
 	int inner_nodes = mesh->get_max_inner_index() + 1;
 	MatrixXd total_stiffness = get_stiffness_matrix(mesh->get_max_outer_index());
@@ -195,12 +241,15 @@ VectorXd Solver<Dim, T>::solve() {
 	VectorXd bound_coeffs = get_boundary_coeffs();
 	VectorXd b_vec = bound_mat * bound_coeffs;
 
-	VectorXd inner_coeffs = stiffness.inverse()*(f_vec-b_vec);
+	VectorXd inner_coeffs = stiffness.inverse()*(f_vec - b_vec);
+	cout << "inner coeffs" << endl;
+	cout << inner_coeffs << endl;
 	VectorXd sol(sol_size);
 	sol.head(inner_nodes) = inner_coeffs;
 	sol.tail(sol_size - inner_nodes) = bound_coeffs;
 	return sol;
 }
+
 
 template <int Dim, typename T>
 MatrixXd Solver<Dim, T>::get_solution_values(VectorXd solution) {
