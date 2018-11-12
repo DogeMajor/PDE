@@ -218,7 +218,7 @@ TEST_CASE("Test Solver with Point -based Mesh") {
 		//REQUIRE(solver.get_stiffness_matrix(3) == STIFFNESS_MAT);
 		solver2.refine();
 		//solver2.refine();
-		solver2.show();
+		//solver2.show();
 
 		VectorXd refined_sol2 = solver2.solve();
 		VectorXd vana_hea_sol = solver2.vana_hea_solve();
