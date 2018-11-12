@@ -11,6 +11,7 @@
 
 #include <../C++ libs/boost_1_67_0/boost/random.hpp>
 #include <../C++ libs/boost_1_67_0/boost/generator_iterator.hpp>
+//#include <../C++ libs/boost_1_67_0/boost/random/mersenne_twister.hpp>
 //#include <../C++ libs/boost_1_67_0/boost/chrono.hpp>
 #include <chrono>
 
@@ -26,29 +27,41 @@ typedef Eigen::Triplet<double, int> Tri;
 
 typedef boost::mt19937 RNGType;
 
+#include <random>
+
+typedef std::mt19937                     Engine;    // Mersenne Twister
+typedef std::uniform_real_distribution<> Distribution;   // Uniform Distribution
+
+class Generator {
+
+private:
+	Engine eng;
+	Distribution dist;
+
+public:
+	Distribution::result_type gen() { return dist(eng); }
+	Generator() {}
+	Generator(double min, double max, int seed)
+		: dist(min, max)
+	{
+		eng.seed(seed);
+	}
+};
+
+
+
 class Randomizer {
 public:
-	Randomizer(){}
-	Randomizer(RNGType gen);
+	Randomizer(int seed) { generator = Generator(0, 1, seed); }
 	~Randomizer() {}
-	void seed_gen();
-	double random01() {
-		boost::uniform_01<RNGType> dist(generator);
-		return dist();
-	}
-	int random_int(int max) { return int(max*random01()); }
+	double prob() { return generator.gen(); }
+	int random_int(int max) { return int(max*generator.gen()); }
 	vector<double>& randomize_items(vector<double> x);
 	vector<double>& get_convex_coeffs(int dim);
 
 private:
-	RNGType generator;
+	Generator generator;
 };
-
-
-Randomizer::Randomizer(RNGType gen){ generator = gen; }
-void Randomizer::seed_gen() {
-	generator.seed(time(0));
-}
 
 vector<double>& Randomizer::get_convex_coeffs(int dim) {
 	vector <double> coeffs(dim);
@@ -56,7 +69,7 @@ vector<double>& Randomizer::get_convex_coeffs(int dim) {
 	int I;
 	for (int i = 0; i < dim - 1; i++) {
 		I = random_int(i);
-		coeffs[i] = (1 - sum)*random01();
+		coeffs[i] = (1 - sum)*generator.gen();
 		sum += coeffs[i];
 	}
 	coeffs[dim - 1] = 1 - sum;

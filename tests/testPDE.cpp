@@ -91,23 +91,26 @@ TEST_CASE( "Test PDE" ) {
 
 	//srand(time(NULL));
 	//RNGType new_gen(time(0));
-	Randomizer randomizer = Randomizer(new_gen);
+	Randomizer randomizer = Randomizer(seeder.get_nanoseconds());
 	
 	SECTION("Random_prob funtions should work") {
-		
+		Generator rng_gen(0, 1, seeder.get_nanoseconds());
+		//Distribution distr = rng_gen.gen();
 		double result;
 		double avg = 0;
-		for (int i = 0; i < 50; i++) {
+		int max_iter = 30;
+		for (int i = 0; i < max_iter; i++) {
 			//nanoseconds_time();
 			//new_gen.seed(seeder.get_nanoseconds());
 			//result = random01(new_gen);
-			result = randomizer.random01();
+			//result = random01(new_gen);
+			result = randomizer.prob();
 			avg += result;
 			cout  << result << endl;
 		}
-		avg = avg * (1 / double(50));
+		avg = avg * (1 / double(max_iter));
 		cout << "Avg: " << avg << endl;
-		REQUIRE(abs(avg - 0.5) < 0.05);
+		REQUIRE(abs(avg - 0.5) < 0.10);
 		vector<double> coeffs = get_convex_coeffs(new_gen, 5);
 		cout << "sum" << sum(coeffs) << endl;
 		show_vector<vector<double> >(coeffs);
