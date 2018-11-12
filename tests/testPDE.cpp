@@ -83,21 +83,40 @@ TEST_CASE( "Test PDE" ) {
 
 	BoundaryConditions<VectorXd> boundaries = {bound_cond, bound_val, bound_normal };
 	
-	srand(time(NULL));
+	chrono::high_resolution_clock::time_point start_t;
+	Seeder seeder = { start_t };
+	seeder.start_clock();
+	RNGType new_gen(seeder.get_nanoseconds());
+	//new_gen.seed(seeder.get_nanoseconds());
 
+	//srand(time(NULL));
+	//RNGType new_gen(time(0));
+	Randomizer randomizer = Randomizer(new_gen);
+	
 	SECTION("Random_prob funtions should work") {
-		for (int i = 0; i < 30; i++) {
-			cout << random_prob() << endl;
+		
+		double result;
+		double avg = 0;
+		for (int i = 0; i < 50; i++) {
+			//nanoseconds_time();
+			//new_gen.seed(seeder.get_nanoseconds());
+			//result = random01(new_gen);
+			result = randomizer.random01();
+			avg += result;
+			cout  << result << endl;
 		}
-		vector<double> coeffs = get_convex_coeffs(5);
+		avg = avg * (1 / double(50));
+		cout << "Avg: " << avg << endl;
+		REQUIRE(abs(avg - 0.5) < 0.05);
+		vector<double> coeffs = get_convex_coeffs(new_gen, 5);
 		cout << "sum" << sum(coeffs) << endl;
 		show_vector<vector<double> >(coeffs);
-		vector<double> items = randomize_items(coeffs);
+		vector<double> items = randomize_items(new_gen, coeffs);
 		cout << "Rand" << endl;
 		show_vector<vector<double> >(items);
 	}
 
-	SECTION("BoundaryConditions for 2-D box should work") {
+	/*SECTION("BoundaryConditions for 2-D box should work") {
 		PDE<2, VectorXd>  new_pde(BilinearFunction bl_fn, Function f_kernel);
 	}
 
@@ -159,5 +178,5 @@ TEST_CASE( "Test PDE" ) {
 
     SECTION( "Test inner product with f" ){
         REQUIRE( limit_decimals(pde.f(element, funcs[0]),7) == 0.0925925 );
-    }
+    }*/
 }
