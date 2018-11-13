@@ -29,9 +29,9 @@ public:
 	Mesh();
 	Mesh(Element<Dim, N, T> &t);
 	~Mesh();
-	bool push(Element<Dim, N, T> &t);//To the top  OK
+	bool push(Element<Dim, N, T> &t);//To the top
 	bool push(MeshNode<Element<Dim, N, T> > *previous, Element<Dim, N, T> &t);//Adds efter the previous element!
-	bool pop();//From the top  OK
+	bool pop();//From the top
 	bool pop(MeshNode<Element<Dim, N, T> > *previous);//Deletes the next element!!!
 	int how_many() const;// { return objects_alive; }
 	int how_many_nodes() const;
@@ -172,21 +172,13 @@ void Mesh<Dim, N, T>::refine() {
 			push(previous, *new_els[i]);
 			previous = previous->next;
 		}
-		pop(before_original_node);
-
-		cout << "Amount of nodes after refining one element: " << new_els[0]->how_many() << endl;
-		
+		pop(before_original_node);		
 		before_original_node = previous;
 		original_node = previous->next;
 		previous = previous->next;
 	}
 	map< array<int, 2>, Node<Dim, T>* >::iterator map_iter = commons.begin();
 	commons.erase(map_iter, commons.end());
-	cout << "length of commons: " << commons.size() << endl;
-	//before_original_node = nullptr;
-	//original_node = nullptr;
-	//previous = nullptr;
-	//reset_indices();
 }
 
 template <int Dim, int N, typename T>
@@ -210,17 +202,10 @@ int Mesh<Dim, N, T>::set_outer_indices(int index, BoundaryConditions<T> boundari
 	return index;
 }
 
-
 template <int Dim, int N, typename T>
 void Mesh<Dim, N, T>::reset_indices(BoundaryConditions<T> boundaries) {
 	max_inner_index = set_inner_and_init_outer_indices(max_inner_index, boundaries);
 	max_outer_index = set_outer_indices(max_inner_index, boundaries);
-	/*MeshNode<Element<Dim, N, T> >* iter = top;
-	while (iter != nullptr) {
-		index = iter->data.set_indices(index);
-		iter = iter->next;
-	}
-	return index;*/
 }
 
 template <int Dim, int N, typename T>

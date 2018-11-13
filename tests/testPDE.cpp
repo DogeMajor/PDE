@@ -8,8 +8,17 @@
 using namespace std;
 using namespace Eigen;
 
+double PI = 3.14159;
 double f_kern(VectorXd coords){
     return coords.transpose()*coords;
+}
+
+double f_kern_sin(VectorXd coords) {//Particle in a N-Dim box...
+	double result = sin(coords[0] * PI);
+	for (int i = 1; i < coords.rows(); i++) {
+		result *= sin(coords[i] * PI);
+	}
+	return result;
 }
 
 //N-dim box's boundary
@@ -42,7 +51,7 @@ VectorXd bound_normal(VectorXd coords) {
 
 
 TEST_CASE( "Test PDE" ) {
-
+	double PRODUCT_F_PHI2 = 0.0759909;
 	VectorXd location(2);
 	location << 0.0, 0.0;
 	Node <2, VectorXd> node1(location);
@@ -70,16 +79,42 @@ TEST_CASE( "Test PDE" ) {
 
     BilinearFunction bl_fn;
     bl_fn.mat = MatrixXd::Identity(2,2);
-    PDE<2, VectorXd>  pde(bl_fn, f_kern);
+    PDE<2, VectorXd>  pde(bl_fn, f_kern_sin);
 
 	BoundaryConditions<VectorXd> boundaries = {bound_cond, bound_val, bound_normal };
+
+	chrono::high_resolution_clock::time_point start_t;
+	Seeder seeder = Seeder();
+
+	Randomizer randomizer = Randomizer(seeder.get_nanoseconds());
 	
+	SECTION("Random_prob funtions should work") {
+		Generator rng_gen(0, 1, seeder.get_nanoseconds());
+		double result;
+		double avg = 0;
+		int max_iter = 30;
+		for (int i = 0; i < max_iter; i++) {
+			result = randomizer.prob();
+			avg += result;
+			cout  << result << endl;
+		}
+		avg = avg * (1 / double(max_iter));
+		cout << "Avg: " << avg << endl;
+		REQUIRE(abs(avg - 0.5) < 0.10);
+		vector<double> coeffs = randomizer.get_convex_coeffs(5);
+		cout << "sum" << sum(coeffs) << endl;
+		REQUIRE(limit_decimals(sum(coeffs), 3) == 1.000);
+		show_vector<vector<double> >(coeffs);
+		vector<double> items = randomizer.randomize_items(coeffs);
+		REQUIRE(limit_decimals(sum(items), 3) == 1.000);
+		show_vector<vector<double> >(items);
+	}
 
 	SECTION("BoundaryConditions for 2-D box should work") {
 		PDE<2, VectorXd>  new_pde(BilinearFunction bl_fn, Function f_kernel);
 	}
 
-    SECTION( "Test constructing PDE" ){
+	SECTION( "Test constructing PDE" ){
 		VectorXd temp(2);
 		temp << 0.5, 0.5;
 		REQUIRE(boundaries.cond(temp)==false);
@@ -89,7 +124,7 @@ TEST_CASE( "Test PDE" ) {
 		REQUIRE(boundaries.val(temp) == 1.0);
     }
 
-    SECTION( "Test inner product A(.,.)" ){
+	SECTION( "Test inner product A(.,.)" ){
         REQUIRE( pde.A(element, funcs[0], funcs[0]) == 0.5 );
         REQUIRE( pde.A(element, funcs[0], funcs[1]) == -0.5 );
         REQUIRE( pde.A(element, funcs[0], funcs[2]) == 0.0 );
@@ -99,14 +134,38 @@ TEST_CASE( "Test PDE" ) {
     }
 
 	SECTION("Test f(.,.)") {
-		//cout << pde.f(element, funcs[0]) << endl;
-		//cout << pde.f(element, funcs[1]) << endl;
-		cout << pde.f(element, funcs[2]) << endl;
+
+		cout <<"result f" << pde.f(element, funcs[2]) << endl;
+		REQUIRE(abs(PRODUCT_F_PHI2 - pde.f(element, funcs[2])) < 0.1);
+
+	}
+
+	SECTION("Getting random location should succeed") {
+		vector<double> probs = randomizer.get_convex_coeffs(2);
+		cout << probs[0] <<", " << probs[1] << endl;
+		VectorXd rand_loc = pde.get_random_location(element, randomizer);
+		cout << rand_loc << endl;
+		for (int i = 0; i > rand_loc.size(); i++) {
+			REQUIRE(rand_loc[i] <= 1);
+			REQUIRE(rand_loc[i] >= 0);
+		}
+		
+	}
+
+	SECTION("Test f_monte_carlo(.,.)") {//More accurate integration!!
+
+		cout << funcs[2].coeff << endl;
+		cout << "Monte carlo intergals" << endl;
+		cout << pde.f_monte_carlo(element, funcs[2], 10) << endl;
+		REQUIRE(pde.f_monte_carlo(element, funcs[2], 20) < 0.08);
+		cout << pde.f_monte_carlo(element, funcs[2], 50) << endl;
+		cout << pde.f_monte_carlo(element, funcs[2], 100) << endl;
+		cout << pde.f_monte_carlo(element, funcs[2], 1000) << endl;
 
 	}
 
 
     SECTION( "Test inner product with f" ){
-        REQUIRE( limit_decimals(pde.f(element, funcs[0]),7) == 0.0925925 );
+        REQUIRE( limit_decimals(pde.f(element, funcs[0]),3) == 0.125 );
     }
 }

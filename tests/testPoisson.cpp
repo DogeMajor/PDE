@@ -35,8 +35,8 @@ double limit_decimals(double number, int decimals){
 TEST_CASE( "Test cutting off decimals off doubles" ) {
         double number = 1.123456;
 
-        REQUIRE( limit_decimals(number, 3) == 1.123d );
-        REQUIRE( limit_decimals(number, 2) == 1.12d );
+        REQUIRE( limit_decimals(number, 3) == 1.123 );
+        REQUIRE( limit_decimals(number, 2) == 1.12 );
 }
 
 
@@ -56,7 +56,7 @@ TEST_CASE( "Poisson: 1-dimensional case" ) {
         //poisson.show();
         Vector solution = poisson.solve();
         REQUIRE( solution.rows() == 5 );
-        REQUIRE ( limit_decimals(solution(1), 4) == 0.3053d );
+        REQUIRE ( limit_decimals(solution(1), 4) == 0.3053 );
         }
 
 
@@ -64,7 +64,7 @@ TEST_CASE( "Poisson: 1-dimensional case" ) {
         Vector derivative = poisson.derivative(zero_vector);
 
         REQUIRE( derivative.rows() == 5 );
-        REQUIRE( limit_decimals(derivative(2), 10) == 0.0d );
+        REQUIRE( limit_decimals(derivative(2), 10) == 0.0 );
 
         Vector u = MatrixXd::Zero(dims(0), 1);
         double change = 0.1;
@@ -73,9 +73,9 @@ TEST_CASE( "Poisson: 1-dimensional case" ) {
             }
         derivative = poisson.derivative(u);
 
-        REQUIRE( limit_decimals(derivative(0), 2) == -0.72d );
+        REQUIRE( limit_decimals(derivative(0), 2) == -0.72 );
         REQUIRE( derivative.rows() == 5 );
-        REQUIRE( limit_decimals(derivative(4), 2) == 12.24d);
+        REQUIRE( limit_decimals(derivative(4), 2) == 12.24);
 
     }
 }
@@ -179,7 +179,7 @@ TEST_CASE( "Poisson: 3-dimensional case" ) {
         //max deriv. for 3-D sin-function should be roughly 59.218
         VectorXd derivative = poisson.derivative(zero_vector);
         REQUIRE( derivative.rows() == 4*5*6 );
-        REQUIRE( limit_decimals(derivative(2), 10) == 0.0d );
+        REQUIRE( limit_decimals(derivative(2), 10) == 0.0 );
         VectorXd x(4*5*6);
         x.setZero();
         VectorXd change(3);
@@ -194,9 +194,9 @@ TEST_CASE( "Poisson: 3-dimensional case" ) {
                 }
             }
         derivative = poisson.derivative(x);
-        REQUIRE( limit_decimals(derivative(0), 2) == 3.68d );
+        REQUIRE( limit_decimals(derivative(0), 2) == 3.68 );
         REQUIRE( derivative.rows() == 4*5*6 );
-        REQUIRE( limit_decimals(derivative(4), 2) == 6.38d);
+        REQUIRE( limit_decimals(derivative(4), 2) == 6.38);
     }
 }
 
@@ -290,7 +290,7 @@ TEST_CASE( "Poisson: 2-dimensional case" ) {
     SECTION( "solve -method works" ) {
         VectorXd solution = poisson.solve();
         REQUIRE( solution.rows() == 15 );
-        REQUIRE ( limit_decimals(solution(1), 8) == 0.00457382d );
+        REQUIRE ( limit_decimals(solution(1), 8) == 0.00457382 );
         VectorXd deriv = poisson.derivative(solution);
         VectorXd f = poisson.vectorize_scalar_func();
         REQUIRE( limit_decimals(deriv(0), 5) == limit_decimals(f(0), 5) );
@@ -301,7 +301,7 @@ TEST_CASE( "Poisson: 2-dimensional case" ) {
     SECTION( "Poisson::derivative" ) {
         VectorXd derivative = poisson.derivative(zero_vector);
         REQUIRE( derivative.rows() == 15 );
-        REQUIRE( limit_decimals(derivative(2), 10) == 0.0d );
+        REQUIRE( limit_decimals(derivative(2), 10) == 0.0 );
 
         VectorXd x(15);
         x.setZero();
@@ -317,9 +317,9 @@ TEST_CASE( "Poisson: 2-dimensional case" ) {
                 }
             }
         derivative = poisson.derivative(x);
-        REQUIRE( limit_decimals(derivative(0), 2) == 6.72d );
+        REQUIRE( limit_decimals(derivative(0), 2) == 6.72 );
         REQUIRE( derivative.rows() == 15 );
-        REQUIRE( limit_decimals(derivative(4), 2) == 16.47d);
+        REQUIRE( limit_decimals(derivative(4), 2) == 16.47);
 
     }
 }
