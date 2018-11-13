@@ -206,7 +206,7 @@ TEST_CASE("Test Solver with Point -based Mesh") {
 
 	Solver<2, Point <2, double> > solver(pde, mesh_ptr, boundaries);
 	MatrixXd STIFFNESS_MAT(4, 4);
-	STIFFNESS_MAT << 1, 0, -.5, -.5, 0, 1, -.5, 0, 0, 0, 1, 0, 0, -.5, 0, 1;
+	STIFFNESS_MAT << 1, 0, -.5, -.5, 0, 1, -.5, -0.5, -.5, -.5, 1, 0, -.5, -.5, 0, 1;
 	//solver.show();
 	//VectorXd x_vec(2);
 	//x_vec << 0.5, 0.5;
@@ -215,9 +215,11 @@ TEST_CASE("Test Solver with Point -based Mesh") {
 
 	SECTION("Test solving the pde2") {
 		Solver<2, Point <2, double>>  solver2(pde2, mesh_ptr, boundaries);
-		//REQUIRE(solver.get_stiffness_matrix(3) == STIFFNESS_MAT);
-		solver2.refine();
+		REQUIRE(solver.get_stiffness_matrix(3) == STIFFNESS_MAT);
 		//solver2.refine();
+		//solver2.refine();
+		//solver2.refine();
+		solver2.refine();
 		//solver2.show();
 
 		VectorXd refined_sol2 = solver2.solve();
@@ -232,13 +234,25 @@ TEST_CASE("Test Solver with Point -based Mesh") {
 		//REQUIRE(refined_sol2.minCoeff() == 0);
 		MatrixXd ref_values = solver2.get_solution_values(refined_sol2);
 		cout << ref_values << endl;
-		cout << solver2.get_solution_values(vana_hea_sol);
+		cout << solver2.get_solution_values(vana_hea_sol) << endl;
+		//cout << "max outer"
+		//map<array<int, 2>, double> stiffness_map2 = solver2.get_sparse_stiffness_map();
+		//cout << "max outer" << mesh.get_max_outer_index() << endl;
+		MatrixXd stiff_A = solver2.get_stiffness_matrix(mesh.get_max_outer_index());
+		//REQUIRE(stiff_A.transpose() == stiff_A);
+		cout << stiff_A << endl;
+		//solver.show();
+		//mesh.get_last().show();
+		mesh.get_element(6).show();
+		//mesh.get_last()[1].show();
 	}
-	/*
-	SECTION("Getting sparse stiffness matrix should succeed") {
+	
+	/*SECTION("Getting sparse stiffness matrix should succeed") {
 		map<array<int, 2>, double> sparse_map = solver.get_sparse_stiffness_map();
 		SparseMatrix<double> test = solver.get_sparse_stiffness_matrix(3);
 		MatrixXd to_dense = test.toDense();
+		cout << to_dense << endl;
+		cout << solver.get_stiffness_matrix(3) << endl;
 		REQUIRE(to_dense == STIFFNESS_MAT);
 	}
 
@@ -275,15 +289,14 @@ TEST_CASE("Test Solver with Point -based Mesh") {
 	}
 	SECTION("Test get_stiffness matrix(MatrixXd)") {
 		MatrixXd stiffness_mat = solver.get_stiffness_matrix(3);
-		MatrixXd mat_should_be(4,4);
-		mat_should_be << 1, 0, -.5, -.5, 0, 1, -.5, 0, 0, 0, 1, 0, 0, -.5, 0, 1;
-		REQUIRE(stiffness_mat == mat_should_be);
+		REQUIRE(stiffness_mat == STIFFNESS_MAT);
 		solver.refine();
 		cout << solver.get_stiffness_matrix(8) << endl;
 	}
 
 
 	SECTION("Solving the PDE should succeed") {
+		//solver.refine();
 		//solver.refine();
 		//solver.refine();
 		solver.refine();
@@ -299,7 +312,7 @@ TEST_CASE("Test Solver with Point -based Mesh") {
 		double avg = solution.mean();
 		cout << "Avg. relative error norm in" << sqrt(error_squared);
 		
-	}*/
+	}
 
 	/*SECTION("Solving the PDE after refinement should succeed") {
 		solver.refine();
@@ -362,8 +375,6 @@ TEST_CASE("Test Solver with Point -based Mesh") {
 		cout << "values" << endl;
 		cout << values << endl;
 		//mesh.get_top().show();
-	}
-
-*/
+	}*/
 
 }

@@ -75,6 +75,9 @@ map<array<int, 2>, double> Solver<Dim, T>::get_sparse_stiffness_map() const{
 				fn_j = iter->data.get_function(j);
 				J = iter->data[j].get_index();
 				stiffness_map[{I, J}] += pde.A(iter->data, fn_i, fn_j);
+				if (I != J) {
+					stiffness_map[{J, I}] += pde.A(iter->data, fn_i, fn_j);
+				}
 			}
 		}
 		iter = iter->next;
@@ -111,6 +114,13 @@ MatrixXd Solver<Dim, T>::get_stiffness_matrix(int n) const {
 				fn_j = iter->data.get_function(j);
 				J = iter->data[j].get_index();
 				stiffness(I, J) += pde.A(iter->data, fn_i, fn_j);
+				if (I == 8 && J==8) {
+					cout << fn_i.coeff << ", "<<endl << fn_j.coeff <<": "<< pde.A(iter->data, fn_i, fn_j) << endl;
+					cout << iter->data.get_volume() << endl;
+				}
+				if (I != J) {
+					stiffness(J, I) += pde.A(iter->data, fn_i, fn_j);
+				}
 			}
 		}
 		iter = iter->next;
@@ -173,7 +183,7 @@ VectorXd Solver<Dim, T>::get_f_vec(int n) const {
 			fn_i = iter->data.get_function(i);
 			//if (I <= max_index) {f_vec(I) += pde.f(iter->data, fn_i);}
 			//cout << I <<": " << pde.f_monte_carlo(iter->data, fn_i, 40) << endl;
-			if (I <= max_index) { f_vec(I) = f_vec(I) + pde.f_monte_carlo(iter->data, fn_i, 40); }
+			if (I <= max_index) { f_vec(I) = f_vec(I) + pde.f_monte_carlo(iter->data, fn_i, 50); }
 		}
 		iter = iter->next;
 	}
