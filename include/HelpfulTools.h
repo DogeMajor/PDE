@@ -57,4 +57,13 @@ pair<int, double> find_smallest(const T &container, int size) {
 	return pair<int, double>(index, container[index]);
 }
 
+template <typename T>
+double sum(vector<T> v) {
+	double result = 0;
+	for(int i = 0; i < v.size(); i++) {
+		result += v[i];
+	}
+	return result;
+}
+
 #endif

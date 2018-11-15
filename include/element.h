@@ -48,7 +48,9 @@ public:
 	int to_global(int local_index) { return index_maps.map_to_global[local_index]; }
 
 	void set_index_maps();
-
+	void set_f_variation(int n, double var) { f_variations[n] = var; }
+	vector<double> get_f_variations() { return f_variations; }
+	double get_avg_f_variation() { return sum<double>(f_variations) / double(N); }
 	//int set_outer_node_indices(int index, BoundaryConditions<T> conds);
 	int how_many() const;
 	vector <Node <Dim, T>* > get_nodes();
@@ -74,12 +76,13 @@ private:
     vector <SimplexFunction <T> > functions;
 	IndexMaps index_maps;
 	VolumeCalculator<Dim, T> volume_calculator;
+	vector<double> f_variations;//Needed for refine algo in mesh!
 };
 
 
 template <int Dim, int N, typename T>
 Element<Dim,N,T>::Element()
-	: nodes(N, nullptr) {
+	: nodes(N, nullptr), f_variations(N) {
 	volume_calculator = VolumeCalculator<Dim, T>();
 }
 
@@ -89,6 +92,7 @@ Element<Dim, N, T>::Element(vector <Node <Dim, T>* > nodes_vec, vector <SimplexF
 	increase_shared_elements();
 	functions = funcs;
 	volume_calculator = VolumeCalculator<Dim, T>();
+	f_variations = vector<double>(N);
 }
 
 template <int Dim, int N, typename T>
@@ -96,6 +100,7 @@ Element<Dim,N,T>::Element(const Element &el){
 	nodes = el.nodes;
     increase_shared_elements();
     functions = el.functions;
+	f_variations = el.f_variations;
 }
 
 template <int Dim, int N, typename T>
@@ -108,6 +113,7 @@ Element<Dim,N,T>::~Element(){
 	}
 	nodes.clear();
     functions.clear();
+	f_variations.clear();
 }
 
 template <int Dim, int N, typename T>

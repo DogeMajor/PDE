@@ -140,6 +140,16 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D do
 		element.set_all_indices_to(-1);
 	}
 
+	SECTION("Test f_variations methods") {
+		element.set_f_variation(0, .1);
+		element.set_f_variation(2, .5);
+		vector<double> f_vars = element.get_f_variations();
+		REQUIRE(f_vars[0] == 0.1);
+		REQUIRE(f_vars[1] == 0);
+		REQUIRE(f_vars[2] == 0.5);
+		REQUIRE(limit_decimals(element.get_avg_f_variation(),2) == 0.2);
+	}
+
     SECTION( "Test get_function(int)" ){
         SimplexFunction<VectorXd> first_fn = element.get_function(0);
         REQUIRE( first_fn(node1.get_location()) == 1 );
