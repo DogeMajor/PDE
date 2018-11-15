@@ -62,17 +62,11 @@ TEST_CASE("Test ElementDivider with Point template -based Nodes") {
 	node_vec2.push_back(node_vec[2]);
 	node_vec2.push_back(new Node<2, Point <2,double> >(point4));
 	Element<2, 3, Point<2,double> > el2 = factory.build(node_vec2);
-	//Mesh<2, 3, Point <2,double> > el_mesh(el1);
-	//el_mesh.push(el2);
 	ElementDivider<2, 3, Point <2,double> > divider;
 	element.set_indices(-1);
-	element.set_indexings();
+	element.set_index_maps();
 	el2.set_indices(2);
-	el2.set_indexings();
-	element.show();
-	cout << "second el:"<< endl;
-	el2.show();
-	//REQUIRE(n_1.how_many() == 7);
+	el2.set_index_maps();
 
 	map< array<int, 2>, int> MIDPOINTS_MAP;
 	int I = 0;
@@ -84,7 +78,7 @@ TEST_CASE("Test ElementDivider with Point template -based Nodes") {
 	}
 
 
-	/*SECTION("dist_squared template function should work") {
+	SECTION("dist_squared template function should work") {
 			VectorXd a(3);
 			a << 0, 1, 2;
 			VectorXd b(3);
@@ -150,9 +144,7 @@ TEST_CASE("Test ElementDivider with Point template -based Nodes") {
 	SECTION("Generating new mid nodes from midpoints map should succeed") {
 		map<array<int, 2>, Point<2, double> > m_p_map = element.get_midpoints_map();
 		vector <Node<2, Point<2, double> >* > mid_nods = element.get_midpoint_nodes(m_p_map);
-		//for (int i = 0; i < mid_nods.size(); i++) {
-		//	mid_nods[i]->show();
-		//}
+
 		cout << "Showing midpoint of type Point <2, double> between nodes 0 and 1" << endl;
 		m_p_map[{0, 1}].show();
 		REQUIRE(mid_nods.size() == 3 );
@@ -164,14 +156,11 @@ TEST_CASE("Test ElementDivider with Point template -based Nodes") {
 		REQUIRE(m_loc_map[{0, 1}] == 0.5*(point1 + point2) );
 		REQUIRE(m_loc_map[{0, 2}] == 0.5*(point1 + point3) );
 		REQUIRE(m_loc_map[{1, 2}] == 0.5*(point2 + point3) );
-		//REQUIRE(m_loc_map[{0, 2}] == point4)
-		//REQUIRE(m_loc_map[{1, 2}] == point4)
 	}
-
 
 	SECTION("One can generate new vertex elements out of old element when refining the mesh") {
 		vector <Node <2, Point <2, double> >* > mid_nodes = element.get_midpoint_nodes();
-		Element <2, 3, Point <2, double> > el_AB = divider.get_vertex_element(0, mid_nodes, MIDPOINTS_MAP, element);
+		Element <2, 3, Point <2, double> > el_AB = divider.get_vertex_element(0, mid_nodes, element);
 		REQUIRE(el_AB[0].get_location() == element[0].get_location());
 		REQUIRE(el_AB.get_function(0)(el_AB[0].get_location()) == 1);
 		REQUIRE(el_AB.get_function(1)(el_AB[0].get_location()) == 0);
@@ -181,13 +170,13 @@ TEST_CASE("Test ElementDivider with Point template -based Nodes") {
 
 	SECTION("One can generate new inner elements out of old element when refining the mesh") {
 		vector <Node <2, Point <2, double> >* > m_nodes = element.get_midpoint_nodes();
-		Element <2, 3, Point <2, double> > inner_el = divider.get_inner_element(0, m_nodes, MIDPOINTS_MAP);
+		Element <2, 3, Point <2, double> > inner_el = divider.get_inner_element(0, m_nodes);
 		REQUIRE(inner_el.get_function(0)(inner_el[0].get_location()) == 1);
 		REQUIRE(inner_el.get_function(1)(inner_el[0].get_location()) == 0);
 		REQUIRE(inner_el[0].get_location() == 0.5*(element[0].get_location() + element[1].get_location()));
 		REQUIRE(inner_el[1].get_location() == 0.5*(element[0].get_location() + element[2].get_location()));
 		REQUIRE(inner_el[2].get_location() == 0.5*(element[1].get_location() + element[2].get_location()));
-	}*/
+	}
 
 	SECTION( "Generating new Elements should succeed" ) {
 		map< array<int, 2>, Node<2, Point <2, double> >* >  coms;
@@ -197,14 +186,9 @@ TEST_CASE("Test ElementDivider with Point template -based Nodes") {
 		
 		REQUIRE(els.size() == 4);
 		REQUIRE(nodes_at_t0 + 3 == n_1.how_many() );
-		//REQUIRE(divider.get_inner_element(0, element.get_midpoint_nodes(), MIDPOINTS_MAP)[1].get_location() == (*els[3])[1].get_location());
-		//REQUIRE(divider.get_vertex_element(1, element.get_midpoint_nodes(), MIDPOINTS_MAP, element)[2].get_location() == (*els[1])[2].get_location());
-		
-		cout << "ehehe!!!!!!" << endl;
 		vector <Element <2, 3, Point <2, double> >* > els2 = divider.divide(el2, coms);
 		REQUIRE(els2.size() == 4);
 		REQUIRE(nodes_at_t0 + 5 == n_1.how_many() );
-		cout << "ehehe!!!!!!" << endl;
 		coms.erase(coms.begin(), coms.begin()); 
 	}
 
@@ -293,40 +277,6 @@ TEST_CASE("Test ElementDivider with Point template -based Nodes") {
 		ElementDivider <2, 3, VectorXd> new_divider;
 	}
 
-	SECTION("Generating midpoint nodes when some are already generated should succeed") {
-		vector <Node<2, VectorXd>* > m_nods = divider.get_midpoint_nodes(element);
-		vector<VectorXd> locations;
-		VectorXd loc1(2);
-		loc1 << 0.0, 0.0;
-		locations.push_back(loc1);
-		loc1 << 1.0, 0.0;
-		locations.push_back(loc1);
-		loc1 << 1.0, 1.0;
-		locations.push_back(loc1);
-		VectorXd temp(2);
-		temp = locations[0];
-		cout << temp;
-		//vector <Node<2, VectorXd> > xtr_nodes = factory.build_nodes(locations);
-		//xtr_nodes[0].show();
-		
-		//Element<2, 3, VectorXd> inner_el = factory.build(m_nods);
-		//inner_el.show();
-		//typedef vector <Node<2, VectorXd>* > (Element <2, 3, VectorXd>::*ELPTR) ();
-		//typedef vector <Node<2, Point<double> >* >(Element <2, 3, Point<double> >::*ELPTR) ();
-		/*ELPTR el_ptr = &Element<2, 3, VectorXd>::get_nodes;
-		vector <Node<2, VectorXd>* > new_nodes = (element.*el_ptr)();
-		cout << "Hehe " << endl;
-		new_nodes[0]->show();
-		cout << new_nodes[0]->get_location();
-		m_nods[0]->show();
-		cout << "Hehe " << endl;
-		cout << new_nodes.size() << endl;
-		//for (int i = 0; i < m_nods.size(); i++) {
-			//m_nods[i]->show();
-		//}
-		REQUIRE(m_nods.size() == 3);*/
-	//}
-
 	/*SECTION("Generating map of midpoints should succeed") {
 		typedef map<array<int, 2>, VectorXd>::const_iterator PointsMapIter;
 		map<array<int, 2>, VectorXd> m_nods_map = element.get_midpoints_map();
@@ -338,55 +288,12 @@ TEST_CASE("Test ElementDivider with Point template -based Nodes") {
 		}
 	}
 
-	SECTION("Generating new mid nodes from midpoints map should succeed") {
-		map<array<int, 2>, VectorXd> m_p_map = element.get_midpoints_map();
-		vector <Node<2, VectorXd>* > mid_nods = element.get_midpoint_nodes(m_p_map);
-		for (int i = 0; i < mid_nods.size(); i++) {
-			mid_nods[i]->show();
-		}
-		REQUIRE(mid_nods.size() == 3);
-	}
-
-	SECTION("Generating midpoint_map should succeed") {
-		map<array<int, 2>, int> m_map = divider.get_midpoints_map();
-		REQUIRE(m_map == MIDPOINTS_MAP);
-	}
 
 	//SECTION("Generating location_map should succeed") {
 		//map<VectorXd, array<int, 2> > location_map = divider.get_locations_map(element);
 		//cout << location_map.size() << endl;
 		//REQUIRE(m_map == MIDPOINTS_MAP);
 	//}
-	
-
-	SECTION("One can generate new vertex elements out of old element when refining the mesh") {
-		vector <Node <2, VectorXd >* > mid_nodes = element.get_midpoint_nodes();
-		Element <2, 3, VectorXd > el_AB = divider.get_vertex_element(0, mid_nodes, MIDPOINTS_MAP, element);
-		REQUIRE(el_AB[0].get_location() == element[0].get_location());
-		REQUIRE(el_AB.get_function(0)(el_AB[0].get_location()) == 1);
-		REQUIRE(el_AB.get_function(1)(el_AB[0].get_location()) == 0);
-		REQUIRE(el_AB[1].get_location() == 0.5*(element[0].get_location()+ element[1].get_location()));
-		REQUIRE(el_AB[2].get_location() == 0.5*(element[0].get_location() + element[2].get_location()));
-	}
-
-	SECTION("One can generate new inner elements out of old element when refining the mesh") {
-		vector <Node <2, VectorXd >* > m_nodes = element.get_midpoint_nodes();
-		Element <2, 3, VectorXd > inner_el = divider.get_inner_element(0, m_nodes, MIDPOINTS_MAP);		
-		REQUIRE(inner_el.get_function(0)(inner_el[0].get_location()) == 1);
-		REQUIRE(inner_el.get_function(1)(inner_el[0].get_location()) == 0);
-		REQUIRE(inner_el[0].get_location() == 0.5*(element[0].get_location() + element[1].get_location()));
-		REQUIRE(inner_el[1].get_location() == 0.5*(element[0].get_location() + element[2].get_location()));
-		REQUIRE(inner_el[2].get_location() == 0.5*(element[1].get_location() + element[2].get_location()));
-	}
-
-	SECTION("Generating new Elements should succeed") {
-		vector <Element <2, 3, VectorXd >* > els = divider.divide(element);
-		cout << els.size() << endl;
-		els[0]->show();
-		REQUIRE(els.size() == 4);
-		REQUIRE(divider.get_inner_element(0, element.get_midpoint_nodes(), MIDPOINTS_MAP)[1].get_location() == (*els[3])[1].get_location());
-		REQUIRE(divider.get_vertex_element(1, element.get_midpoint_nodes(), MIDPOINTS_MAP, element)[2].get_location() == (*els[1])[2].get_location());
-	}
 
 	SECTION("Calculating average location should succeed") {
 		vector <Node <2, VectorXd >* > el_nodes = element.get_nodes();

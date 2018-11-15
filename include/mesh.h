@@ -164,7 +164,7 @@ void Mesh<Dim, N, T>::refine() {
 	MeshNode<Element<Dim, N, T> >* previous = top;
 	MeshNode<Element<Dim, N, T> >* before_original_node = nullptr;
 	vector<Element<Dim, N, T>* > new_els;
-	map< array<int, 2>, Node<Dim, T>* > commons;
+	map<array<int, 2>, Node<Dim, T>* > commons;
 
 	while(original_node != nullptr){
 		new_els = divider.divide(original_node->data, commons);
@@ -177,7 +177,7 @@ void Mesh<Dim, N, T>::refine() {
 		original_node = previous->next;
 		previous = previous->next;
 	}
-	map< array<int, 2>, Node<Dim, T>* >::iterator map_iter = commons.begin();
+	map<array<int, 2>, Node<Dim, T>* >::iterator map_iter = commons.begin();
 	commons.erase(map_iter, commons.end());
 }
 

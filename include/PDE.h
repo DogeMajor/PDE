@@ -118,7 +118,7 @@ public:
     const double A(Element<Dim, Dim+1,T> el, SimplexFunction<T> a, SimplexFunction<T> b) const;//Integrates A_kernel*a*b over Element simplex
     double f(Element<Dim, Dim+1, T> &el, SimplexFunction<T> a) const;//Integrates f_kernel*a over Element simplex
 	T get_random_location(Element<Dim, Dim + 1, T> &el, Randomizer &randomizer) const;
-	double f_monte_carlo(Element<Dim, Dim + 1, T> &el, SimplexFunction<T> a, int n=20) const;//Integrates f_kernel*a over Element simplex
+	double f_monte_carlo(Element<Dim, Dim + 1, T> &el, SimplexFunction<T> a, int fn_index, int n=20) const;//Integrates f_kernel*a over Element simplex
 
 	double b(Element<Dim, Dim + 1, T> &el, SimplexFunction<T> a, SimplexFunction<T> b, BoundaryConditions<T> boundaries) const;//Surface integral of phi_i * grad(boundary_fn) on element's edge
 	VectorXd to_VectorXd(T &location) const;
@@ -164,7 +164,7 @@ double PDE<Dim, T>::f(Element<Dim, Dim+1, T> &el, SimplexFunction<T> a) const{
 }
 
 template <int Dim, typename T>
-double PDE<Dim, T>::f_monte_carlo(Element<Dim, Dim + 1, T> &el, SimplexFunction<T> a, int n) const {
+double PDE<Dim, T>::f_monte_carlo(Element<Dim, Dim + 1, T> &el, SimplexFunction<T> a, int fn_index, int n) const {
 	T loc;
 	double sum = 0;
 	double var = 0;
@@ -176,6 +176,7 @@ double PDE<Dim, T>::f_monte_carlo(Element<Dim, Dim + 1, T> &el, SimplexFunction<
 		sum = sum + f_kernel(to_VectorXd(loc))*a(loc);
 	}
 	var = (1 / double(n))*var;
+	el.set_f_variation(fn_index, var);
 	return sum*el.get_volume()*(1/double(n));
 }
 

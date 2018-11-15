@@ -106,7 +106,7 @@ TEST_CASE( "Test PDE" ) {
 		REQUIRE(limit_decimals(sum(coeffs), 3) == 1.000);
 		show_vector<vector<double> >(coeffs);
 		vector<double> items = randomizer.randomize_items(coeffs);
-		REQUIRE(limit_decimals(sum(items), 3) == 1.000);
+		REQUIRE(abs(sum(items)-1) < 0.001);
 		show_vector<vector<double> >(items);
 	}
 
@@ -149,21 +149,21 @@ TEST_CASE( "Test PDE" ) {
 			REQUIRE(rand_loc[i] <= 1);
 			REQUIRE(rand_loc[i] >= 0);
 		}
-		
 	}
 
 	SECTION("Test f_monte_carlo(.,.)") {//More accurate integration!!
 
 		cout << funcs[2].coeff << endl;
 		cout << "Monte carlo intergals" << endl;
-		cout << pde.f_monte_carlo(element, funcs[2], 10) << endl;
-		REQUIRE(pde.f_monte_carlo(element, funcs[2], 20) < 0.08);
-		cout << pde.f_monte_carlo(element, funcs[2], 50) << endl;
-		cout << pde.f_monte_carlo(element, funcs[2], 100) << endl;
-		cout << pde.f_monte_carlo(element, funcs[2], 1000) << endl;
+		cout << pde.f_monte_carlo(element, funcs[2], 2, 10) << endl;
+		REQUIRE(pde.f_monte_carlo(element, funcs[2], 2, 20) < 0.09);
+		cout << pde.f_monte_carlo(element, funcs[2], 2, 50) << endl;
+		REQUIRE(abs(pde.f_monte_carlo(element, funcs[2], 2, 100) - PRODUCT_F_PHI2) < 0.02);
+		cout << pde.f_monte_carlo(element, funcs[2], 2, 1000) << endl;
+		REQUIRE(element.get_avg_f_variation() < 0.10);
+		cout << "var" << element.get_avg_f_variation() << endl;
 
 	}
-
 
     SECTION( "Test inner product with f" ){
         REQUIRE( limit_decimals(pde.f(element, funcs[0]),3) == 0.125 );

@@ -168,7 +168,7 @@ VectorXd Solver<Dim, T>::get_f_vec(int n) const {
 			I = iter->data[i].get_index();
 			fn_i = iter->data.get_function(i);
 			//if (I <= max_index) {f_vec(I) += pde.f(iter->data, fn_i);}
-			if (I <= max_index) { f_vec(I) = f_vec(I) + pde.f_monte_carlo(iter->data, fn_i, 50); }
+			if (I <= max_index) { f_vec(I) = f_vec(I) + pde.f_monte_carlo(iter->data, fn_i, i, 50); }
 		}
 		iter = iter->next;
 	}
