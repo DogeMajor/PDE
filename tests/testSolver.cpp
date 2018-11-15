@@ -1,6 +1,6 @@
 #include "../include/point.h"
 #include "../include/Function.h"
-#include "../include/node.h"
+#include "../include/Vertex.h"
 #include "../include/element.h"
 #include "../include/ElementFactory.h"
 #include "../include/PDE.h"
@@ -110,13 +110,13 @@ double error_norm(MatrixXd sol_values) {
 	Node <2, VectorXd> node2(location);
 	location << 1.0, 1.0;
 	Node <2, VectorXd> node3(location);
-	vector<Node<2, VectorXd> *> nodes(3, nullptr);
+	vector<Vertex<2, VectorXd> *> nodes(3, nullptr);
 	location << 0.0, 0.0;
-	nodes[0] = new Node<2, VectorXd>(location);
+	nodes[0] = new Vertex<2, VectorXd>(location);
 	location << 1.0, 0.0;
-	nodes[1] = new Node<2, VectorXd>(location);
+	nodes[1] = new Vertex<2, VectorXd>(location);
 	location << 1.0, 1.0;
-	nodes[2] = new Node<2, VectorXd>(location);
+	nodes[2] = new Vertex<2, VectorXd>(location);
 	vector<SimplexFunction <VectorXd> > funcs(3);
 	VectorXd coeffs(3);
 	coeffs << -1, 0, 1;
@@ -127,11 +127,11 @@ double error_norm(MatrixXd sol_values) {
 	funcs[2].coeff = coeffs;
 	Element <2, 3, VectorXd> element(nodes, funcs);
 
-	vector<Node<2, VectorXd> *> nodes2;
+	vector<Vertex<2, VectorXd> *> nodes2;
 	nodes2.push_back(nodes[0]);
 	nodes2.push_back(nodes[2]);
 	location << 0, 1;
-	nodes2.push_back(new Node<2, VectorXd>(location));
+	nodes2.push_back(new Vertex<2, VectorXd>(location));
 	ElementFactory <2, 3, VectorXd> factory;
 	Element <2, 3, VectorXd> element2 = factory.build(nodes2);//Too lazy to find out what the funcs would be...
 
@@ -173,19 +173,19 @@ TEST_CASE("Test Solver with Point -based Mesh") {
 	Point <2, double> point4(vec4);
 	Point <2, double> point5(vec5);
 	Point <2, double> point6(vec6);
-	Node <2, Point <2, double> > n_1(point1);
-	Node <2, Point <2, double> > n_2(point2);
-	Node <2, Point <2, double> > n_3(point3);
-	vector<Node <2, Point <2, double>  > * > node_vec(3, nullptr);
-	node_vec[0] = new Node<2, Point <2, double> >(point1);
-	node_vec[1] = new Node<2, Point <2, double> >(point2);
-	node_vec[2] = new Node<2, Point <2, double> >(point3);
+	Vertex<2, Point <2, double> > n_1(point1);
+	Vertex<2, Point <2, double> > n_2(point2);
+	Vertex<2, Point <2, double> > n_3(point3);
+	vector<Vertex <2, Point <2, double>  > * > node_vec(3, nullptr);
+	node_vec[0] = new Vertex<2, Point <2, double> >(point1);
+	node_vec[1] = new Vertex<2, Point <2, double> >(point2);
+	node_vec[2] = new Vertex<2, Point <2, double> >(point3);
 	ElementFactory<2, 3, Point <2, double> > factory;
 	Element<2, 3, Point <2, double> > el1 = factory.build(node_vec);
-	vector<Node <2, Point <2, double> > *> node_vec2;//(3, nullptr);
+	vector<Vertex <2, Point <2, double> > *> node_vec2;//(3, nullptr);
 	node_vec2.push_back(node_vec[0]);
 	node_vec2.push_back(node_vec[2]);
-	node_vec2.push_back(new Node<2, Point <2, double> >(point4));
+	node_vec2.push_back(new Vertex<2, Point <2, double> >(point4));
 	Element<2, 3, Point <2, double> > el2 = factory.build(node_vec2);
 	Mesh<2, 3, Point <2, double> > mesh(el1);
 	mesh.push(el2);

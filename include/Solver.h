@@ -2,7 +2,7 @@
 #define SOLVER_H
 #include <iostream>
 #include "PDE.h"
-#include "mesh.h"
+#include "Mesh.h"
 #include <math.h>
 
 #include "../C++ libs/eigen/Eigen/Sparse"

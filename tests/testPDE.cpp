@@ -1,6 +1,6 @@
-#include "../include/point.h"
-#include "../include/node.h"
-#include "../include/element.h"
+#include "../include/Point.h"
+#include "../include/Vertex.h"
+#include "../include/Element.h"
 #include "../include/PDE.h"
 #include "../include/HelpfulTools.h"
 #include <math.h>
@@ -54,18 +54,18 @@ TEST_CASE( "Test PDE" ) {
 	double PRODUCT_F_PHI2 = 0.0759909;
 	VectorXd location(2);
 	location << 0.0, 0.0;
-	Node <2, VectorXd> node1(location);
+	Vertex<2, VectorXd> node1(location);
 	location << 1.0, 0.0;
-	Node <2, VectorXd> node2(location);
+	Vertex<2, VectorXd> node2(location);
 	location << 1.0, 1.0;
-	Node <2, VectorXd> node3(location);
-	vector<Node<2, VectorXd> *> nodes(3, nullptr);
+	Vertex<2, VectorXd> node3(location);
+	vector<Vertex<2, VectorXd> *> vertices(3, nullptr);
 	location << 0.0, 0.0;
-	nodes[0] = new Node<2, VectorXd>(location);
+	vertices[0] = new Vertex<2, VectorXd>(location);
 	location << 1.0, 0.0;
-	nodes[1] = new Node<2, VectorXd>(location);
+	vertices[1] = new Vertex<2, VectorXd>(location);
 	location << 1.0, 1.0;
-	nodes[2] = new Node<2, VectorXd>(location);
+	vertices[2] = new Vertex<2, VectorXd>(location);
 	vector<SimplexFunction <VectorXd> > funcs(3);
 	VectorXd coeffs(3);
 	coeffs << -1, 0, 1;
@@ -75,7 +75,7 @@ TEST_CASE( "Test PDE" ) {
 	coeffs << 0, 1, 0;
 	funcs[2].coeff = coeffs;
 
-	Element <2, 3, VectorXd> element(nodes, funcs);
+	Element <2, 3, VectorXd> element(vertices, funcs);
 
     BilinearFunction bl_fn;
     bl_fn.mat = MatrixXd::Identity(2,2);

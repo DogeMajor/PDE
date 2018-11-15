@@ -10,7 +10,7 @@
 #include "../C++ libs/eigen/Eigen/Sparse"
 #include "../C++ libs/eigen/Eigen/Core"
 #include "../C++ libs/eigen/Eigen/IterativeLinearSolvers"
-#include "mesh.h"
+#include "Mesh.h"
 
 using namespace std;
 using namespace Eigen;
@@ -183,11 +183,11 @@ double PDE<Dim, T>::f_monte_carlo(Element<Dim, Dim + 1, T> &el, SimplexFunction<
 template <int Dim, typename T>//Chooses one point in the middle of simplex, returns f(P_mid)*a(P_mid)*el.volume()
 T PDE<Dim, T>::get_random_location(Element<Dim, Dim + 1, T> &el, Randomizer &randomizer) const{
 	T loc;
-	int sz = el.nodes_size();
+	int sz = el.vertices_size();
 	vector<double> prob(sz);
 	prob = randomizer.get_convex_coeffs(sz);
 	loc = prob[0] * el[0].get_location();
-	for (int i = 1; i < el.nodes_size(); i++) {
+	for (int i = 1; i < el.vertices_size(); i++) {
 		loc = loc + prob[i] * el[i].get_location();
 	}
 	return loc;
