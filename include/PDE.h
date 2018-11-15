@@ -87,6 +87,16 @@ public:
 			chrono::high_resolution_clock::now();
 		return chrono::duration_cast<chrono::nanoseconds>(current_time - start_time).count();
 	}
+	int get_milliseconds() const {
+		chrono::high_resolution_clock::time_point current_time =
+			chrono::high_resolution_clock::now();
+		return chrono::duration_cast<chrono::milliseconds>(current_time - start_time).count();
+	}
+	int get_seconds() const {
+		chrono::high_resolution_clock::time_point current_time =
+			chrono::high_resolution_clock::now();
+		return chrono::duration_cast<chrono::seconds>(current_time - start_time).count();
+	}
 };
 
 

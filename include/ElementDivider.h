@@ -94,34 +94,15 @@ vector <Element <Dim, N, T>* > ElementDivider<Dim, N, T>::divide(Element <Dim, N
 	map< array<int, 2>, int> midpoints_map = get_midpoints_map();
 	vector <Node <Dim, T>* >  midpoint_nodes(N, nullptr);
 	map< array<int, 2>, Node<Dim, T>* > m_nodes_map = get_mid_nodes_map(el, commons);
-	cout << "nodes_map_sz" << m_nodes_map.size() << endl;
-	cout << "commons_map_sz" << commons.size() << endl;
 	int i, j, k;
 	for (map< array<int, 2>, Node<Dim, T>* >::const_iterator iter = m_nodes_map.begin(); iter != m_nodes_map.end(); iter++) {
 		i = el.to_local(iter->first[0]);
 		j = el.to_local(iter->first[1]);
 		k = midpoints_map[{i, j}];
-		//cout << i << "," << j << "," << k << endl;
 		midpoint_nodes[k] = iter->second;
-		//midpoint_nodes.push_back(iter->second);
 	}
-	/*int index = 0;
-	int I, J;
-	for (int i = 0; i < N; i++) {
-		I = el.to_global(i);
-		for (int j = i + 1; j < N; j++) {
-			J = el.to_global(j);
-			//midpoints_map.insert(pair< array<int, 2>, int>({ i, j }, index));
-			cout << "indices" << i << j << endl;
-			//m_nodes_map[{i, j}][0].show();
-			midpoint_nodes.push_back(m_nodes_map[{I, J}]);
-			cout << midpoint_nodes.size() << endl;
-			index++;
-		}
-	}*/
-	//vector <Node <Dim, T>* >  midpoint_nodes = el.get_midpoint_nodes();
+
 	
-	//Diverse grejer
 	for (int i = 0; i < N; i++) {
 		els.push_back(new Element <Dim, N, T>(get_vertex_element(i, midpoint_nodes, midpoints_map, el)));
 	}

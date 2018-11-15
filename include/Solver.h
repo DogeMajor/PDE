@@ -23,21 +23,19 @@ public:
 	Solver();
 	Solver(PDE<Dim, T> p, Mesh<Dim, Dim + 1, T> *m, BoundaryConditions<T> b);
 	~Solver() {}
-	void set_pde(PDE<Dim, T> p) { pde = p; }
-	void set_mesh(Mesh<Dim, Dim + 1, T> *m) { mesh = m; mesh->reset_indices();}
+	void refine();
 	map<array<int, 2>, double> get_sparse_stiffness_map() const;
 	SparseMatrix<double> get_sparse_stiffness_matrix(int n) const;
 	MatrixXd get_stiffness_matrix(int n) const;
-	MatrixXd get_inner_stiffness_matrix(MatrixXd stiffness);
 	SparseMatrix<double> get_sparse_inner_stiffness_matrix(map<array<int, 2>, double> stiffness_map);
 	SparseMatrix<double> get_sparse_boundary_matrix(map<array<int, 2>, double> stiffness_map);
-	MatrixXd get_boundary_matrix(MatrixXd stiffness);
 	VectorXd get_f_vec(int n) const;
 	VectorXd get_boundary_coeffs();
-	void refine() { mesh->refine(); mesh->reset_indices(boundaries); }
+	VectorXd conj_gradient_solve(const SparseMatrix<double> &A, VectorXd b);
+
 	VectorXd solve();
-	VectorXd vana_hea_solve();
 	MatrixXd get_solution_values(VectorXd solution);//In the same order as indexing of nodes
+
 	Mesh<Dim, Dim + 1, T> get_mesh() { return *mesh; }
 	void show() const;
 
@@ -58,6 +56,11 @@ Solver<Dim, T>::Solver(PDE<Dim, T> p, Mesh<Dim, Dim + 1, T> *m, BoundaryConditio
 	mesh = m;
 	boundaries = b;
 	mesh->reset_indices(boundaries);
+}
+
+template<int Dim, typename T>
+void Solver<Dim, T>::refine() {
+	mesh->refine(); mesh->reset_indices(boundaries);
 }
 
 
@@ -114,10 +117,6 @@ MatrixXd Solver<Dim, T>::get_stiffness_matrix(int n) const {
 				fn_j = iter->data.get_function(j);
 				J = iter->data[j].get_index();
 				stiffness(I, J) += pde.A(iter->data, fn_i, fn_j);
-				if (I == 8 && J==8) {
-					cout << fn_i.coeff << ", "<<endl << fn_j.coeff <<": "<< pde.A(iter->data, fn_i, fn_j) << endl;
-					cout << iter->data.get_volume() << endl;
-				}
 				if (I != J) {
 					stiffness(J, I) += pde.A(iter->data, fn_i, fn_j);
 				}
@@ -126,12 +125,6 @@ MatrixXd Solver<Dim, T>::get_stiffness_matrix(int n) const {
 		iter = iter->next;
 	}
 	return stiffness;
-}
-
-template <int Dim, typename T>
-MatrixXd Solver<Dim, T>::get_inner_stiffness_matrix(MatrixXd stiffness) {
-	int sz = mesh->get_max_inner_index() + 1;
-	return stiffness.block(0, 0, sz, sz);
 }
 
 template <int Dim, typename T>
@@ -146,13 +139,6 @@ SparseMatrix<double> Solver<Dim, T>::get_sparse_inner_stiffness_matrix(map<array
 		}
 	}
 	return inner_stiffness;
-}
-
-template <int Dim, typename T>
-MatrixXd Solver<Dim, T>::get_boundary_matrix(MatrixXd stiffness) {
-	int rows = mesh->get_max_inner_index() + 1;
-	int cols = mesh->get_max_outer_index() - mesh->get_max_inner_index();
-	return stiffness.block(0, rows, rows, cols);
 }
 
 template <int Dim, typename T>
@@ -182,7 +168,6 @@ VectorXd Solver<Dim, T>::get_f_vec(int n) const {
 			I = iter->data[i].get_index();
 			fn_i = iter->data.get_function(i);
 			//if (I <= max_index) {f_vec(I) += pde.f(iter->data, fn_i);}
-			//cout << I <<": " << pde.f_monte_carlo(iter->data, fn_i, 40) << endl;
 			if (I <= max_index) { f_vec(I) = f_vec(I) + pde.f_monte_carlo(iter->data, fn_i, 50); }
 		}
 		iter = iter->next;
@@ -211,6 +196,16 @@ VectorXd Solver<Dim, T>::get_boundary_coeffs() {
 	return coeffs;
 }
 
+template <int Dim, typename T>//A.x = b, solve x
+VectorXd Solver<Dim, T>::conj_gradient_solve(const SparseMatrix<double> &A, VectorXd b) {
+	VectorXd solution(A.cols());
+	ConjugateGradient<SparseMatrix<double>, Lower | Upper> cg;
+	cg.compute(A);
+	solution = cg.solve(b);
+	b = A * solution;
+	return cg.solve(b);
+}
+
 template <int Dim, typename T>
 VectorXd Solver<Dim, T>::solve() {
 	int inner_size = mesh->get_max_inner_index() + 1;
@@ -218,49 +213,21 @@ VectorXd Solver<Dim, T>::solve() {
 	map<array<int, 2>, double> stiffness_map = get_sparse_stiffness_map();
 	SparseMatrix<double> stiffness = get_sparse_inner_stiffness_matrix(stiffness_map);
 	VectorXd f_vec = get_f_vec(inner_size - 1);
+
 	VectorXd bound_coeffs = get_boundary_coeffs();
 	SparseMatrix<double> bound_mat = get_sparse_boundary_matrix(stiffness_map);
 	VectorXd b_vec(inner_size);
-	b_vec = bound_mat.toDense() * bound_coeffs;
+	b_vec = bound_mat * bound_coeffs;
+
 	VectorXd vec = f_vec - b_vec;
-
 	VectorXd inner_coeffs(inner_size);
+	inner_coeffs = conj_gradient_solve(stiffness, vec);
 
-	ConjugateGradient<SparseMatrix<double>, Lower | Upper> cg;
-	cg.compute(stiffness);
-	inner_coeffs = cg.solve(vec);
-	vec = stiffness * inner_coeffs;
-	inner_coeffs = cg.solve(vec);
-	//inner_coeffs = stiffness.toDense().inverse()*vec;
-	cout << "f_vec" << endl;
-	cout << f_vec << endl;
 	VectorXd coeffs(outer_size);
 	coeffs.head(inner_size) = inner_coeffs;
 	coeffs.tail(outer_size - inner_size) = bound_coeffs;
 	return coeffs;
 }
-
-template <int Dim, typename T>
-VectorXd Solver<Dim, T>::vana_hea_solve() {
-	int sol_size = mesh->get_max_outer_index() + 1;
-	int inner_nodes = mesh->get_max_inner_index() + 1;
-	MatrixXd total_stiffness = get_stiffness_matrix(mesh->get_max_outer_index());
-	MatrixXd stiffness = get_inner_stiffness_matrix(total_stiffness);
-	VectorXd f_vec = get_f_vec(mesh->get_max_inner_index());
-
-	MatrixXd bound_mat = get_boundary_matrix(total_stiffness);
-	VectorXd bound_coeffs = get_boundary_coeffs();
-	VectorXd b_vec = bound_mat * bound_coeffs;
-
-	VectorXd inner_coeffs = stiffness.inverse()*(f_vec - b_vec);
-	cout << "inner coeffs" << endl;
-	cout << inner_coeffs << endl;
-	VectorXd sol(sol_size);
-	sol.head(inner_nodes) = inner_coeffs;
-	sol.tail(sol_size - inner_nodes) = bound_coeffs;
-	return sol;
-}
-
 
 template <int Dim, typename T>
 MatrixXd Solver<Dim, T>::get_solution_values(VectorXd solution) {
