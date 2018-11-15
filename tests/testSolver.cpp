@@ -213,7 +213,7 @@ TEST_CASE("Test Solver with Point -based Mesh") {
 	//cout << f_kern_sin(x_vec) << endl;
 	//REQUIRE(limit_decimals(f_kern_sin(x_vec), 1) == 1.00);
 
-	SECTION("Test solving the pde2") {
+	/*SECTION("Test solving the pde2") {
 		Solver<2, Point <2, double>>  solver2(pde2, mesh_ptr, boundaries);
 		REQUIRE(solver.get_stiffness_matrix(3) == STIFFNESS_MAT);
 		//solver2.refine();
@@ -245,9 +245,9 @@ TEST_CASE("Test Solver with Point -based Mesh") {
 		//mesh.get_last().show();
 		mesh.get_element(6).show();
 		//mesh.get_last()[1].show();
-	}
+	}*/
 	
-	/*SECTION("Getting sparse stiffness matrix should succeed") {
+	SECTION("Getting sparse stiffness matrix should succeed") {
 		map<array<int, 2>, double> sparse_map = solver.get_sparse_stiffness_map();
 		SparseMatrix<double> test = solver.get_sparse_stiffness_matrix(3);
 		MatrixXd to_dense = test.toDense();
@@ -297,8 +297,8 @@ TEST_CASE("Test Solver with Point -based Mesh") {
 
 	SECTION("Solving the PDE should succeed") {
 		//solver.refine();
-		//solver.refine();
-		//solver.refine();
+		solver.refine();
+		solver.refine();
 		solver.refine();
 		solver.refine();
 		VectorXd solution = solver.solve();

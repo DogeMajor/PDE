@@ -226,12 +226,12 @@ VectorXd Solver<Dim, T>::solve() {
 
 	VectorXd inner_coeffs(inner_size);
 
-	/*ConjugateGradient<SparseMatrix<double>, Lower | Upper> cg;
+	ConjugateGradient<SparseMatrix<double>, Lower | Upper> cg;
 	cg.compute(stiffness);
 	inner_coeffs = cg.solve(vec);
 	vec = stiffness * inner_coeffs;
-	inner_coeffs = cg.solve(vec);*/
-	inner_coeffs = stiffness.toDense().inverse()*vec;
+	inner_coeffs = cg.solve(vec);
+	//inner_coeffs = stiffness.toDense().inverse()*vec;
 	cout << "f_vec" << endl;
 	cout << f_vec << endl;
 	VectorXd coeffs(outer_size);
