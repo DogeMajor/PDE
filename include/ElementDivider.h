@@ -9,7 +9,6 @@ class ElementDivider {
 public:
 	ElementDivider();
 	~ElementDivider() {}
-	map<array<int, 2>, T> get_midlocation_map(Element<Dim, N, T> &el);
 	map< array<int, 2>, Node<Dim, T>* > get_mid_nodes_map(Element<Dim, N, T> &el, map< array<int, 2>, Node<Dim, T>* > &commons);
 	vector <Element <Dim, N, T>* > divide(Element <Dim, N, T>& el, map< array<int, 2>, Node<Dim, T>* > &commons);
 	Element<Dim, N, T> get_vertex_element(int I, vector <Node <Dim, T>* >  midpoint_nodes, Element <Dim, N, T>& el);
@@ -31,12 +30,6 @@ ElementDivider<Dim, N, T>::ElementDivider() {
 			index++;
 		}
 	}
-}
-
-template <int Dim, int N, typename T>
-map<array<int, 2>, T>  ElementDivider<Dim, N, T>::get_midlocation_map(Element<Dim, N, T> &el) {
-	map<array<int, 2>, T> m_map = el.get_midpoints_map();
-	return m_map;
 }
 
 template <int Dim, int N, typename T>//Also adds new mid nodes to commons!!

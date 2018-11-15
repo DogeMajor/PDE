@@ -262,15 +262,14 @@ TEST_CASE("Test Solver with Point -based Mesh") {
 		cout << b_mat.toDense() << endl;
 		//cout << "ehehe!" << endl;
 		//cout << solver.get_boundary_matrix(solver.get_stiffness_matrix(8));
-
 	}
+
 	SECTION("Test get_stiffness matrix(MatrixXd)") {
 		MatrixXd stiffness_mat = solver.get_stiffness_matrix(3);
 		REQUIRE(stiffness_mat == STIFFNESS_MAT);
 		solver.refine();
 		cout << solver.get_stiffness_matrix(8) << endl;
 	}
-
 
 	SECTION("Solving the PDE should succeed") {
 		//solver.refine();
