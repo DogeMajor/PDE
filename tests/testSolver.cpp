@@ -1,6 +1,6 @@
 #include "../include/point.h"
 #include "../include/Function.h"
-#include "../include/node.h"
+#include "../include/Vertex.h"
 #include "../include/element.h"
 #include "../include/ElementFactory.h"
 #include "../include/PDE.h"
@@ -110,13 +110,13 @@ double error_norm(MatrixXd sol_values) {
 	Node <2, VectorXd> node2(location);
 	location << 1.0, 1.0;
 	Node <2, VectorXd> node3(location);
-	vector<Node<2, VectorXd> *> nodes(3, nullptr);
+	vector<Vertex<2, VectorXd> *> nodes(3, nullptr);
 	location << 0.0, 0.0;
-	nodes[0] = new Node<2, VectorXd>(location);
+	nodes[0] = new Vertex<2, VectorXd>(location);
 	location << 1.0, 0.0;
-	nodes[1] = new Node<2, VectorXd>(location);
+	nodes[1] = new Vertex<2, VectorXd>(location);
 	location << 1.0, 1.0;
-	nodes[2] = new Node<2, VectorXd>(location);
+	nodes[2] = new Vertex<2, VectorXd>(location);
 	vector<SimplexFunction <VectorXd> > funcs(3);
 	VectorXd coeffs(3);
 	coeffs << -1, 0, 1;
@@ -127,11 +127,11 @@ double error_norm(MatrixXd sol_values) {
 	funcs[2].coeff = coeffs;
 	Element <2, 3, VectorXd> element(nodes, funcs);
 
-	vector<Node<2, VectorXd> *> nodes2;
+	vector<Vertex<2, VectorXd> *> nodes2;
 	nodes2.push_back(nodes[0]);
 	nodes2.push_back(nodes[2]);
 	location << 0, 1;
-	nodes2.push_back(new Node<2, VectorXd>(location));
+	nodes2.push_back(new Vertex<2, VectorXd>(location));
 	ElementFactory <2, 3, VectorXd> factory;
 	Element <2, 3, VectorXd> element2 = factory.build(nodes2);//Too lazy to find out what the funcs would be...
 
@@ -145,8 +145,6 @@ double error_norm(MatrixXd sol_values) {
 	bl_fn.mat = MatrixXd::Identity(2, 2);
 	PDE<2, VectorXd> pde(bl_fn, f_kern);
 	//Solver<2, VectorXd> solver;
-	//solver.set_pde(pde);
-	//solver.set_mesh(&mesh);
 	Solver<2, VectorXd> solver(pde, mesh_ptr);
 
 	SECTION("Test default constructor") {
@@ -175,19 +173,19 @@ TEST_CASE("Test Solver with Point -based Mesh") {
 	Point <2, double> point4(vec4);
 	Point <2, double> point5(vec5);
 	Point <2, double> point6(vec6);
-	Node <2, Point <2, double> > n_1(point1);
-	Node <2, Point <2, double> > n_2(point2);
-	Node <2, Point <2, double> > n_3(point3);
-	vector<Node <2, Point <2, double>  > * > node_vec(3, nullptr);
-	node_vec[0] = new Node<2, Point <2, double> >(point1);
-	node_vec[1] = new Node<2, Point <2, double> >(point2);
-	node_vec[2] = new Node<2, Point <2, double> >(point3);
+	Vertex<2, Point <2, double> > n_1(point1);
+	Vertex<2, Point <2, double> > n_2(point2);
+	Vertex<2, Point <2, double> > n_3(point3);
+	vector<Vertex <2, Point <2, double>  > * > node_vec(3, nullptr);
+	node_vec[0] = new Vertex<2, Point <2, double> >(point1);
+	node_vec[1] = new Vertex<2, Point <2, double> >(point2);
+	node_vec[2] = new Vertex<2, Point <2, double> >(point3);
 	ElementFactory<2, 3, Point <2, double> > factory;
 	Element<2, 3, Point <2, double> > el1 = factory.build(node_vec);
-	vector<Node <2, Point <2, double> > *> node_vec2;//(3, nullptr);
+	vector<Vertex <2, Point <2, double> > *> node_vec2;//(3, nullptr);
 	node_vec2.push_back(node_vec[0]);
 	node_vec2.push_back(node_vec[2]);
-	node_vec2.push_back(new Node<2, Point <2, double> >(point4));
+	node_vec2.push_back(new Vertex<2, Point <2, double> >(point4));
 	Element<2, 3, Point <2, double> > el2 = factory.build(node_vec2);
 	Mesh<2, 3, Point <2, double> > mesh(el1);
 	mesh.push(el2);
@@ -207,47 +205,26 @@ TEST_CASE("Test Solver with Point -based Mesh") {
 	Solver<2, Point <2, double> > solver(pde, mesh_ptr, boundaries);
 	MatrixXd STIFFNESS_MAT(4, 4);
 	STIFFNESS_MAT << 1, 0, -.5, -.5, 0, 1, -.5, -0.5, -.5, -.5, 1, 0, -.5, -.5, 0, 1;
-	//solver.show();
-	//VectorXd x_vec(2);
-	//x_vec << 0.5, 0.5;
-	//cout << f_kern_sin(x_vec) << endl;
-	//REQUIRE(limit_decimals(f_kern_sin(x_vec), 1) == 1.00);
 
 	SECTION("Test solving the pde2") {
 		Solver<2, Point <2, double>>  solver2(pde2, mesh_ptr, boundaries);
 		REQUIRE(solver.get_stiffness_matrix(3) == STIFFNESS_MAT);
-		//solver2.refine();
-		//solver2.refine();
-		//solver2.refine();
 		solver2.refine();
-		//solver2.show();
+		solver2.refine();
+		solver2.refine();
 
 		VectorXd refined_sol2 = solver2.solve();
-		VectorXd vana_hea_sol = solver2.vana_hea_solve();
 		cout << refined_sol2 << endl;
 		cout << refined_sol2.maxCoeff() << endl;
 		cout << endl;
-		cout << vana_hea_sol << endl;
-		cout << vana_hea_sol.maxCoeff() << endl;
-		//REQUIRE(0.0073 < refined_sol2.maxCoeff());
-		//REQUIRE(refined_sol2.maxCoeff() < 0.0075);
-		//REQUIRE(refined_sol2.minCoeff() == 0);
+		REQUIRE(0.070 < refined_sol2.maxCoeff());
+		REQUIRE(refined_sol2.maxCoeff() < 0.075);
+		REQUIRE(refined_sol2.minCoeff() == 0);
 		MatrixXd ref_values = solver2.get_solution_values(refined_sol2);
 		cout << ref_values << endl;
-		cout << solver2.get_solution_values(vana_hea_sol) << endl;
-		//cout << "max outer"
-		//map<array<int, 2>, double> stiffness_map2 = solver2.get_sparse_stiffness_map();
-		//cout << "max outer" << mesh.get_max_outer_index() << endl;
-		MatrixXd stiff_A = solver2.get_stiffness_matrix(mesh.get_max_outer_index());
-		//REQUIRE(stiff_A.transpose() == stiff_A);
-		cout << stiff_A << endl;
-		//solver.show();
-		//mesh.get_last().show();
-		mesh.get_element(6).show();
-		//mesh.get_last()[1].show();
 	}
 	
-	/*SECTION("Getting sparse stiffness matrix should succeed") {
+	SECTION("Getting sparse stiffness matrix should succeed") {
 		map<array<int, 2>, double> sparse_map = solver.get_sparse_stiffness_map();
 		SparseMatrix<double> test = solver.get_sparse_stiffness_matrix(3);
 		MatrixXd to_dense = test.toDense();
@@ -285,8 +262,8 @@ TEST_CASE("Test Solver with Point -based Mesh") {
 		cout << b_mat.toDense() << endl;
 		//cout << "ehehe!" << endl;
 		//cout << solver.get_boundary_matrix(solver.get_stiffness_matrix(8));
-
 	}
+
 	SECTION("Test get_stiffness matrix(MatrixXd)") {
 		MatrixXd stiffness_mat = solver.get_stiffness_matrix(3);
 		REQUIRE(stiffness_mat == STIFFNESS_MAT);
@@ -294,14 +271,20 @@ TEST_CASE("Test Solver with Point -based Mesh") {
 		cout << solver.get_stiffness_matrix(8) << endl;
 	}
 
-
 	SECTION("Solving the PDE should succeed") {
 		//solver.refine();
 		//solver.refine();
-		//solver.refine();
+		Seeder timer = Seeder();
+		int nanosecs = 0;
 		solver.refine();
 		solver.refine();
+		solver.refine();
+		nanosecs = timer.get_nanoseconds();
+		cout << "Duration in millisecs for refine(): " << timer.get_milliseconds() << endl;
+
 		VectorXd solution = solver.solve();
+		cout << "Duration in milli secs for solve(): " << timer.get_milliseconds()  << endl;
+
 		cout << solution << endl;
 		REQUIRE(solution.size() == mesh.get_max_outer_index() + 1);
 		MatrixXd calc_values = solver.get_solution_values(solution);
@@ -311,38 +294,7 @@ TEST_CASE("Test Solver with Point -based Mesh") {
 		cout << error_squared / calc_values.rows() << endl;
 		double avg = solution.mean();
 		cout << "Avg. relative error norm in" << sqrt(error_squared);
-		
-	}
-
-	/*SECTION("Solving the PDE after refinement should succeed") {
-		solver.refine();
-		solver.refine();
-		//solver.show();
-		VectorXd solution = solver.solve();
-		cout << "Showing solution" << endl;
-		cout << solution << endl;
-		//Element<2, 3, Point <2, double> > temp_el = solver.get_mesh().get_top_mesh_node()->data;
-		//temp_el.show();
-		//cout << "Show the refined mesh" << endl;
-		//solver.show();
-		//VectorXd sol_should_be(4);
-		//sol_should_be << 0.185185, 0.185185, 0.092592, 0.092592;
-		//sol_should_be << 0.453125, 0.3125, 0.125, 0.28125;
-		//for (int i = 0; i < 4; i++) { REQUIRE(limit_decimals(solution(i), 6) == sol_should_be(i)); }
-	}
-
-
-	SECTION("Test get_inner_stiffness matrix and get_boundary_matrix") {
-		solver.refine();
-		int max_index = mesh_ptr->get_max_outer_index();
-		MatrixXd tot_stiffness_mat = solver.get_stiffness_matrix(max_index);
-		MatrixXd inner_stiffness_mat = solver.get_inner_stiffness_matrix(tot_stiffness_mat);
-		REQUIRE(inner_stiffness_mat.rows() == 1);
-		REQUIRE(inner_stiffness_mat.cols() == 1);
-		REQUIRE(inner_stiffness_mat(0, 0) == 4);
-		MatrixXd stiff_mat = solver.get_stiffness_matrix(8);
-		MatrixXd boundary = solver.get_boundary_matrix(stiff_mat);
-		REQUIRE(boundary == stiff_mat.block(0, 1, 1, 8));
+		REQUIRE(sqrt(error_squared) < 0.005);
 		
 	}
 
@@ -351,14 +303,6 @@ TEST_CASE("Test Solver with Point -based Mesh") {
 		VectorXd boundary_should_be(8);
 		boundary_should_be << 0, 0, 0, 0, 0, 0, 0, 0;
 		REQUIRE(boundary_should_be == solver.get_boundary_coeffs());
-	}
-
-	SECTION("Getting the total solution points should succeed") {
-		VectorXd solution = solver.solve();
-		MatrixXd sol_values = solver.get_solution_values(solution);
-		cout << "values" << endl;
-		cout << sol_values << endl;
-		//solver.show();
 	}
 
 	SECTION("Refining Mesh should improve the values") {
@@ -375,6 +319,6 @@ TEST_CASE("Test Solver with Point -based Mesh") {
 		cout << "values" << endl;
 		cout << values << endl;
 		//mesh.get_top().show();
-	}*/
+	}
 
 }

@@ -1,7 +1,7 @@
 #ifndef MESH_H
 #define MESH_H
 #include <iostream>
-#include "node.h"
+#include "Vertex.h"
 #include "element.h"
 #include "ElementFactory.h"
 #include "ElementDivider.h"
@@ -164,7 +164,7 @@ void Mesh<Dim, N, T>::refine() {
 	MeshNode<Element<Dim, N, T> >* previous = top;
 	MeshNode<Element<Dim, N, T> >* before_original_node = nullptr;
 	vector<Element<Dim, N, T>* > new_els;
-	map< array<int, 2>, Node<Dim, T>* > commons;
+	map<array<int, 2>, Vertex<Dim, T>* > commons;
 
 	while(original_node != nullptr){
 		new_els = divider.divide(original_node->data, commons);
@@ -177,7 +177,7 @@ void Mesh<Dim, N, T>::refine() {
 		original_node = previous->next;
 		previous = previous->next;
 	}
-	map< array<int, 2>, Node<Dim, T>* >::iterator map_iter = commons.begin();
+	map<array<int, 2>, Vertex<Dim, T>* >::iterator map_iter = commons.begin();
 	commons.erase(map_iter, commons.end());
 }
 
@@ -185,8 +185,8 @@ template <int Dim, int N, typename T>
 int Mesh<Dim, N, T>::set_inner_and_init_outer_indices(int index, BoundaryConditions<T> boundaries) {
 	MeshNode<Element<Dim, N, T> >* iter = top;
 	while (iter != nullptr) {
-		index = iter->data.set_inner_node_indices(index, boundaries);
-		iter->data.set_outer_node_indices_to(-1, boundaries);
+		index = iter->data.set_inner_vertex_indices(index, boundaries);
+		iter->data.set_outer_vertex_indices_to(-1, boundaries);
 		iter = iter->next;
 	}
 	return index;
@@ -197,6 +197,7 @@ int Mesh<Dim, N, T>::set_outer_indices(int index, BoundaryConditions<T> boundari
 	MeshNode<Element<Dim, N, T> >* iter = top;
 	while (iter != nullptr) {
 		index = iter->data.set_indices(index);
+		iter->data.set_index_maps();
 		iter = iter->next;
 	}
 	return index;

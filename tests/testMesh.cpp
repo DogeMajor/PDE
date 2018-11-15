@@ -1,7 +1,7 @@
-#include "../include/point.h"
+#include "../include/Point.h"
 //#include "../include/element.h"
 //#include "../include/ElementFactory.h"
-#include "../include/mesh.h"
+#include "../include/Mesh.h"
 
 #include <math.h>
 
@@ -40,19 +40,19 @@ TEST_CASE("Test the real Mesh with Elements based on Points") {
 	Point <2, double> point4(vec4);
 	Point <2, double> point5(vec5);
 	Point <2, double> point6(vec6);
-	Node <2, Point <2, double> > n_1(point1);
-	Node <2, Point <2, double> > n_2(point2);
-	Node <2, Point <2, double> > n_3(point3);
-	vector<Node <2, Point <2, double>  > * > node_vec(3, nullptr);
-	node_vec[0] = new Node<2, Point <2, double> >(point1);
-	node_vec[1] = new Node<2, Point <2, double> >(point2);
-	node_vec[2] = new Node<2, Point <2, double> >(point3);
+	Vertex<2, Point <2, double> > n_1(point1);
+	Vertex<2, Point <2, double> > n_2(point2);
+	Vertex<2, Point <2, double> > n_3(point3);
+	vector<Vertex<2, Point <2, double>  > * > node_vec(3, nullptr);
+	node_vec[0] = new Vertex<2, Point <2, double> >(point1);
+	node_vec[1] = new Vertex<2, Point <2, double> >(point2);
+	node_vec[2] = new Vertex<2, Point <2, double> >(point3);
 	ElementFactory<2, 3, Point <2, double> > factory;
 	Element<2, 3, Point <2, double> > el1 = factory.build(node_vec);
-	vector<Node <2, Point <2, double> > *> node_vec2;//(3, nullptr);
+	vector<Vertex<2, Point <2, double> > *> node_vec2;//(3, nullptr);
 	node_vec2.push_back(node_vec[0]);
 	node_vec2.push_back(node_vec[2]);
-	node_vec2.push_back(new Node<2, Point <2, double> >(point4));
+	node_vec2.push_back(new Vertex<2, Point <2, double> >(point4));
 	Element<2, 3, Point <2, double> > el2 = factory.build(node_vec2);
 	el1.show();
 	el2.show();
@@ -117,14 +117,14 @@ TEST_CASE("Test the real Mesh with Elements based on Points") {
 	}
 
 	SECTION("One can push and pop a MeshNode from anywhere in the Mesh") {//OK!!
-		vector<Node <2, Point <2, double>  > * > node_vec_D;
-		node_vec_D.push_back(new Node<2, Point <2, double> >(point6));
+		vector<Vertex<2, Point <2, double>  > * > node_vec_D;
+		node_vec_D.push_back(new Vertex<2, Point <2, double> >(point6));
 		node_vec_D.push_back(node_vec[1]);
 		node_vec_D.push_back(node_vec[2]);
 		Element<2, 3, Point <2, double> > el4 = factory.build(node_vec_D);
 		
-		vector<Node <2, Point <2, double>  > * > node_vec_C;
-		node_vec_C.push_back(new Node<2, Point <2, double> >(point5));
+		vector<Vertex<2, Point <2, double>  > * > node_vec_C;
+		node_vec_C.push_back(new Vertex<2, Point <2, double> >(point5));
 		node_vec_C.push_back(node_vec[1]);
 		node_vec_C.push_back(node_vec_D[0]);
 		Element<2, 3, Point <2, double> > el3 = factory.build(node_vec_C);

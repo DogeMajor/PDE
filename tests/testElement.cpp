@@ -1,6 +1,6 @@
-#include "../include/point.h"
-#include "../include/node.h"
-#include "../include/element.h"
+#include "../include/Point.h"
+#include "../include/Vertex.h"
+#include "../include/Element.h"
 
 using namespace std;
 using namespace Eigen;
@@ -30,22 +30,22 @@ double bound_val(VectorXd coords) {
 #include "../C++ libs/catch/catch.hpp"
 
 
-TEST_CASE( "Test Element template containing Node template initiated with 2-D double vector from Eigen lib" ){
+TEST_CASE( "Test Element template containing vertex template initiated with 2-D double vector from Eigen lib" ){
 
     VectorXd location(2);
     location << 0.0, 0.0;
-    Node <2,VectorXd> node1(location);
+    Vertex<2,VectorXd> vertex1(location);
     location << 1.0, 0.0;
-    Node <2,VectorXd> node2(location);
+    Vertex<2,VectorXd> vertex2(location);
     location << 1.0, 1.0;
-    Node <2,VectorXd> node3(location);
-    vector<Node<2,VectorXd> *> nodes(3, nullptr);
+    Vertex<2,VectorXd> vertex3(location);
+    vector<Vertex<2,VectorXd> *> vertices(3, nullptr);
 	location << 0.0, 0.0;
-    nodes[0] = new Node<2, VectorXd>(location);
+    vertices[0] = new Vertex<2, VectorXd>(location);
 	location << 1.0, 0.0;
-    nodes[1] = new Node<2, VectorXd>(location);
+    vertices[1] = new Vertex<2, VectorXd>(location);
 	location << 1.0, 1.0;
-    nodes[2] = new Node<2, VectorXd>(location);
+    vertices[2] = new Vertex<2, VectorXd>(location);
     vector<SimplexFunction <VectorXd> > funcs(3);
     VectorXd coeffs(3);
     coeffs << -1,0,1;
@@ -55,7 +55,7 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D do
     coeffs << 0,1,0;
     funcs[2].coeff = coeffs;
 	
-    Element <2, 3, VectorXd> element(nodes, funcs);
+    Element <2, 3, VectorXd> element(vertices, funcs);
 
 	BoundaryConditions<VectorXd> boundaries;
 	boundaries.cond = bound_cond_large_box;//omega = [0,2]^2
@@ -65,30 +65,30 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D do
 
     SECTION( "Test default constructor()" ){
         Element <2, 3, VectorXd> empty_element;
-		vector<Node <2, VectorXd> *> empty_nodes = empty_element.get_nodes();
-		REQUIRE(empty_nodes[2] == nullptr);
-		REQUIRE(empty_nodes.size() == 3);
+		vector<Vertex<2, VectorXd> *> empty_vertices = empty_element.get_vertices();
+		REQUIRE(empty_vertices[2] == nullptr);
+		REQUIRE(empty_vertices.size() == 3);
     }
 	
-	SECTION("Test get_nodes") {
+	SECTION("Test get_vertices") {
 
-		vector<Node <2, VectorXd> *> retrieved_nodes = element.get_nodes();
-		REQUIRE( retrieved_nodes[2]->how_many() == 6 );
-		REQUIRE( retrieved_nodes[2]->get_location() == node3.get_location() );
-		REQUIRE( retrieved_nodes[2]->get_index() == node3.get_index() );
-		REQUIRE( retrieved_nodes[2]->get_shared_elements() == node3.get_shared_elements()+1 );
+		vector<Vertex<2, VectorXd> *> retrieved_vertices = element.get_vertices();
+		REQUIRE( retrieved_vertices[2]->how_many() == 6 );
+		REQUIRE( retrieved_vertices[2]->get_location() == vertex3.get_location() );
+		REQUIRE( retrieved_vertices[2]->get_index() == vertex3.get_index() );
+		REQUIRE( retrieved_vertices[2]->get_shared_elements() == vertex3.get_shared_elements()+1 );
 	}
 
     SECTION( "Test operator []" ){
-        REQUIRE( element[0].get_location() == nodes[0]->get_location() );
-        REQUIRE( element[0].get_location() != nodes[1]->get_location() );
+        REQUIRE( element[0].get_location() == vertices[0]->get_location() );
+        REQUIRE( element[0].get_location() != vertices[1]->get_location() );
     }
 
     SECTION( "Test show()" ){
         cout << "showing element[0]" << endl;
         element[0].show();
-        cout << "showing node1" << endl;
-        nodes[0]->show();
+        cout << "showing vertex1" << endl;
+        vertices[0]->show();
     }
 
     SECTION( "Test copy constructor" ){
@@ -121,17 +121,40 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D do
 
 	SECTION("Test set_inner_indices") {
 		element.set_all_indices_to(-1);
-		REQUIRE(element.set_inner_node_indices(-1, boundaries) == 0);
+		REQUIRE(element.set_inner_vertex_indices(-1, boundaries) == 0);
 		REQUIRE(element[2].get_index() == 0);
 		REQUIRE(element[0].get_index() == -1);
 		REQUIRE(element[1].get_index() == -1);
 	}
 
+	SECTION("Test set index maps") {
+		element.set_indices(0);
+		element.set_index_maps();
+		cout << "0 to global" << element.to_global(0) << endl;
+		REQUIRE(element.to_global(0) == 1);
+		REQUIRE(element.to_global(1) == 2);
+		REQUIRE(element.to_global(2) == 3);
+		REQUIRE(element.to_local(1) == 0);
+		REQUIRE(element.to_local(2) == 1);
+		REQUIRE(element.to_local(3) == 2);
+		element.set_all_indices_to(-1);
+	}
+
+	SECTION("Test f_variations methods") {
+		element.set_f_variation(0, .1);
+		element.set_f_variation(2, .5);
+		vector<double> f_vars = element.get_f_variations();
+		REQUIRE(f_vars[0] == 0.1);
+		REQUIRE(f_vars[1] == 0);
+		REQUIRE(f_vars[2] == 0.5);
+		REQUIRE(limit_decimals(element.get_avg_f_variation(),2) == 0.2);
+	}
+
     SECTION( "Test get_function(int)" ){
         SimplexFunction<VectorXd> first_fn = element.get_function(0);
-        REQUIRE( first_fn(node1.get_location()) == 1 );
-        REQUIRE( first_fn(node2.get_location()) == 0 );
-        REQUIRE( first_fn(node3.get_location()) == 0 );
+        REQUIRE( first_fn(vertex1.get_location()) == 1 );
+        REQUIRE( first_fn(vertex2.get_location()) == 0 );
+        REQUIRE( first_fn(vertex3.get_location()) == 0 );
     }
 
     SECTION( "Test assignment operator" ){
@@ -143,14 +166,14 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D do
     }
 	
     SECTION( "Test operators == and !=" ){
-        Element <2, 3, VectorXd> new_element(nodes, funcs);
+        Element <2, 3, VectorXd> new_element(vertices, funcs);
         REQUIRE( new_element == element );
-		vector<Node <2, VectorXd> *> reflected_nodes;//(3, nullptr);
-        reflected_nodes.push_back(nodes[2]);
-        reflected_nodes.push_back(nodes[1]);
-        reflected_nodes.push_back(nodes[0]);
-		Element <2, 3, VectorXd> refl_element(reflected_nodes, funcs);
-		REQUIRE(reflected_nodes[1]->how_many() == 6 );
+		vector<Vertex<2, VectorXd> *> reflected_vertices;//(3, nullptr);
+        reflected_vertices.push_back(vertices[2]);
+        reflected_vertices.push_back(vertices[1]);
+        reflected_vertices.push_back(vertices[0]);
+		Element <2, 3, VectorXd> refl_element(reflected_vertices, funcs);
+		REQUIRE(reflected_vertices[1]->how_many() == 6 );
         REQUIRE( refl_element != element );
     }
 	
@@ -173,38 +196,38 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D do
 	}
 
 	
-	SECTION("Test midpoint_nodes()") {
+	SECTION("Test midpoint_vertices()") {
 		VectorXd loc(2);
-		int node_no = element[0].how_many();
+		int vertex_no = element[0].how_many();
 		vector <pair <int[2], VectorXd> > mpoints = element.get_midpoints();
-		vector<Node<2, VectorXd> *> new_nodes = element.get_midpoint_nodes();
-		new_nodes[2]->show();
-		REQUIRE( element[0].how_many() == node_no+3 );
+		vector<Vertex<2, VectorXd> *> new_vertices = element.get_midpoint_vertices();
+		new_vertices[2]->show();
+		REQUIRE( element[0].how_many() == vertex_no+3 );
 		loc << 0.5, 0.0;
-		REQUIRE(new_nodes[0]->get_location() == loc);
+		REQUIRE(new_vertices[0]->get_location() == loc);
 		loc << 0.5, 0.5;
-		REQUIRE(new_nodes[1]->get_location() == loc);
+		REQUIRE(new_vertices[1]->get_location() == loc);
 		loc << 1.0, 0.5;
-		REQUIRE(new_nodes[2]->get_location() == loc);
-		//REQUIRE(midnodes[0].first[1] == 1);
+		REQUIRE(new_vertices[2]->get_location() == loc);
+		//REQUIRE(midvertices[0].first[1] == 1);
 	}
 
-	SECTION("Test map of nodes") {
+	SECTION("Test map of vertices") {
 		vector <pair <int[2], VectorXd> > m_points = element.get_midpoints();
-		vector< Node<2, VectorXd> * > m_nodes = element.get_midpoint_nodes();
-		map< array<int, 2>, Node<2, VectorXd>* > node_map;
+		vector< Vertex<2, VectorXd> * > m_vertices = element.get_midpoint_vertices();
+		map< array<int, 2>, Vertex<2, VectorXd>* > vertex_map;
 		for (int i = 0; i < 3; i++) {
 			for (int j = i + 1; j < 3; j++) {
-				node_map[{i, j}] = new Node<2, VectorXd>(*m_nodes[i+j-1]);
+				vertex_map[{i, j}] = new Vertex<2, VectorXd>(*m_vertices[i+j-1]);
 			}
 		}
-		node_map[{0, 1}]->show();
+		vertex_map[{0, 1}]->show();
 	}
 	
 }
 
 
-TEST_CASE( "Test Element template containing Node template initiated with 2-D Point <2 ,double> template objects" ) {
+TEST_CASE( "Test Element template containing vertex template initiated with 2-D Point <2 ,double> template objects" ) {
 
     vector <double> vec1 = {0.0, 0.0};
     vector <double> vec2 = {1.0, 0.0};
@@ -212,10 +235,10 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D Po
     Point <2 ,double> point1(vec1);
     Point <2 ,double> point2(vec2);
     Point <2 ,double> point3(vec3);
-	vector < Node <2, Point <2 ,double> >* > node_vec;
-	node_vec.push_back(new Node <2, Point <2 ,double> >(point1));//delete is utilized by ~Element afters the tests are run
-	node_vec.push_back(new Node <2, Point <2 ,double> >(point2));
-	node_vec.push_back(new Node <2, Point <2 ,double> >(point3));
+	vector < Vertex<2, Point <2 ,double> >* > vertex_vec;
+	vertex_vec.push_back(new Vertex<2, Point <2 ,double> >(point1));//delete is utilized by ~Element afters the tests are run
+	vertex_vec.push_back(new Vertex<2, Point <2 ,double> >(point2));
+	vertex_vec.push_back(new Vertex<2, Point <2 ,double> >(point3));
     vector <SimplexFunction <Point <2 ,double> > > fns(3);
     VectorXd coeff(3);
     coeff << -1,0,1;
@@ -224,7 +247,7 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D Po
     fns[1].coeff = coeff;
     coeff << 0,1,0;
     fns[2].coeff = coeff;
-    Element <2, 3, Point <2 ,double> > el(node_vec, fns);
+    Element <2, 3, Point <2 ,double> > el(vertex_vec, fns);
 	VolumeCalculator <2, Point <2, double> > volume_calculator;
 
 	map< array<int, 2>, int> MIDPOINTS_MAP;
@@ -236,9 +259,9 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D Po
 
 	SECTION("Test operator []") {
 		cout << "Showing location in the Element based on Point<.,.>" << endl;
-		node_vec[0]->show();
-		REQUIRE(el[0].get_location() == node_vec[0]->get_location());
-		REQUIRE(el[0].get_location() != node_vec[1]->get_location());
+		vertex_vec[0]->show();
+		REQUIRE(el[0].get_location() == vertex_vec[0]->get_location());
+		REQUIRE(el[0].get_location() != vertex_vec[1]->get_location());
 		REQUIRE(el[0].get_location()[0] == 0.0);
 		REQUIRE(el[0].get_location()[1] == 0.0);
 	}
@@ -246,17 +269,17 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D Po
     SECTION( "Test show()" ){
         cout << "showing element[0]" << endl;
         el[0].show();
-        cout << "showing node1" << endl;
-        node_vec[0]->show();
+        cout << "showing vertex1" << endl;
+        vertex_vec[0]->show();
     }
 
 	SECTION("Test get_squared_dist_mat()") {
-		MatrixXd D = volume_calculator.get_distance_squared_matrix(el.get_nodes());
+		MatrixXd D = volume_calculator.get_distance_squared_matrix(el.get_vertices());
 		cout << D << endl;
 	}
 
     SECTION( "Test get_simplex_matrix(T &el)" ){
-        Matrix<double, 2, 2> s_mat = volume_calculator.get_simplex_matrix(el.get_nodes());
+        Matrix<double, 2, 2> s_mat = volume_calculator.get_simplex_matrix(el.get_vertices());
         REQUIRE( s_mat == MatrixXd::Identity(2,2) );
     }
 
@@ -293,21 +316,21 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D Po
 
     SECTION( "Test get_function(int)" ){
         SimplexFunction< Point <2 ,double> > func_1 = el.get_function(0);
-        REQUIRE( func_1(node_vec[0]->get_location()) == 1 );
-        REQUIRE( func_1(node_vec[1]->get_location()) == 0 );
-        REQUIRE( func_1(node_vec[2]->get_location()) == 0 );
+        REQUIRE( func_1(vertex_vec[0]->get_location()) == 1 );
+        REQUIRE( func_1(vertex_vec[1]->get_location()) == 0 );
+        REQUIRE( func_1(vertex_vec[2]->get_location()) == 0 );
     }
 	
-	SECTION("Test midpoint_nodes()") {
+	SECTION("Test midpoint_vertices()") {
 		VectorXd loc(2);
 		loc << 0.5, 0.0;
-		int node_no = el[0].how_many();
+		int vertex_no = el[0].how_many();
 		vector <pair <int[2], Point <2 ,double> > > m_points = el.get_midpoints();
-		vector <Node <2, Point <2 ,double> >* > m_nodes = el.get_midpoint_nodes();
-		REQUIRE(el[0].how_many() == node_no + 3);
-		REQUIRE(m_nodes[0]->get_location()[0] == 0.5*(vec1[0]+ vec2[0]));
-		REQUIRE(m_nodes[1]->get_location()[1] == 0.5*(vec1[1] + vec3[1]));
-		REQUIRE(m_nodes[2]->get_location()[0] == 0.5*(vec2[0] + vec3[0]));
+		vector <Vertex<2, Point <2 ,double> >* > m_vertices = el.get_midpoint_vertices();
+		REQUIRE(el[0].how_many() == vertex_no + 3);
+		REQUIRE(m_vertices[0]->get_location()[0] == 0.5*(vec1[0]+ vec2[0]));
+		REQUIRE(m_vertices[1]->get_location()[1] == 0.5*(vec1[1] + vec3[1]));
+		REQUIRE(m_vertices[2]->get_location()[0] == 0.5*(vec2[0] + vec3[0]));
 	}
 
 }

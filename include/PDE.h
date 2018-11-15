@@ -10,7 +10,7 @@
 #include "../C++ libs/eigen/Eigen/Sparse"
 #include "../C++ libs/eigen/Eigen/Core"
 #include "../C++ libs/eigen/Eigen/IterativeLinearSolvers"
-#include "mesh.h"
+#include "Mesh.h"
 
 using namespace std;
 using namespace Eigen;
@@ -87,6 +87,16 @@ public:
 			chrono::high_resolution_clock::now();
 		return chrono::duration_cast<chrono::nanoseconds>(current_time - start_time).count();
 	}
+	int get_milliseconds() const {
+		chrono::high_resolution_clock::time_point current_time =
+			chrono::high_resolution_clock::now();
+		return chrono::duration_cast<chrono::milliseconds>(current_time - start_time).count();
+	}
+	int get_seconds() const {
+		chrono::high_resolution_clock::time_point current_time =
+			chrono::high_resolution_clock::now();
+		return chrono::duration_cast<chrono::seconds>(current_time - start_time).count();
+	}
 };
 
 
@@ -108,7 +118,7 @@ public:
     const double A(Element<Dim, Dim+1,T> el, SimplexFunction<T> a, SimplexFunction<T> b) const;//Integrates A_kernel*a*b over Element simplex
     double f(Element<Dim, Dim+1, T> &el, SimplexFunction<T> a) const;//Integrates f_kernel*a over Element simplex
 	T get_random_location(Element<Dim, Dim + 1, T> &el, Randomizer &randomizer) const;
-	double f_monte_carlo(Element<Dim, Dim + 1, T> &el, SimplexFunction<T> a, int n=20) const;//Integrates f_kernel*a over Element simplex
+	double f_monte_carlo(Element<Dim, Dim + 1, T> &el, SimplexFunction<T> a, int fn_index, int n=20) const;//Integrates f_kernel*a over Element simplex
 
 	double b(Element<Dim, Dim + 1, T> &el, SimplexFunction<T> a, SimplexFunction<T> b, BoundaryConditions<T> boundaries) const;//Surface integral of phi_i * grad(boundary_fn) on element's edge
 	VectorXd to_VectorXd(T &location) const;
@@ -154,7 +164,7 @@ double PDE<Dim, T>::f(Element<Dim, Dim+1, T> &el, SimplexFunction<T> a) const{
 }
 
 template <int Dim, typename T>
-double PDE<Dim, T>::f_monte_carlo(Element<Dim, Dim + 1, T> &el, SimplexFunction<T> a, int n) const {
+double PDE<Dim, T>::f_monte_carlo(Element<Dim, Dim + 1, T> &el, SimplexFunction<T> a, int fn_index, int n) const {
 	T loc;
 	double sum = 0;
 	double var = 0;
@@ -166,17 +176,18 @@ double PDE<Dim, T>::f_monte_carlo(Element<Dim, Dim + 1, T> &el, SimplexFunction<
 		sum = sum + f_kernel(to_VectorXd(loc))*a(loc);
 	}
 	var = (1 / double(n))*var;
+	el.set_f_variation(fn_index, var);
 	return sum*el.get_volume()*(1/double(n));
 }
 
 template <int Dim, typename T>//Chooses one point in the middle of simplex, returns f(P_mid)*a(P_mid)*el.volume()
 T PDE<Dim, T>::get_random_location(Element<Dim, Dim + 1, T> &el, Randomizer &randomizer) const{
 	T loc;
-	int sz = el.nodes_size();
+	int sz = el.vertices_size();
 	vector<double> prob(sz);
 	prob = randomizer.get_convex_coeffs(sz);
 	loc = prob[0] * el[0].get_location();
-	for (int i = 1; i < el.nodes_size(); i++) {
+	for (int i = 1; i < el.vertices_size(); i++) {
 		loc = loc + prob[i] * el[i].get_location();
 	}
 	return loc;

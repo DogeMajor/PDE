@@ -1,6 +1,6 @@
-#include "../include/point.h"
-#include "../include/node.h"
-#include "../include/element.h"
+#include "../include/Point.h"
+#include "../include/Vertex.h"
+#include "../include/Element.h"
 #include "../include/PDE.h"
 #include "../include/HelpfulTools.h"
 #include <math.h>
@@ -54,18 +54,18 @@ TEST_CASE( "Test PDE" ) {
 	double PRODUCT_F_PHI2 = 0.0759909;
 	VectorXd location(2);
 	location << 0.0, 0.0;
-	Node <2, VectorXd> node1(location);
+	Vertex<2, VectorXd> node1(location);
 	location << 1.0, 0.0;
-	Node <2, VectorXd> node2(location);
+	Vertex<2, VectorXd> node2(location);
 	location << 1.0, 1.0;
-	Node <2, VectorXd> node3(location);
-	vector<Node<2, VectorXd> *> nodes(3, nullptr);
+	Vertex<2, VectorXd> node3(location);
+	vector<Vertex<2, VectorXd> *> vertices(3, nullptr);
 	location << 0.0, 0.0;
-	nodes[0] = new Node<2, VectorXd>(location);
+	vertices[0] = new Vertex<2, VectorXd>(location);
 	location << 1.0, 0.0;
-	nodes[1] = new Node<2, VectorXd>(location);
+	vertices[1] = new Vertex<2, VectorXd>(location);
 	location << 1.0, 1.0;
-	nodes[2] = new Node<2, VectorXd>(location);
+	vertices[2] = new Vertex<2, VectorXd>(location);
 	vector<SimplexFunction <VectorXd> > funcs(3);
 	VectorXd coeffs(3);
 	coeffs << -1, 0, 1;
@@ -75,7 +75,7 @@ TEST_CASE( "Test PDE" ) {
 	coeffs << 0, 1, 0;
 	funcs[2].coeff = coeffs;
 
-	Element <2, 3, VectorXd> element(nodes, funcs);
+	Element <2, 3, VectorXd> element(vertices, funcs);
 
     BilinearFunction bl_fn;
     bl_fn.mat = MatrixXd::Identity(2,2);
@@ -106,7 +106,7 @@ TEST_CASE( "Test PDE" ) {
 		REQUIRE(limit_decimals(sum(coeffs), 3) == 1.000);
 		show_vector<vector<double> >(coeffs);
 		vector<double> items = randomizer.randomize_items(coeffs);
-		REQUIRE(limit_decimals(sum(items), 3) == 1.000);
+		REQUIRE(abs(sum(items)-1) < 0.001);
 		show_vector<vector<double> >(items);
 	}
 
@@ -149,21 +149,21 @@ TEST_CASE( "Test PDE" ) {
 			REQUIRE(rand_loc[i] <= 1);
 			REQUIRE(rand_loc[i] >= 0);
 		}
-		
 	}
 
 	SECTION("Test f_monte_carlo(.,.)") {//More accurate integration!!
 
 		cout << funcs[2].coeff << endl;
 		cout << "Monte carlo intergals" << endl;
-		cout << pde.f_monte_carlo(element, funcs[2], 10) << endl;
-		REQUIRE(pde.f_monte_carlo(element, funcs[2], 20) < 0.08);
-		cout << pde.f_monte_carlo(element, funcs[2], 50) << endl;
-		cout << pde.f_monte_carlo(element, funcs[2], 100) << endl;
-		cout << pde.f_monte_carlo(element, funcs[2], 1000) << endl;
+		cout << pde.f_monte_carlo(element, funcs[2], 2, 10) << endl;
+		REQUIRE(pde.f_monte_carlo(element, funcs[2], 2, 20) < 0.09);
+		cout << pde.f_monte_carlo(element, funcs[2], 2, 50) << endl;
+		REQUIRE(abs(pde.f_monte_carlo(element, funcs[2], 2, 100) - PRODUCT_F_PHI2) < 0.02);
+		cout << pde.f_monte_carlo(element, funcs[2], 2, 1000) << endl;
+		REQUIRE(element.get_avg_f_variation() < 0.10);
+		cout << "var" << element.get_avg_f_variation() << endl;
 
 	}
-
 
     SECTION( "Test inner product with f" ){
         REQUIRE( limit_decimals(pde.f(element, funcs[0]),3) == 0.125 );
