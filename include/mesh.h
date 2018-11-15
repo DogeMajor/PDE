@@ -197,6 +197,7 @@ int Mesh<Dim, N, T>::set_outer_indices(int index, BoundaryConditions<T> boundari
 	MeshNode<Element<Dim, N, T> >* iter = top;
 	while (iter != nullptr) {
 		index = iter->data.set_indices(index);
+		iter->data.set_index_maps();
 		iter = iter->next;
 	}
 	return index;

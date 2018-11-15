@@ -15,9 +15,17 @@
 using namespace std;
 using namespace Eigen;
 
-//int factorial(int n){
-    //return (n != 0)? n*factorial(n-1) : 1;
-//}
+
+struct IndexMaps {
+	typedef map<int, int> IndexMap;
+	IndexMap map_to_local;
+	IndexMap map_to_global;
+	void erase_maps() {
+		map_to_local.erase(map_to_local.begin(), map_to_local.end());
+		map_to_global.erase(map_to_global.begin(), map_to_global.end());
+	}
+
+};
 
 //We simply want to use the already existing nodes and don't need to worry about garbage collection.
 //This is the reason why destructor deletes only for nodes which share 0 elements!
@@ -35,6 +43,12 @@ public:
 	void set_all_indices_to(const int index);
 	int set_inner_node_indices(int index, BoundaryConditions<T> conds);
 	void set_outer_node_indices_to(const int index, BoundaryConditions<T> conds);
+
+	int to_local(int global_index) { return index_maps.map_to_local[global_index]; }
+	int to_global(int local_index) { return index_maps.map_to_global[local_index]; }
+
+	void set_index_maps();
+
 	//int set_outer_node_indices(int index, BoundaryConditions<T> conds);
 	int how_many() const;
 	vector <Node <Dim, T>* > get_nodes();
@@ -58,6 +72,7 @@ public:
 private:
 	vector <Node <Dim, T>* > nodes; // with pointers #nodes does not increase when new element is added provided that nodes have already been built
     vector <SimplexFunction <T> > functions;
+	IndexMaps index_maps;
 	VolumeCalculator<Dim, T> volume_calculator;
 };
 
@@ -137,6 +152,7 @@ int Element<Dim, N, T>::set_inner_node_indices(int index, BoundaryConditions<T> 
 			index++;
 		}
 	}
+	set_index_maps();
 	return index;
 }
 
@@ -149,6 +165,16 @@ void Element<Dim, N, T>::set_outer_node_indices_to(const int index, BoundaryCond
 	}
 }
 
+template <int Dim, int N, typename T>
+void Element<Dim, N, T>::set_index_maps() {
+	index_maps.erase_maps();
+	int I;
+	for (int i = 0; i < N; i++) {
+		I = nodes[i]->get_index();
+		index_maps.map_to_global[i] = I;
+		index_maps.map_to_local[I] = i;
+	}
+}
 /*template <int Dim, int N, typename T>//Not ok!
 int Element<Dim, N, T>::set_outer_node_indices(int index, BoundaryConditions<T> conds) {
 	for (int i = 0; i < N; i++) {

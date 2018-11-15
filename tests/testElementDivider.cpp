@@ -66,8 +66,12 @@ TEST_CASE("Test ElementDivider with Point template -based Nodes") {
 	//el_mesh.push(el2);
 	ElementDivider<2, 3, Point <2,double> > divider;
 	element.set_indices(-1);
+	element.set_indexings();
 	el2.set_indices(2);
-	
+	el2.set_indexings();
+	element.show();
+	cout << "second el:"<< endl;
+	el2.show();
 	//REQUIRE(n_1.how_many() == 7);
 
 	map< array<int, 2>, int> MIDPOINTS_MAP;
@@ -80,7 +84,7 @@ TEST_CASE("Test ElementDivider with Point template -based Nodes") {
 	}
 
 
-	SECTION("dist_squared template function should work") {
+	/*SECTION("dist_squared template function should work") {
 			VectorXd a(3);
 			a << 0, 1, 2;
 			VectorXd b(3);
@@ -183,19 +187,25 @@ TEST_CASE("Test ElementDivider with Point template -based Nodes") {
 		REQUIRE(inner_el[0].get_location() == 0.5*(element[0].get_location() + element[1].get_location()));
 		REQUIRE(inner_el[1].get_location() == 0.5*(element[0].get_location() + element[2].get_location()));
 		REQUIRE(inner_el[2].get_location() == 0.5*(element[1].get_location() + element[2].get_location()));
-	}
+	}*/
 
 	SECTION( "Generating new Elements should succeed" ) {
 		map< array<int, 2>, Node<2, Point <2, double> >* >  coms;
 		int nodes_at_t0 = n_1.how_many();
+		
 		vector <Element <2, 3, Point <2,double> >* > els = divider.divide(element, coms);
+		
 		REQUIRE(els.size() == 4);
 		REQUIRE(nodes_at_t0 + 3 == n_1.how_many() );
-		REQUIRE(divider.get_inner_element(0, element.get_midpoint_nodes(), MIDPOINTS_MAP)[1].get_location() == (*els[3])[1].get_location());
+		//REQUIRE(divider.get_inner_element(0, element.get_midpoint_nodes(), MIDPOINTS_MAP)[1].get_location() == (*els[3])[1].get_location());
 		//REQUIRE(divider.get_vertex_element(1, element.get_midpoint_nodes(), MIDPOINTS_MAP, element)[2].get_location() == (*els[1])[2].get_location());
+		
+		cout << "ehehe!!!!!!" << endl;
 		vector <Element <2, 3, Point <2, double> >* > els2 = divider.divide(el2, coms);
 		REQUIRE(els2.size() == 4);
 		REQUIRE(nodes_at_t0 + 5 == n_1.how_many() );
+		cout << "ehehe!!!!!!" << endl;
+		coms.erase(coms.begin(), coms.begin()); 
 	}
 
 }

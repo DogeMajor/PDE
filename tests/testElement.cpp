@@ -127,6 +127,19 @@ TEST_CASE( "Test Element template containing Node template initiated with 2-D do
 		REQUIRE(element[1].get_index() == -1);
 	}
 
+	SECTION("Test set index maps") {
+		element.set_indices(0);
+		element.set_index_maps();
+		cout << "0 to global" << element.to_global(0) << endl;
+		REQUIRE(element.to_global(0) == 1);
+		REQUIRE(element.to_global(1) == 2);
+		REQUIRE(element.to_global(2) == 3);
+		REQUIRE(element.to_local(1) == 0);
+		REQUIRE(element.to_local(2) == 1);
+		REQUIRE(element.to_local(3) == 2);
+		element.set_all_indices_to(-1);
+	}
+
     SECTION( "Test get_function(int)" ){
         SimplexFunction<VectorXd> first_fn = element.get_function(0);
         REQUIRE( first_fn(node1.get_location()) == 1 );

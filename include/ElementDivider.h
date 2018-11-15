@@ -45,7 +45,7 @@ map<array<int, 2>, T>  ElementDivider<Dim, N, T>::get_midlocation_map(Element<Di
 }
 
 
-template <int Dim, int N, typename T>//Also addss new mid nodes to commons!!
+template <int Dim, int N, typename T>//OK! Also addss new mid nodes to commons!!
 map< array<int, 2>, Node<Dim, T>* > ElementDivider<Dim, N, T>::get_mid_nodes_map(Element<Dim, N, T> &el, map< array<int, 2>, Node<Dim, T>* > &commons) {
 	map< array<int, 2>, Node<Dim, T>* > nodes_map;
 	map<array<int, 2>, T> m_map = el.get_midpoints_map();
@@ -56,11 +56,16 @@ map< array<int, 2>, Node<Dim, T>* > ElementDivider<Dim, N, T>::get_mid_nodes_map
 		for (int j = i + 1; j < N; j++) {
 			J = el[j].get_index();
 			loc = m_map[{I, J}];
-			if (commons.find({ I,J }) != commons.end()) {
+			if (commons.count({ I,J }) > 0 ) {
 				//cout << "Commons found for key " << I << ", " << J << endl;
 				nodes_map[{I, J}] = commons[{I, J}];
 			}
+			else if (commons.count({ J,I }) > 0) {
+				//cout << "Commons found for key " << I << ", " << J << endl;
+				nodes_map[{I, J}] = commons[{J, I}];
+			}
 			else {
+				//cout << "New elem added with key " << I << ", " << J << endl;
 				nodes_map.insert(pair<array<int, 2>, Node<Dim, T>* >({ I,J }, new Node<Dim, T>(loc)));
 				commons[{I, J}] = nodes_map[{I, J}];
 			}
@@ -86,23 +91,46 @@ map<array<int, 2>, int> ElementDivider<Dim, N, T>::get_midpoints_map() {
 template <int Dim, int N, typename T>
 vector <Element <Dim, N, T>* > ElementDivider<Dim, N, T>::divide(Element <Dim, N, T>& el, map< array<int, 2>, Node<Dim, T>* >  &commons) {
 	vector <Element <Dim, N, T>* > els;//( Dim*(Dim + 1)) / 2, nullptr);
-
-	vector <Node <Dim, T>* >  midpoint_nodes;
-	map< array<int, 2>, Node<Dim, T>* > m_nodes_map = get_mid_nodes_map(el, commons);
-	for (map< array<int, 2>, Node<Dim, T>* >::const_iterator iter = m_nodes_map.begin(); iter != m_nodes_map.end(); iter++) {
-		midpoint_nodes.push_back(iter->second);
-	}
-
-	//vector <Node <Dim, T>* >  midpoint_nodes = el.get_midpoint_nodes();
 	map< array<int, 2>, int> midpoints_map = get_midpoints_map();
+	vector <Node <Dim, T>* >  midpoint_nodes(N, nullptr);
+	map< array<int, 2>, Node<Dim, T>* > m_nodes_map = get_mid_nodes_map(el, commons);
+	cout << "nodes_map_sz" << m_nodes_map.size() << endl;
+	cout << "commons_map_sz" << commons.size() << endl;
+	int i, j, k;
+	for (map< array<int, 2>, Node<Dim, T>* >::const_iterator iter = m_nodes_map.begin(); iter != m_nodes_map.end(); iter++) {
+		i = el.to_local(iter->first[0]);
+		j = el.to_local(iter->first[1]);
+		k = midpoints_map[{i, j}];
+		//cout << i << "," << j << "," << k << endl;
+		midpoint_nodes[k] = iter->second;
+		//midpoint_nodes.push_back(iter->second);
+	}
+	/*int index = 0;
+	int I, J;
+	for (int i = 0; i < N; i++) {
+		I = el.to_global(i);
+		for (int j = i + 1; j < N; j++) {
+			J = el.to_global(j);
+			//midpoints_map.insert(pair< array<int, 2>, int>({ i, j }, index));
+			cout << "indices" << i << j << endl;
+			//m_nodes_map[{i, j}][0].show();
+			midpoint_nodes.push_back(m_nodes_map[{I, J}]);
+			cout << midpoint_nodes.size() << endl;
+			index++;
+		}
+	}*/
+	//vector <Node <Dim, T>* >  midpoint_nodes = el.get_midpoint_nodes();
+	
 	//Diverse grejer
 	for (int i = 0; i < N; i++) {
 		els.push_back(new Element <Dim, N, T>(get_vertex_element(i, midpoint_nodes, midpoints_map, el)));
 	}
+	
 	int inner_els_amount = pow(2, Dim) - N;
 	for (int i = 0; i < inner_els_amount; i++) {
 		els.push_back(new Element <Dim, N, T>(get_inner_element(i, midpoint_nodes, midpoints_map)));
 	}
+	
 	return els;
 }
 
@@ -123,13 +151,17 @@ vector <Element <Dim, N, T>* > ElementDivider<Dim, N, T>::divide(Element <Dim, N
 }
 
 template <int Dim, int N, typename T>
-Element<Dim, N, T> ElementDivider<Dim, N, T>::get_vertex_element(int I, vector <Node <Dim, T>* >  midpoint_nodes, map< array<int, 2>, int> midpoints_map, Element <Dim, N, T>& el) {
+Element<Dim, N, T> ElementDivider<Dim, N, T>::get_vertex_element(int k, vector <Node <Dim, T>* >  midpoint_nodes, map< array<int, 2>, int> midpoints_map, Element <Dim, N, T>& el) {
 	vector <Node <Dim, T>* > added_nodes;
 	//added_nodes.push_back(new Node <Dim, T>(el[I]));//Not clear if new should be used...
-	added_nodes.push_back(&el[I]);
+	int I, J;
+	int K = el.to_global(k);
+	added_nodes.push_back(&el[k]);
 	for (int i = 0; i < N; i++) {
+		int I = el.to_global(i);
 		for (int j = i + 1; j < N; j++) {
-			if (i == I || j == I) {
+			int I = el.to_global(i);
+			if (i == k || j == k) {
 				added_nodes.push_back(midpoint_nodes[midpoints_map[{i, j}]]);
 			}
 		}
@@ -143,6 +175,7 @@ Element<Dim, N, T> ElementDivider<Dim, N, T>::get_inner_element(int I, vector<No
 	map< array<int, 2>, int> unused_nodes_map;
 	for (int i = 0; i < N; i++) {
 		for (int j = i + 1; j < N; j++) {
+			
 			if (i == I || j == I) { new_nodes.push_back(midpoint_nodes[midpoints_map[{i, j}]]); }
 			else { unused_nodes_map[{i, j}] = midpoints_map[{i, j}]; }
 		}

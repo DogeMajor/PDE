@@ -217,8 +217,8 @@ TEST_CASE("Test Solver with Point -based Mesh") {
 		Solver<2, Point <2, double>>  solver2(pde2, mesh_ptr, boundaries);
 		REQUIRE(solver.get_stiffness_matrix(3) == STIFFNESS_MAT);
 		//solver2.refine();
-		//solver2.refine();
-		//solver2.refine();
+		solver2.refine();
+		solver2.refine();
 		solver2.refine();
 		//solver2.show();
 
@@ -240,7 +240,7 @@ TEST_CASE("Test Solver with Point -based Mesh") {
 		//cout << "max outer" << mesh.get_max_outer_index() << endl;
 		MatrixXd stiff_A = solver2.get_stiffness_matrix(mesh.get_max_outer_index());
 		//REQUIRE(stiff_A.transpose() == stiff_A);
-		cout << stiff_A << endl;
+		//cout << stiff_A << endl;
 		//solver.show();
 		//mesh.get_last().show();
 		mesh.get_element(6).show();
