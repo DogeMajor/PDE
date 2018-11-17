@@ -29,6 +29,7 @@ public:
 	Mesh();
 	Mesh(Element<Dim, N, T> &t);
 	~Mesh();
+	void set_element_divider(BoundaryConditions<T> b);
 	bool push(Element<Dim, N, T> &t);//To the top
 	bool push(MeshNode<Element<Dim, N, T> > *previous, Element<Dim, N, T> &t);//Adds efter the previous element!
 	bool pop();//From the top
@@ -79,6 +80,11 @@ Mesh<Dim, N, T>::~Mesh() {
 	while (pop() != false) {}
 	cout << "Mesh destroyed!" << endl;
 	cout << "Nodes left in the mesh: " << node_counter << endl;
+}
+
+template <int Dim, int N, typename T>
+void Mesh<Dim, N, T>::set_element_divider(BoundaryConditions<T> b) {
+	divider = ElementDivider<Dim, N, T>(b);
 }
 
 template <int Dim, int N, typename T>
@@ -167,7 +173,7 @@ void Mesh<Dim, N, T>::refine() {
 	map<array<int, 2>, Vertex<Dim, T>* > commons;
 
 	while(original_node != nullptr){
-		new_els = divider.divide(original_node->data, commons);
+		new_els = divider.divide(original_node->data, commons, max_inner_index);
 		for (int i = 0; i < new_els.size(); i++) {
 			push(previous, *new_els[i]);
 			previous = previous->next;

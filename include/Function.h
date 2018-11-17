@@ -49,12 +49,20 @@ struct BilinearFunction{
 
 template <typename T>
 struct BoundaryConditions {
-	typedef bool(*ConditionFn)(T x);
+	typedef bool(*ConditionFn)(T x, double acc);
 	typedef double(*ValueFn)(T x);
 	typedef T (*NormalFn)(T x);
-	ConditionFn cond;
+	ConditionFn cond_fn;
+	ConditionFn is_inside_fn;
 	ValueFn val;
 	NormalFn normal;
+	double accuracy;
+	bool cond(T x) {
+		return cond_fn(x, accuracy);
+	}
+	bool is_inside(T x) {
+		return is_inside_fn(x, accuracy);
+	}
 };
 
 #endif

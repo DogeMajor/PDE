@@ -45,6 +45,13 @@ bool bound_cond(VectorXd coords) {
 	return false;
 }
 
+bool bound_is_inside(VectorXd coords) {
+	for (int i = 0; i < coords.size(); i++) {
+		if ((coords[i] <= 0.0) || (coords[i] >= 1.0)) { return false; }
+	}
+	return true;
+}
+
 double bound_val(VectorXd coords) {
 	//if (coords[1] == 1.0) { return 1; }
 	return 0;
@@ -67,6 +74,13 @@ bool point_bound_cond(Point<2, double> coords) {
 		if ((coords[i] == 0.0) || (coords[i] == 1.0)) { return true; }
 	}
 	return false;
+}
+
+bool point_bound_is_inside(Point<2, double> coords) {
+	for (int i = 0; i < coords.size(); i++) {
+		if ((coords[i] <= 0.0) || (coords[i] >= 1.0)) { return false; }
+	}
+	return true;
 }
 
 double point_bound_val(Point<2, double> coords) {
@@ -200,7 +214,7 @@ TEST_CASE("Test Solver with Point -based Mesh") {
 	bl_fn.mat = MatrixXd::Identity(2, 2);
 	PDE<2, Point <2, double> > pde(bl_fn, f_kern_sin);
 	PDE<2, Point <2, double> > pde2(bl_fn, f_kern_const);
-	BoundaryConditions<Point <2, double> > boundaries = { point_bound_cond, point_bound_val };
+	BoundaryConditions<Point <2, double> > boundaries = { point_bound_cond, point_bound_is_inside, point_bound_val };
 
 	Solver<2, Point <2, double> > solver(pde, mesh_ptr, boundaries);
 	MatrixXd STIFFNESS_MAT(4, 4);

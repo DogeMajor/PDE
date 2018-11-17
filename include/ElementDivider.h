@@ -2,27 +2,33 @@
 #define ELEMENTDIVIDER_H
 #include "Element.h"
 #include "ElementFactory.h"
+#include "Function.h"
 
 template <int Dim, int N, typename T>
 class ElementDivider {
 
 public:
-	ElementDivider();
+	ElementDivider() {}
+	ElementDivider(BoundaryConditions<T> bound);
 	~ElementDivider() {}
-	map< array<int, 2>, Vertex<Dim, T>* > get_mid_vertices_map(Element<Dim, N, T> &el, map< array<int, 2>, Vertex<Dim, T>* > &commons);
-	vector <Element <Dim, N, T>* > divide(Element <Dim, N, T>& el, map< array<int, 2>, Vertex<Dim, T>* > &commons);
+	map<array<int, 2>, T> adjust_midpoints(Element<Dim, N, T> &el, map<array<int, 2>, T> m_map, int max_inner);
+	T find_surface_point(T old_mid_loc, T avg, double accuracy);
+	map<array<int, 2>, Vertex<Dim, T>* > get_mid_vertices_map(Element<Dim, N, T> &el, map<array<int, 2>, Vertex<Dim, T>* > &commons, int max_inner);
+	vector <Element <Dim, N, T>* > divide(Element <Dim, N, T>& el, map<array<int, 2>, Vertex<Dim, T>* > &commons, int max_inner);
 	Element<Dim, N, T> get_corner_element(int I, vector <Vertex <Dim, T>* >  midpoint_vertices, Element <Dim, N, T>& el);
 	Element<Dim, N, T> get_inner_element(int I, vector <Vertex <Dim, T>* >  midpoint_vertices);
 
 private:
 	ElementFactory <Dim, N, T> factory;
 	map<array<int, 2>, int> midpoint_indices_map;
+	BoundaryConditions<T> boundaries;
 
 };
 
 template <int Dim, int N, typename T>
-ElementDivider<Dim, N, T>::ElementDivider() {
+ElementDivider<Dim, N, T>::ElementDivider(BoundaryConditions<T> bound) {
 	factory = ElementFactory <Dim, N, T>();
+	boundaries = bound;
 	int index = 0;
 	for (int i = 0; i < N; i++) {
 		for (int j = i + 1; j < N; j++) {
@@ -32,10 +38,50 @@ ElementDivider<Dim, N, T>::ElementDivider() {
 	}
 }
 
+template <int Dim, int N, typename T>
+T ElementDivider<Dim, N, T>::find_surface_point(T old_mid_loc, T avg, double error_tolerance) {
+	double max_error = 1;
+	T direction = old_mid_loc - avg;
+	T loc = old_mid_loc;
+	int n = 1;
+	while (max_error > error_tolerance) {
+		if (boundaries.is_inside(loc)) {
+			loc = loc + pow(2, -n)*direction;
+		}
+		else {
+			loc = loc - pow(2, -n)*direction;
+		}
+		if (int(boundaries.is_inside(loc)) + int(boundaries.is_inside(old_mid_loc)) == 1) {//XOR!!!
+			n++;
+			//cout << n <<": "<< b.is_inside(old_mid_loc) << b.is_inside(loc) << endl;
+			max_error = sqrt(dist_squared<Dim, T>(loc, old_mid_loc));
+		}
+		old_mid_loc = loc;
+	}
+	return loc;
+}
+
+template <int Dim, int N, typename T>//Changes new midpoints so that they are on the boundary if the element is a boundary element
+map<array<int, 2>, T> ElementDivider<Dim, N, T>::adjust_midpoints(Element<Dim, N, T> &el, map<array<int, 2>, T> m_map, int max_inner) {
+	int I, J;
+	T avg = el.get_avg_location();
+	T surface_location;
+	double error_tolerance = boundaries.accuracy / double(10);
+	for (map<array<int, 2>, T>::const_iterator iter = m_map.begin(); iter != m_map.end(); iter++) {
+		I = iter->first[0];
+		J = iter->first[1];
+		if ((I > max_inner) && (J > max_inner)) {//Meanig that the vertices are at the boundary surface!!
+			surface_location = find_surface_point(iter->second, avg, error_tolerance);
+			m_map[{I, J}] = surface_location;
+		}
+	}
+	return m_map;
+}
+
 template <int Dim, int N, typename T>//Also adds new mid vertices to commons!!
-map< array<int, 2>, Vertex<Dim, T>* > ElementDivider<Dim, N, T>::get_mid_vertices_map(Element<Dim, N, T> &el, map< array<int, 2>, Vertex<Dim, T>* > &commons) {
-	map< array<int, 2>, Vertex<Dim, T>* > vertices_map;
-	map<array<int, 2>, T> m_map = el.get_midpoints_map();
+map<array<int, 2>, Vertex<Dim, T>* > ElementDivider<Dim, N, T>::get_mid_vertices_map(Element<Dim, N, T> &el, map< array<int, 2>, Vertex<Dim, T>* > &commons, int max_inner) {
+	map<array<int, 2>, Vertex<Dim, T>* > vertices_map;
+	map<array<int, 2>, T> m_map = adjust_midpoints(el, el.get_midpoints_map(), max_inner);
 	T loc;
 	int I, J;
 	for (int i = 0; i < N; i++) {
@@ -59,10 +105,10 @@ map< array<int, 2>, Vertex<Dim, T>* > ElementDivider<Dim, N, T>::get_mid_vertice
 }
 
 template <int Dim, int N, typename T>
-vector <Element <Dim, N, T>* > ElementDivider<Dim, N, T>::divide(Element <Dim, N, T>& el, map< array<int, 2>, Vertex<Dim, T>* >  &commons) {
+vector <Element <Dim, N, T>* > ElementDivider<Dim, N, T>::divide(Element <Dim, N, T>& el, map <array<int, 2>, Vertex<Dim, T>* > &commons, int max_inner) {
 	vector <Element <Dim, N, T>* > els;//( Dim*(Dim + 1)) / 2, nullptr);
 	vector <Vertex <Dim, T>* >  midpoint_vertices(N, nullptr);
-	map< array<int, 2>, Vertex<Dim, T>* > m_vertices_map = get_mid_vertices_map(el, commons);
+	map <array<int, 2>, Vertex<Dim, T>* > m_vertices_map = get_mid_vertices_map(el, commons, max_inner);
 	int i, j, k;
 	for (map< array<int, 2>, Vertex<Dim, T>* >::const_iterator iter = m_vertices_map.begin(); iter != m_vertices_map.end(); iter++) {
 		i = el.to_local(iter->first[0]);
@@ -86,7 +132,6 @@ vector <Element <Dim, N, T>* > ElementDivider<Dim, N, T>::divide(Element <Dim, N
 template <int Dim, int N, typename T>
 Element<Dim, N, T> ElementDivider<Dim, N, T>::get_corner_element(int k, vector <Vertex <Dim, T>* >  midpoint_vertices, Element <Dim, N, T>& el) {
 	vector <Vertex <Dim, T>* > added_vertices;
-	//added_Vertexs.push_back(new Vertex <Dim, T>(el[I]));//Not clear if new should be used...
 	int I, J;
 	int K = el.to_global(k);
 	added_vertices.push_back(&el[k]);

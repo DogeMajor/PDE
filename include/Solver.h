@@ -12,9 +12,6 @@
 using namespace std;
 using namespace Eigen;
 
-//typedef double(*Function)(VectorXd x);
-//typedef Eigen::Triplet<double> Tri;
-
 
 template <int Dim, typename T>
 class Solver {
@@ -147,7 +144,7 @@ SparseMatrix<double> Solver<Dim, T>::get_sparse_boundary_matrix(map<array<int, 2
 	int max_outer = mesh->get_max_outer_index() + 1;
 	SparseMatrix<double> bound_mat(max_inner, max_outer - max_inner);
 	bound_mat.reserve(max_inner* factorial(Dim+1));
-	typedef map< array<int, 2>, double>::iterator Map_iter;
+	typedef map<array<int, 2>, double>::iterator Map_iter;
 	for (Map_iter map_iter = stiffness_map.begin(); map_iter != stiffness_map.end(); map_iter++) {
 		if ((map_iter->first[1] >= max_inner) && (map_iter->first[0] < max_inner)) {
 			bound_mat.coeffRef(map_iter->first[0], map_iter->first[1] - max_inner) = map_iter->second;
@@ -158,7 +155,7 @@ SparseMatrix<double> Solver<Dim, T>::get_sparse_boundary_matrix(map<array<int, 2
 
 template <int Dim, typename T>
 VectorXd Solver<Dim, T>::get_f_vec(int n) const {
-	MeshNode <Element<Dim, Dim + 1, T> >* iter = mesh->get_top_mesh_node();
+	MeshNode<Element<Dim, Dim + 1, T> >* iter = mesh->get_top_mesh_node();
 	VectorXd f_vec = VectorXd::Zero(n + 1);
 	int I;
 	int max_index = mesh->get_max_inner_index();

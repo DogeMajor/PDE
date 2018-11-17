@@ -1,25 +1,9 @@
 #include "../include/Point.h"
-//#include "../include/element.h"
-//#include "../include/ElementFactory.h"
 #include "../include/Mesh.h"
-
+#include "../include/TestingTools.h"
 #include <math.h>
 
 using namespace std;
-
-//N-dim box's boundary [0,1]^N where N == coords.size()
-bool point_bound_cond(Point<2, double> coords) {
-	for (int i = 0; i < coords.size(); i++) {
-		if ((coords[i] == 0.0) || (coords[i] == 1.0)) { return true; }
-	}
-	return false;
-}
-
-double point_bound_val(Point<2, double> coords) {
-	if (coords[1] == 1.0) { return 1; }
-	return 0;
-}
-
 
 
 #define CATCH_CONFIG_MAIN  // This tells Catch to provide a main()
@@ -61,8 +45,11 @@ TEST_CASE("Test the real Mesh with Elements based on Points") {
 	
 
 	BoundaryConditions<Point<2, double> > boundaries;
-	boundaries.cond = point_bound_cond;
+	boundaries.cond_fn = point_bound_cond;
+	boundaries.is_inside_fn = point_bound_is_inside;
 	boundaries.val = point_bound_val;
+	boundaries.accuracy = 0.000000000001;
+	el_mesh.set_element_divider(boundaries);
 	el_mesh.reset_indices(boundaries);
 	//el_mesh.show();
 

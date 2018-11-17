@@ -1,56 +1,9 @@
-#include "../include/point.h"
+#include "../include/Point.h"
 #include "../include/Function.h"
+#include "../include/TestingTools.h"
+#include "../include/HelpfulTools.h"
 
 using namespace std;
-using namespace Eigen;
-
-//N-dim box's boundary
-bool bound_cond(VectorXd coords) {
-	for (int i = 0; i < coords.size(); i++) {
-		if ((coords[i] == 0.0) || (coords[i] == 1.0)) { return true; }
-	}
-	return false;
-}
-
-double bound_val(VectorXd coords) {
-	if (coords[1] == 1.0) { return 1; }
-	return 0;
-}
-
-VectorXd bound_normal(VectorXd coords) {
-	int sz = coords.size();
-	VectorXd result = VectorXd::Zero(sz);
-	for (int i = 0; i < coords.size(); i++) {
-		if ((coords[i] == 0.0) || (coords[i] == 1.0)) {
-			result(i) = (coords[i] == 0.0) ? -1 : 1;
-			return result;
-		}
-	}
-	return result;
-}
-
-bool point_bound_cond(Point<2,double> coords) {
-	for (int i = 0; i < coords.size(); i++) {
-		if ((coords[i] == 0.0) || (coords[i] == 1.0)) { return true; }
-	}
-	return false;
-}
-
-double point_bound_val(Point<2, double> coords) {
-	if (coords[1] == 1.0) { return 1; }
-	return 0;
-}
-
-Point<2, double> point_bound_normal(Point<2, double> coords) {
-	vector<double> normal = { 0.0,0.0 };
-	for (int i = 0; i < coords.size(); i++) {
-		if ((coords[i] == 0.0) || (coords[i] == 1.0)) {
-			normal[i] = (coords[i] == 0.0) ? -1 : 1;
-			return Point<2, double>(normal);
-		}
-	}
-	return Point<2, double>(normal);
-}
 
 #define CATCH_CONFIG_MAIN  // This tells Catch to provide a main()
 #include "../C++ libs/catch/catch.hpp"
@@ -159,9 +112,11 @@ TEST_CASE("Test BoundaryConditions") {
 
 	SECTION("BoundaryConditions can be initialized with VectorXd") {
 		BoundaryConditions<VectorXd> boundaries;
-		boundaries.cond = bound_cond;
+		boundaries.cond_fn = bound_cond;
+		boundaries.is_inside_fn = bound_is_inside;
 		boundaries.val = bound_val;
 		boundaries.normal = bound_normal;
+		boundaries.accuracy = 0.0001;
 		VectorXd z(2);
 		z << 1, 0;
 		VectorXd normal(2);
@@ -175,9 +130,11 @@ TEST_CASE("Test BoundaryConditions") {
 		vector<double> r = { 1,0.5 };
 		Point <2, double> p(r);
 		BoundaryConditions<Point <2, double> > point_boundaries;
-		point_boundaries.cond = point_bound_cond;
+		point_boundaries.cond_fn = point_bound_cond;
+		point_boundaries.is_inside_fn = point_bound_is_inside;
 		point_boundaries.val = point_bound_val;
 		point_boundaries.normal = point_bound_normal;
+		point_boundaries.accuracy = 0.000001;
 		REQUIRE(point_boundaries.cond(r)==1);
 		REQUIRE(point_boundaries.val(r)==0);
 		Point <2, double> normal_p = point_boundaries.normal(p);
@@ -187,6 +144,10 @@ TEST_CASE("Test BoundaryConditions") {
 		normal_p = point_boundaries.normal(0.5*p);
 		REQUIRE(normal_p[0] == 0);
 		REQUIRE(normal_p[1] == 0);
+		REQUIRE(point_boundaries.is_inside(p) == 0);
+		REQUIRE(point_boundaries.is_inside(0*p) == 0);
+		REQUIRE(point_boundaries.is_inside(0.1*p) == 1);
+
 	}
 }
 
