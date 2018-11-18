@@ -6,6 +6,7 @@
 #include "../include/PDE.h"
 #include "../include/Solver.h"
 #include "../include/HelpfulTools.h"
+#include "../include/TestingTools.h"
 #include <math.h>
 
 
@@ -38,7 +39,7 @@ double analytic_sol(VectorXd coords) {//Particle in a N-Dim box...
 }
 
 //N-dim box's boundary
-bool bound_cond(VectorXd coords) {
+/*bool bound_cond(VectorXd coords) {
 	for (int i = 0; i < coords.size(); i++) {
 		if ((coords[i] == 0.0) || (coords[i] == 1.0)) { return true; }
 	}
@@ -100,15 +101,17 @@ Point<2, double> point_bound_normal(Point<2, double> coords) {//Not needed!
 }
 
 
+*/
+
 double error_norm(MatrixXd sol_values) {
 	double norm = 0;
 	int sz = sol_values.cols() - 1;
 	VectorXd loc;
 	for (int i = 0; i < sol_values.rows(); i++) {
 		loc = sol_values.row(i).head(sz);
-		norm = norm + pow(sol_values(i,sz) - analytic_sol(loc), 2);
+		norm = norm + pow(sol_values(i, sz) - analytic_sol(loc), 2);
 	}
-	return norm*(1/double(sol_values.rows()));
+	return norm * (1 / double(sol_values.rows()));
 }
 
 #define CATCH_CONFIG_MAIN
@@ -214,7 +217,7 @@ TEST_CASE("Test Solver with Point -based Mesh") {
 	bl_fn.mat = MatrixXd::Identity(2, 2);
 	PDE<2, Point <2, double> > pde(bl_fn, f_kern_sin);
 	PDE<2, Point <2, double> > pde2(bl_fn, f_kern_const);
-	BoundaryConditions<Point <2, double> > boundaries = { point_bound_cond, point_bound_is_inside, point_bound_val };
+	BoundaryConditions<Point <2, double> > boundaries = { point_bound_cond, point_bound_is_inside, point_bound_val, point_bound_normal, 0.0000001 };
 
 	Solver<2, Point <2, double> > solver(pde, mesh_ptr, boundaries);
 	MatrixXd STIFFNESS_MAT(4, 4);
@@ -224,7 +227,7 @@ TEST_CASE("Test Solver with Point -based Mesh") {
 		Solver<2, Point <2, double>>  solver2(pde2, mesh_ptr, boundaries);
 		REQUIRE(solver.get_stiffness_matrix(3) == STIFFNESS_MAT);
 		solver2.refine();
-		solver2.refine();
+		solver2.refine_and_adjust_to_boundary();
 		solver2.refine();
 
 		VectorXd refined_sol2 = solver2.solve();
@@ -238,7 +241,7 @@ TEST_CASE("Test Solver with Point -based Mesh") {
 		cout << ref_values << endl;
 	}
 	
-	SECTION("Getting sparse stiffness matrix should succeed") {
+	/*SECTION("Getting sparse stiffness matrix should succeed") {
 		map<array<int, 2>, double> sparse_map = solver.get_sparse_stiffness_map();
 		SparseMatrix<double> test = solver.get_sparse_stiffness_matrix(3);
 		MatrixXd to_dense = test.toDense();
@@ -333,6 +336,7 @@ TEST_CASE("Test Solver with Point -based Mesh") {
 		cout << "values" << endl;
 		cout << values << endl;
 		//mesh.get_top().show();
-	}
+	}*/
+	
 
 }

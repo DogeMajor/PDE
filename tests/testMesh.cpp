@@ -48,7 +48,7 @@ TEST_CASE("Test the real Mesh with Elements based on Points") {
 	boundaries.cond_fn = point_bound_cond;
 	boundaries.is_inside_fn = point_bound_is_inside;
 	boundaries.val = point_bound_val;
-	boundaries.accuracy = 0.000000000001;
+	boundaries.accuracy = 0.0001;
 	el_mesh.set_element_divider(boundaries);
 	el_mesh.reset_indices(boundaries);
 	//el_mesh.show();
@@ -95,7 +95,7 @@ TEST_CASE("Test the real Mesh with Elements based on Points") {
 		Element<2, 3, Point <2, double> > new_el(el1);
 		REQUIRE(el_mesh.push(nullptr, new_el));
 		REQUIRE(el_mesh.how_many_nodes() == 4);
-		el_mesh.show();
+		//el_mesh.show();
 		REQUIRE(el_mesh.get_last() == el1);
 		//Rebuild the mesh!!
 		REQUIRE(el_mesh.pop() == true);
@@ -151,7 +151,7 @@ TEST_CASE("Test the real Mesh with Elements based on Points") {
 	SECTION("Refining the mesh should succeed") {
 		REQUIRE(el_mesh.how_many_nodes() == 2);
 		cout << "How many nodes totally exist" << el1.how_many() <<endl;
-		el_mesh.refine();
+		el_mesh.refine(el_mesh.get_max_outer_index() +1);
 		cout << "How many nodes totally exist after refinement" << el1.how_many() << endl;
 		
 		el_mesh.reset_indices(boundaries);
@@ -165,7 +165,44 @@ TEST_CASE("Test the real Mesh with Elements based on Points") {
 		REQUIRE(el_mesh.get_element(2)[1].get_location()[1] == 0.5);
 	}
 
-	/*SECTION("Setting indices (for Nodes inside of Elements!) in the mesh should succeed") {
+	SECTION("Refining the mesh with boundary adjustments should succeed") {
+		REQUIRE(el_mesh.how_many_nodes() == 2);
+		cout << "How many nodes totally exist" << el1.how_many() << endl;
+		el_mesh.refine(el_mesh.get_max_outer_index() + 1);
+		cout << "How many nodes totally exist after refinement" << el1.how_many() << endl;
+
+		el_mesh.reset_indices(boundaries);
+		MatrixXd grid = el_mesh.get_grid_values();
+		cout << grid << endl;
+		REQUIRE(el_mesh.get_max_inner_index() == 0);
+		REQUIRE(el_mesh.get_max_outer_index() == 8);
+		el_mesh.refine();
+		el_mesh.reset_indices(boundaries);
+		
+		REQUIRE(el_mesh.how_many_nodes() == 32);
+		cout << el_mesh.get_grid_values() << endl;
+
+		el_mesh.save_grid_values("grid.txt", grid);
+		auto e_sharings = el_mesh.get_edge_sharings();
+		for (auto iter = e_sharings.begin(); iter != e_sharings.end(); iter++) {
+			cout << iter->first[0] << " " << iter->first[1] << endl;
+			cout << iter->second << endl;
+		}
+
+		
+	}
+
+	/*SECTION("SEtting edge sharings should work") {
+		map<array<int, 2>, int> edge_sharings;
+		el_mesh.set_edge_sharings(el1, edge_sharings);
+		el_mesh.set_edge_sharings(el2, edge_sharings);
+		for (auto iter = edge_sharings.begin(); iter != edge_sharings.end(); iter++) {
+			cout << iter->first[0] << " " << iter->first[1] << endl;
+			cout << iter->second << endl;
+		}
+	}
+
+	SECTION("Setting indices (for Nodes inside of Elements!) in the mesh should succeed") {
 		
 		el_mesh.reset_indices();
 		el_mesh.show();

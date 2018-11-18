@@ -1,6 +1,7 @@
 #ifndef MESH_H
 #define MESH_H
 #include <iostream>
+#include <string>
 #include "Vertex.h"
 #include "element.h"
 #include "ElementFactory.h"
@@ -10,6 +11,7 @@
 #include "../C++ libs/eigen/Eigen/Dense"
 #include "../C++ libs/eigen/Eigen/Core"
 #include <math.h>
+#include <fstream>
 
 using namespace std;
 using namespace Eigen;
@@ -42,13 +44,22 @@ public:
 	Element<Dim, N, T> get_top() { return top->data; }
 	Element<Dim, N, T> get_last();
 	Element<Dim, N, T> get_element(int item_no);
+	void refine(int start_index);
 	void refine();
 	int set_inner_and_init_outer_indices(int index, BoundaryConditions<T> boundaries);
-	int set_outer_indices(int index, BoundaryConditions<T> boundaries);
+	int set_outer_indices_and_edge_sharings(int index, BoundaryConditions<T> boundaries);
 	void reset_indices(BoundaryConditions<T> boundaries);
 	bool operator==(const Mesh<Dim, N, T> & m) const;
 	bool operator!=(const Mesh<Dim, N, T> & m) const;
 	void show() const;
+
+	map<array<int, 2>, int> get_edge_sharings() { return edge_sharings; }
+	void set_edge_sharings(Element<Dim, N, T> &el, map<array<int, 2>, int> &edges);
+
+	//----Put saving grid methods below into their own class later...
+	MatrixXd get_grid_values();
+	void Mesh<Dim, N, T>::save_grid_values(string file_name, MatrixXd grid);
+
 
 private:
 	MeshNode<Element<Dim, N, T> > *top;
@@ -56,6 +67,7 @@ private:
 	int node_counter;
 	int max_inner_index;
 	int max_outer_index;
+	map<array<int, 2>, int> edge_sharings;
 
 };
 
@@ -164,8 +176,14 @@ Element<Dim, N, T> Mesh<Dim, N, T>::get_element(int item_no) {
 	return iter->data;
 }
 
-template <int Dim, int N, typename T>
+template <int Dim, int N, typename T>//In practice this is the default refine method, use start_index > max_outer if
+//you don't want adjustments towards the boundary (in refine(int) )
 void Mesh<Dim, N, T>::refine() {
+	refine(max_inner_index);
+}
+
+template <int Dim, int N, typename T>
+void Mesh<Dim, N, T>::refine(int start_index) {
 	MeshNode<Element<Dim, N, T> >* original_node = top;
 	MeshNode<Element<Dim, N, T> >* previous = top;
 	MeshNode<Element<Dim, N, T> >* before_original_node = nullptr;
@@ -173,7 +191,7 @@ void Mesh<Dim, N, T>::refine() {
 	map<array<int, 2>, Vertex<Dim, T>* > commons;
 
 	while(original_node != nullptr){
-		new_els = divider.divide(original_node->data, commons, max_inner_index);
+		new_els = divider.divide(original_node->data, commons, edge_sharings, start_index);
 		for (int i = 0; i < new_els.size(); i++) {
 			push(previous, *new_els[i]);
 			previous = previous->next;
@@ -199,11 +217,13 @@ int Mesh<Dim, N, T>::set_inner_and_init_outer_indices(int index, BoundaryConditi
 }
 
 template <int Dim, int N, typename T>//Only works if run after set_inner_and_init_outer_indices!!
-int Mesh<Dim, N, T>::set_outer_indices(int index, BoundaryConditions<T> boundaries) {
+int Mesh<Dim, N, T>::set_outer_indices_and_edge_sharings(int index, BoundaryConditions<T> boundaries) {
 	MeshNode<Element<Dim, N, T> >* iter = top;
+	edge_sharings.erase(edge_sharings.begin(), edge_sharings.end());
 	while (iter != nullptr) {
 		index = iter->data.set_indices(index);
 		iter->data.set_index_maps();
+		set_edge_sharings(iter->data, edge_sharings);
 		iter = iter->next;
 	}
 	return index;
@@ -212,7 +232,7 @@ int Mesh<Dim, N, T>::set_outer_indices(int index, BoundaryConditions<T> boundari
 template <int Dim, int N, typename T>
 void Mesh<Dim, N, T>::reset_indices(BoundaryConditions<T> boundaries) {
 	max_inner_index = set_inner_and_init_outer_indices(max_inner_index, boundaries);
-	max_outer_index = set_outer_indices(max_inner_index, boundaries);
+	max_outer_index = set_outer_indices_and_edge_sharings(max_inner_index, boundaries);
 }
 
 template <int Dim, int N, typename T>
@@ -227,6 +247,54 @@ void Mesh<Dim, N, T>::show() const {
 		count++;
 	}
 	cout << endl;
+}
+
+template <int Dim, int N, typename T>
+void Mesh<Dim, N, T>::set_edge_sharings(Element<Dim, N, T> &el, map<array<int, 2>, int> &edges){
+	int I, J;
+	for (int i = 0; i < N; i++) {
+		I = el[i].get_index();
+		for (int j = i+1; j < N; j++) {
+			J = el[j].get_index();
+			edges[{min(I, J), max(I, J)}] += 1;
+		}
+	}
+}
+
+//-----------Additional methods to be transferred to DAO clas etc.------------
+
+template <int Dim, int N, typename T>
+MatrixXd Mesh<Dim, N, T>::get_grid_values() {
+	MatrixXd values = MatrixXd::Zero(max_outer_index + 1, Dim);
+	MeshNode <Element<Dim, N, T> >* iter = top;
+	int I;
+	T loc;
+	while (iter != nullptr) {
+		for (int i = 0; i < N; i++) {
+			I = iter->data[i].get_index();
+			loc = iter->data[i].get_location();
+			for (int J = 0; J < Dim; J++) {
+				values(I, J) = loc[J];
+			}
+		}
+		iter = iter->next;
+	}
+	return values;
+}
+
+template <int Dim, int N, typename T>
+void Mesh<Dim, N, T>::save_grid_values(string file_name, MatrixXd grid) {
+	ofstream file;
+	try {
+		file.open(file_name);
+		for (int row = 0; row < grid.rows(); row++) {
+			file << grid.row(row) << endl;
+		}
+		file.close();
+	}
+	catch (std::exception err) {
+		cout << "Saving grid failed!" << endl;
+	}
 }
 
 

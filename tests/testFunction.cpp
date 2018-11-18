@@ -124,6 +124,20 @@ TEST_CASE("Test BoundaryConditions") {
 		REQUIRE(boundaries.cond(z) == 1);
 		REQUIRE(boundaries.val(z) == 0);
 		REQUIRE(boundaries.normal(z) == normal);
+		SECTION("cond function gives right results near the boundary") {
+			z << 0.00011, 0.5;
+			REQUIRE(boundaries.cond(z) == 0);
+			z << 0.99989, 0.5;
+			REQUIRE(boundaries.cond(z) == 0);
+			z << 1.00011, 0.5;
+			REQUIRE(boundaries.cond(z) == 0);
+			z << 0.5, 1.00011;
+			REQUIRE(boundaries.cond(z) == 0);
+			z << 1.00009, 0.5;
+			REQUIRE(boundaries.cond(z) == 1);
+			z << 0.99999, 0.5;
+			REQUIRE(boundaries.cond(z) == 1);
+		}
 	}
 	
 	SECTION("BoundaryConditions can be initialized with Point <2, double> point(vec); ") {

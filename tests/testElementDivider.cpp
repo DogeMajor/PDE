@@ -160,7 +160,12 @@ TEST_CASE("Test ElementDivider with Point template -based vertices") {
 	SECTION("Adjusting midpoints according to boundary conds should succeed "){
 		PointsMap m_map = element.get_midpoints_map();
 		PointsMap adjusted_midpoints = divider.adjust_midpoints(element, m_map, -1);
+		cout << "Show adjusted mid points" << endl;
 		show_map(adjusted_midpoints);
+		REQUIRE(boundaries.cond(adjusted_midpoints[{0, 2}].get_value()));
+		REQUIRE(adjusted_midpoints[{0, 1}] == m_map[{0, 1}]);
+		REQUIRE(adjusted_midpoints[{1, 2}] == m_map[{1, 2}]);
+		
 	}
 
 	SECTION("Generating map of midvertices should succeed") {//OK!
@@ -217,7 +222,7 @@ TEST_CASE("Test ElementDivider with Point template -based vertices") {
 		REQUIRE(inner_el[2].get_location() == 0.5*(element[1].get_location() + element[2].get_location()));
 	}
 
-	SECTION( "Generating new Elements should succeed" ) {
+	SECTION( "Generating new Elements without boundary adjustments should succeed" ) {
 		map< array<int, 2>, Vertex<2, Point <2, double> >* >  coms;
 		int vertices_at_t0 = n_1.how_many();
 		
@@ -228,7 +233,24 @@ TEST_CASE("Test ElementDivider with Point template -based vertices") {
 		vector <Element <2, 3, Point <2, double> >* > els2 = divider.divide(el2, coms, 8999);
 		REQUIRE(els2.size() == 4);
 		REQUIRE(vertices_at_t0 + 5 == n_1.how_many() );
-		coms.erase(coms.begin(), coms.begin()); 
+		coms.erase(coms.begin(), coms.end()); 
+	}
+
+	SECTION("Generating new Elements with boundary adjustments should succeed") {
+		map< array<int, 2>, Vertex<2, Point <2, double> >* >  adj_coms;
+		int vertices_amount = n_1.how_many();
+
+		vector <Element <2, 3, Point <2, double> >* > adjusted_els = divider.divide(element, adj_coms, -2);
+
+		REQUIRE(adjusted_els.size() == 4);
+		REQUIRE(adjusted_els.size() == 4);
+		REQUIRE(vertices_amount + 3 == n_1.how_many());
+		double volume = 0;
+		for (int i = 0; i < adjusted_els.size(); i++) {
+			volume += adjusted_els[i]->get_volume();
+		}
+		REQUIRE(abs(volume - 1) < 0.01);//New boundary adjusted els have to cover the whole of square!!
+		
 	}
 
 }

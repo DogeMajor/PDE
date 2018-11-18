@@ -57,7 +57,7 @@ bool point_bound_is_inside(Point<2, double> coords, double acc) {
 }
 
 double point_bound_val(Point<2, double> coords) {
-	if (coords[1] == 1.0) { return 1; }
+	//if (coords[1] == 1.0) { return 1; }
 	return 0;
 }
 
