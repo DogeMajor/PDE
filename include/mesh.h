@@ -44,7 +44,6 @@ public:
 	Element<Dim, N, T> get_top() { return top->data; }
 	Element<Dim, N, T> get_last();
 	Element<Dim, N, T> get_element(int item_no);
-	void refine(int start_index);
 	void refine();
 	int set_inner_and_init_outer_indices(int index, BoundaryConditions<T> boundaries);
 	int set_outer_indices_and_edge_sharings(int index, BoundaryConditions<T> boundaries);
@@ -176,14 +175,8 @@ Element<Dim, N, T> Mesh<Dim, N, T>::get_element(int item_no) {
 	return iter->data;
 }
 
-template <int Dim, int N, typename T>//In practice this is the default refine method, use start_index > max_outer if
-//you don't want adjustments towards the boundary (in refine(int) )
-void Mesh<Dim, N, T>::refine() {
-	refine(max_inner_index);
-}
-
 template <int Dim, int N, typename T>
-void Mesh<Dim, N, T>::refine(int start_index) {
+void Mesh<Dim, N, T>::refine() {
 	MeshNode<Element<Dim, N, T> >* original_node = top;
 	MeshNode<Element<Dim, N, T> >* previous = top;
 	MeshNode<Element<Dim, N, T> >* before_original_node = nullptr;
@@ -191,7 +184,7 @@ void Mesh<Dim, N, T>::refine(int start_index) {
 	map<array<int, 2>, Vertex<Dim, T>* > commons;
 
 	while(original_node != nullptr){
-		new_els = divider.divide(original_node->data, commons, edge_sharings, start_index);
+		new_els = divider.divide(original_node->data, commons, edge_sharings);
 		for (int i = 0; i < new_els.size(); i++) {
 			push(previous, *new_els[i]);
 			previous = previous->next;

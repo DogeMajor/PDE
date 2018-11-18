@@ -21,7 +21,6 @@ public:
 	Solver(PDE<Dim, T> p, Mesh<Dim, Dim + 1, T> *m, BoundaryConditions<T> b);
 	~Solver() {}
 	void refine();
-	void refine_and_adjust_to_boundary();
 	map<array<int, 2>, double> get_sparse_stiffness_map() const;
 	SparseMatrix<double> get_sparse_stiffness_matrix(int n) const;
 	MatrixXd get_stiffness_matrix(int n) const;
@@ -59,17 +58,9 @@ Solver<Dim, T>::Solver(PDE<Dim, T> p, Mesh<Dim, Dim + 1, T> *m, BoundaryConditio
 
 template<int Dim, typename T>
 void Solver<Dim, T>::refine() {
-	int start_adjusting_at_index = mesh->get_max_outer_index() + 1;
-	mesh->refine(start_adjusting_at_index);
-	mesh->reset_indices(boundaries);
-}
-
-template<int Dim, typename T>
-void refine_and_adjust_to_boundary() {
 	mesh->refine();
 	mesh->reset_indices(boundaries);
 }
-
 
 template <int Dim, typename T>
 map<array<int, 2>, double> Solver<Dim, T>::get_sparse_stiffness_map() const{

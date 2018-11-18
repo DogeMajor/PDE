@@ -227,8 +227,10 @@ TEST_CASE("Test Solver with Point -based Mesh") {
 		Solver<2, Point <2, double>>  solver2(pde2, mesh_ptr, boundaries);
 		REQUIRE(solver.get_stiffness_matrix(3) == STIFFNESS_MAT);
 		solver2.refine();
-		solver2.refine_and_adjust_to_boundary();
 		solver2.refine();
+		solver2.refine();
+		cout << mesh.get_grid_values() << endl;
+		
 
 		VectorXd refined_sol2 = solver2.solve();
 		cout << refined_sol2 << endl;
