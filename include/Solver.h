@@ -211,7 +211,7 @@ VectorXd Solver<Dim, T>::solve() {
 	map<array<int, 2>, double> stiffness_map = get_sparse_stiffness_map();
 	SparseMatrix<double> stiffness = get_sparse_inner_stiffness_matrix(stiffness_map);
 	VectorXd f_vec = get_f_vec(inner_size - 1);
-
+	cout << "Calculated stiffnes mat!!" << endl;
 	VectorXd bound_coeffs = get_boundary_coeffs();
 	SparseMatrix<double> bound_mat = get_sparse_boundary_matrix(stiffness_map);
 	VectorXd b_vec(inner_size);

@@ -30,6 +30,10 @@ double f_kern_const(VectorXd coords) {//max val should be roughly 0.07
 	return 1.0;
 }
 
+double f_kern_zero(VectorXd coords) {//max val should be roughly 0.07
+	return 0.0;
+}
+
 double analytic_sol(VectorXd coords) {//Particle in a N-Dim box...
 	double result = (1/(2*PI*PI))*sin(coords[0] * PI);
 	for (int i = 1; i < coords.rows(); i++) {
@@ -38,70 +42,12 @@ double analytic_sol(VectorXd coords) {//Particle in a N-Dim box...
 	return result;
 }
 
-//N-dim box's boundary
-/*bool bound_cond(VectorXd coords) {
-	for (int i = 0; i < coords.size(); i++) {
-		if ((coords[i] == 0.0) || (coords[i] == 1.0)) { return true; }
-	}
-	return false;
+double circle_sol(VectorXd coords) {//Particle in a N-Dim box...
+	double angle = atan(coords[1]/coords[0]);
+	double squared_r = coords[0] * coords[0] + coords[1] * coords[1];
+	return pow(squared_r, 5)*cos(10 * angle);
 }
 
-bool bound_is_inside(VectorXd coords) {
-	for (int i = 0; i < coords.size(); i++) {
-		if ((coords[i] <= 0.0) || (coords[i] >= 1.0)) { return false; }
-	}
-	return true;
-}
-
-double bound_val(VectorXd coords) {
-	//if (coords[1] == 1.0) { return 1; }
-	return 0;
-}
-
-VectorXd bound_normal(VectorXd coords) {
-	int sz = coords.size();
-	VectorXd result = VectorXd::Zero(sz);
-	for (int i = 0; i < coords.size(); i++) {
-		if ((coords[i] == 0.0) || (coords[i] == 1.0)) {
-			result(i) = (coords[i] == 0.0)? -1: 1;
-			return result;
-		}
-	}
-	return result;
-}
-
-bool point_bound_cond(Point<2, double> coords) {
-	for (int i = 0; i < coords.size(); i++) {
-		if ((coords[i] == 0.0) || (coords[i] == 1.0)) { return true; }
-	}
-	return false;
-}
-
-bool point_bound_is_inside(Point<2, double> coords) {
-	for (int i = 0; i < coords.size(); i++) {
-		if ((coords[i] <= 0.0) || (coords[i] >= 1.0)) { return false; }
-	}
-	return true;
-}
-
-double point_bound_val(Point<2, double> coords) {
-	//if (coords[1] == 1.0) { return 1; }
-	return 0;
-}
-
-Point<2, double> point_bound_normal(Point<2, double> coords) {//Not needed!
-	vector<double> normal = { 0.0,0.0 };
-	for (int i = 0; i < coords.size(); i++) {
-		if ((coords[i] == 0.0) || (coords[i] == 1.0)) {
-			normal[i] = (coords[i] == 0.0) ? -1 : 1;
-			return Point<2, double>(normal);
-		}
-	}
-	return Point<2, double>(normal);
-}
-
-
-*/
 
 double error_norm(MatrixXd sol_values) {
 	double norm = 0;
@@ -177,7 +123,6 @@ double error_norm(MatrixXd sol_values) {
 
 
 TEST_CASE("Test Solver with Point -based Mesh") {
-	srand(time(NULL));
 	vector <double> vec1 = { 0.0, 0.0 };
 	vector <double> vec2 = { 1.0, 0.0 };
 	vector <double> vec3 = { 1.0, 1.0 };
@@ -223,7 +168,7 @@ TEST_CASE("Test Solver with Point -based Mesh") {
 	MatrixXd STIFFNESS_MAT(4, 4);
 	STIFFNESS_MAT << 1, 0, -.5, -.5, 0, 1, -.5, -0.5, -.5, -.5, 1, 0, -.5, -.5, 0, 1;
 
-	SECTION("Test solving the pde2") {
+	/*SECTION("Test solving the pde2") {
 		Solver<2, Point <2, double>>  solver2(pde2, mesh_ptr, boundaries);
 		REQUIRE(solver.get_stiffness_matrix(3) == STIFFNESS_MAT);
 		solver2.refine();
@@ -243,7 +188,7 @@ TEST_CASE("Test Solver with Point -based Mesh") {
 		cout << ref_values << endl;
 	}
 	
-	/*SECTION("Getting sparse stiffness matrix should succeed") {
+	SECTION("Getting sparse stiffness matrix should succeed") {
 		map<array<int, 2>, double> sparse_map = solver.get_sparse_stiffness_map();
 		SparseMatrix<double> test = solver.get_sparse_stiffness_matrix(3);
 		MatrixXd to_dense = test.toDense();
@@ -339,6 +284,75 @@ TEST_CASE("Test Solver with Point -based Mesh") {
 		cout << values << endl;
 		//mesh.get_top().show();
 	}*/
+
+	SECTION("Solving PDE in a unit circle domain should succeed") {
+		VectorXd temp_loc(2);
+		temp_loc << 1, 0;
+		//In case we need to compare vertices later on with the ones in Mesh!
+		Vertex<2, VectorXd > c_v1(temp_loc);
+		temp_loc << 0, 1;
+		Vertex<2, VectorXd > c_v2(temp_loc);
+		temp_loc << -1, 0;
+		Vertex<2, VectorXd > c_v3(temp_loc);
+		temp_loc << 0, -1;
+		Vertex<2, VectorXd > c_v4(temp_loc);
+
+
+		vector<Vertex <2, VectorXd> * > c_vertices1(3, nullptr);
+		temp_loc << 1, 0;
+		c_vertices1[0] = new Vertex <2, VectorXd>(temp_loc);
+		temp_loc << 0, 1;
+		c_vertices1[1] = new Vertex <2, VectorXd>(temp_loc);
+		temp_loc << -1, 0;
+		c_vertices1[2] = new Vertex <2, VectorXd>(temp_loc);
+		ElementFactory<2, 3, VectorXd> factory;
+		Element<2, 3, VectorXd> c_el1 = factory.build(c_vertices1);
+		vector<Vertex <2, VectorXd> *> c_vertices2;//(3, nullptr);
+		c_vertices2.push_back(c_vertices1[0]);
+		c_vertices2.push_back(c_vertices1[2]);
+		temp_loc << 0, -1;
+		c_vertices2.push_back(new Vertex<2,VectorXd >(temp_loc));
+
+
+		Element<2, 3, VectorXd> c_el2 = factory.build(c_vertices2);
+		Mesh<2, 3, VectorXd> c_mesh(c_el1);
+		c_mesh.push(c_el2);
+		//mesh.reset_indices(boundaries);
+		//mesh.get_top().show();
+		//Element<2, 3, Point <2, double> > element2 = factory.build(node_vec);//Too lazy to find out what the funcs would be...
+
+		Mesh<2, 3, VectorXd>* c_mesh_ptr;
+		c_mesh_ptr = &c_mesh;
+		
+		BilinearFunction c_bl_fn;
+		c_bl_fn.mat = MatrixXd::Identity(2, 2);
+		PDE<2, VectorXd> c_pde(c_bl_fn, f_kern_zero);
+		
+		BoundaryConditions<VectorXd> c_boundaries = { c_cond, c_is_inside, c_val, c_normal, 0.000001 };
+
+		Solver<2, VectorXd> c_solver(c_pde, c_mesh_ptr, c_boundaries);
+
+		SECTION("Solving pde in unit circle should succeed") {
+			c_solver.refine();
+			c_solver.refine();
+			//c_mesh.show();
+			map<array<int, 2>, double> c_stiffness_map = c_solver.get_sparse_stiffness_map();
+			show_map(c_stiffness_map);
+			cout << c_mesh.get_grid_values() << endl;
+			VectorXd temp(2);
+			temp << 1, 0;
+			cout << "Cos(c_v1)" << c_boundaries.val(temp);
+
+			VectorXd c_sol = c_solver.solve();
+			cout << c_sol << endl;
+			cout << c_sol.maxCoeff() << endl;
+			cout << endl;
+			
+			MatrixXd c_values = c_solver.get_solution_values(c_sol);
+			cout << c_values << endl;
+		}
+	}
+
 	
 
 }

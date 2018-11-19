@@ -127,4 +127,30 @@ VectorXd bound_normal(VectorXd coords) {
 	return result;
 }
 
+//Unit circle domain!!
+bool c_cond(VectorXd coords, double acc) {
+	VectorXd m_p(2);
+	m_p << 0, 0;
+	double dist = sqrt(dist_squared<2, VectorXd>(m_p, coords));
+	if ((dist > 1 - acc) && (dist < 1 + acc)) { return true; }
+	return false;
+}
+
+bool c_is_inside(VectorXd coords, double acc) {
+	VectorXd m_p(2);
+	m_p << 0, 0;
+	if (sqrt(dist_squared<2, VectorXd>(m_p, coords)) < 1 - acc) { return true; }
+	return false;
+}
+
+double c_val(VectorXd coords) {
+	double angle = atan(coords[1] / coords[0]);
+	return cos(10.0 * angle);
+}
+
+VectorXd c_normal(VectorXd coords) {
+	double length = sqrt(coords.transpose()*coords);
+	return (1 / length) * coords;
+}
+
 #endif
