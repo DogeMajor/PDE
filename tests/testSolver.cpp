@@ -6,6 +6,7 @@
 #include "../include/PDE.h"
 #include "../include/Solver.h"
 #include "../include/HelpfulTools.h"
+#include "../include/TestingTools.h"
 #include <math.h>
 
 
@@ -25,8 +26,12 @@ double f_kern_sin(VectorXd coords) {//Particle in a N-Dim box...
 	return result;
 }
 
-double f_kern_const(VectorXd coords) {//max val should be roughly 0.07
+double f_kern_const(VectorXd coords) {//max val of the solution should be roughly 0.07
 	return 1.0;
+}
+
+double f_kern_zero(VectorXd coords) {
+	return 0.0;
 }
 
 double analytic_sol(VectorXd coords) {//Particle in a N-Dim box...
@@ -37,52 +42,24 @@ double analytic_sol(VectorXd coords) {//Particle in a N-Dim box...
 	return result;
 }
 
-//N-dim box's boundary
-bool bound_cond(VectorXd coords) {
-	for (int i = 0; i < coords.size(); i++) {
-		if ((coords[i] == 0.0) || (coords[i] == 1.0)) { return true; }
+
+double circle_sol(VectorXd coords) {
+	if (coords[0] == 0 && coords[1] == 0) { return 0; }
+	double squared_r = coords[0] * coords[0] + coords[1] * coords[1];
+	double angle = acos(coords[0] / sqrt(squared_r));
+	return pow(squared_r, 5)*cos(10 * angle);
+}
+
+double c_error_norm(MatrixXd sol_values) {
+	double norm = 0;
+	int sz = sol_values.cols() - 1;
+	VectorXd loc;
+	for (int i = 0; i < sol_values.rows(); i++) {
+		loc = sol_values.row(i).head(sz);
+		norm = norm + pow(sol_values(i, sz) - circle_sol(loc), 2);
 	}
-	return false;
-}
-
-double bound_val(VectorXd coords) {
-	//if (coords[1] == 1.0) { return 1; }
-	return 0;
-}
-
-VectorXd bound_normal(VectorXd coords) {
-	int sz = coords.size();
-	VectorXd result = VectorXd::Zero(sz);
-	for (int i = 0; i < coords.size(); i++) {
-		if ((coords[i] == 0.0) || (coords[i] == 1.0)) {
-			result(i) = (coords[i] == 0.0)? -1: 1;
-			return result;
-		}
-	}
-	return result;
-}
-
-bool point_bound_cond(Point<2, double> coords) {
-	for (int i = 0; i < coords.size(); i++) {
-		if ((coords[i] == 0.0) || (coords[i] == 1.0)) { return true; }
-	}
-	return false;
-}
-
-double point_bound_val(Point<2, double> coords) {
-	//if (coords[1] == 1.0) { return 1; }
-	return 0;
-}
-
-Point<2, double> point_bound_normal(Point<2, double> coords) {//Not needed!
-	vector<double> normal = { 0.0,0.0 };
-	for (int i = 0; i < coords.size(); i++) {
-		if ((coords[i] == 0.0) || (coords[i] == 1.0)) {
-			normal[i] = (coords[i] == 0.0) ? -1 : 1;
-			return Point<2, double>(normal);
-		}
-	}
-	return Point<2, double>(normal);
+	cout << "error sum" << norm << endl;
+	return norm * (1 / double(sol_values.rows()));
 }
 
 
@@ -92,9 +69,10 @@ double error_norm(MatrixXd sol_values) {
 	VectorXd loc;
 	for (int i = 0; i < sol_values.rows(); i++) {
 		loc = sol_values.row(i).head(sz);
-		norm = norm + pow(sol_values(i,sz) - analytic_sol(loc), 2);
+		norm = norm + pow(sol_values(i, sz) - analytic_sol(loc), 2);
 	}
-	return norm*(1/double(sol_values.rows()));
+	cout << "error sum" << norm << endl;
+	return norm * (1 / double(sol_values.rows()));
 }
 
 #define CATCH_CONFIG_MAIN
@@ -160,7 +138,6 @@ double error_norm(MatrixXd sol_values) {
 
 
 TEST_CASE("Test Solver with Point -based Mesh") {
-	srand(time(NULL));
 	vector <double> vec1 = { 0.0, 0.0 };
 	vector <double> vec2 = { 1.0, 0.0 };
 	vector <double> vec3 = { 1.0, 1.0 };
@@ -200,18 +177,20 @@ TEST_CASE("Test Solver with Point -based Mesh") {
 	bl_fn.mat = MatrixXd::Identity(2, 2);
 	PDE<2, Point <2, double> > pde(bl_fn, f_kern_sin);
 	PDE<2, Point <2, double> > pde2(bl_fn, f_kern_const);
-	BoundaryConditions<Point <2, double> > boundaries = { point_bound_cond, point_bound_val };
+	BoundaryConditions<Point <2, double> > boundaries = { point_bound_cond, point_bound_is_inside, point_bound_val, point_bound_normal, 0.0000001 };
 
 	Solver<2, Point <2, double> > solver(pde, mesh_ptr, boundaries);
 	MatrixXd STIFFNESS_MAT(4, 4);
 	STIFFNESS_MAT << 1, 0, -.5, -.5, 0, 1, -.5, -0.5, -.5, -.5, 1, 0, -.5, -.5, 0, 1;
 
-	SECTION("Test solving the pde2") {
+	/*SECTION("Test solving the pde2") {
 		Solver<2, Point <2, double>>  solver2(pde2, mesh_ptr, boundaries);
 		REQUIRE(solver.get_stiffness_matrix(3) == STIFFNESS_MAT);
 		solver2.refine();
 		solver2.refine();
 		solver2.refine();
+		cout << mesh.get_grid_values() << endl;
+		
 
 		VectorXd refined_sol2 = solver2.solve();
 		cout << refined_sol2 << endl;
@@ -222,7 +201,7 @@ TEST_CASE("Test Solver with Point -based Mesh") {
 		REQUIRE(refined_sol2.minCoeff() == 0);
 		MatrixXd ref_values = solver2.get_solution_values(refined_sol2);
 		cout << ref_values << endl;
-	}
+	}*/
 	
 	SECTION("Getting sparse stiffness matrix should succeed") {
 		map<array<int, 2>, double> sparse_map = solver.get_sparse_stiffness_map();
@@ -271,7 +250,7 @@ TEST_CASE("Test Solver with Point -based Mesh") {
 		cout << solver.get_stiffness_matrix(8) << endl;
 	}
 
-	SECTION("Solving the PDE should succeed") {
+	/*SECTION("Solving the PDE should succeed") {
 		//solver.refine();
 		//solver.refine();
 		Seeder timer = Seeder();
@@ -319,6 +298,96 @@ TEST_CASE("Test Solver with Point -based Mesh") {
 		cout << "values" << endl;
 		cout << values << endl;
 		//mesh.get_top().show();
+	}*/
+
+	SECTION("Solving PDE in a unit circle domain should succeed") {
+		VectorXd temp_loc(2);
+		temp_loc << 1, 0;
+		//In case we need to compare vertices later on with the ones in Mesh!
+		Vertex<2, VectorXd > c_v1(temp_loc);
+		temp_loc << 0, 1;
+		Vertex<2, VectorXd > c_v2(temp_loc);
+		temp_loc << -1, 0;
+		Vertex<2, VectorXd > c_v3(temp_loc);
+		temp_loc << 0, -1;
+		Vertex<2, VectorXd > c_v4(temp_loc);
+
+
+		vector<Vertex <2, VectorXd> * > c_vertices1(3, nullptr);
+		temp_loc << 1, 0;
+		c_vertices1[0] = new Vertex <2, VectorXd>(temp_loc);
+		temp_loc << 0, 1;
+		c_vertices1[1] = new Vertex <2, VectorXd>(temp_loc);
+		temp_loc << -1, 0;
+		c_vertices1[2] = new Vertex <2, VectorXd>(temp_loc);
+		ElementFactory<2, 3, VectorXd> factory;
+		Element<2, 3, VectorXd> c_el1 = factory.build(c_vertices1);
+		vector<Vertex <2, VectorXd> *> c_vertices2;//(3, nullptr);
+		c_vertices2.push_back(c_vertices1[0]);
+		c_vertices2.push_back(c_vertices1[2]);
+		temp_loc << 0, -1;
+		c_vertices2.push_back(new Vertex<2,VectorXd >(temp_loc));
+
+
+		Element<2, 3, VectorXd> c_el2 = factory.build(c_vertices2);
+		Mesh<2, 3, VectorXd> c_mesh(c_el1);
+		c_mesh.push(c_el2);
+		//mesh.reset_indices(boundaries);
+		//mesh.get_top().show();
+		//Element<2, 3, Point <2, double> > element2 = factory.build(node_vec);//Too lazy to find out what the funcs would be...
+
+		Mesh<2, 3, VectorXd>* c_mesh_ptr;
+		c_mesh_ptr = &c_mesh;
+		
+		BilinearFunction c_bl_fn;
+		c_bl_fn.mat = MatrixXd::Identity(2, 2);
+		PDE<2, VectorXd> c_pde(c_bl_fn, f_kern_zero);
+		
+		BoundaryConditions<VectorXd> c_boundaries = { c_cond, c_is_inside, c_val, c_normal, 0.000001 };
+
+		Solver<2, VectorXd> c_solver(c_pde, c_mesh_ptr, c_boundaries);
+
+		SECTION("Solving pde in unit circle should succeed") {
+			c_solver.refine();
+			c_solver.refine();
+			c_solver.refine();
+			c_solver.refine();
+			//c_solver.refine();
+			//c_mesh.show();
+			map<array<int, 2>, double> c_stiffness_map = c_solver.get_sparse_stiffness_map();
+			cout << c_mesh.get_max_inner_index() << endl;
+			cout << c_mesh.get_max_outer_index() << endl;
+			int A, B;
+			int max_index = 0;
+			for (auto iter = c_stiffness_map.begin(); iter != c_stiffness_map.end(); iter++) {
+				A = iter->first[0];
+				B = iter->first[1];
+				max_index = max(max_index, A);
+				max_index = max(max_index, B);
+				REQUIRE(iter->second == c_stiffness_map[{B, A}]);
+			}
+			cout << "max outer index: " << max_index << endl;
+			//cout << c_solver.get_sparse_inner_stiffness_matrix(c_stiffness_map).toDense() << endl;
+			c_mesh.save_matrix("refined_grid.txt", c_mesh.get_grid_values());
+			VectorXd temp(2);
+			temp << 1, 0;
+			cout << "Cos(c_v1)" << c_boundaries.val(temp);
+
+			VectorXd c_sol = c_solver.solve();
+			cout << c_sol << endl;
+			cout << c_sol.maxCoeff() << endl;
+			cout << endl;
+			
+			MatrixXd c_values = c_solver.get_solution_values(c_sol);
+			cout << c_values << endl;
+			c_mesh.save_matrix("c_mesh_grid.txt", c_values);
+			double c_error_avg = c_error_norm(c_values);
+			REQUIRE(c_error_avg < 0.05);
+			cout << "Average error" << c_error_avg;
+			cout << "circle_sol at 0,1" << circle_sol(c_v2.get_location());
+			cout << "circle_sol at 0,0.5" << circle_sol(0.5*c_v2.get_location());
+		}
 	}
+
 
 }

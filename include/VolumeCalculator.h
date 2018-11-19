@@ -20,7 +20,6 @@ template <int Dimension, typename T>
 class VolumeCalculator {
 public:
 	MatrixXd get_distance_squared_matrix(vector <Vertex<Dimension, T>* > el_vertices) const;
-	Matrix<double, Dimension, Dimension> get_simplex_matrix(vector <Vertex<Dimension, T>* > el_vertices) const;
 	double get_volume(vector <Vertex<Dimension, T>* > el_vertices) const;
 
 };
@@ -39,17 +38,6 @@ MatrixXd VolumeCalculator<Dimension, T>::get_distance_squared_matrix(vector <Ver
 		D(row, cols) = 1;
 	}
 	return D;
-}
-
-template <int Dimension, typename T>
-Matrix<double, Dimension, Dimension> VolumeCalculator<Dimension, T>::get_simplex_matrix(vector <Vertex<Dimension, T>* > el_vertices) const {
-	MatrixXd simplex_mat = MatrixXd::Zero(Dimension, Dimension);
-	for (int col = 0; col < Dimension; col++) {
-		for (int row = 0; row < Dimension; row++) {
-			simplex_mat(row, col) = el_vertices[row + 1]->get_location()[col] - el_vertices[row]->get_location()[col];
-		}
-	}
-	return simplex_mat;
 }
 
 template <int Dimension, typename T>

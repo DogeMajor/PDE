@@ -46,12 +46,12 @@ public:
 
 	int to_local(int global_index) { return index_maps.map_to_local[global_index]; }
 	int to_global(int local_index) { return index_maps.map_to_global[local_index]; }
-
 	void set_index_maps();
+
 	void set_f_variation(int n, double var) { f_variations[n] = var; }
 	vector<double> get_f_variations() { return f_variations; }
 	double get_avg_f_variation() { return sum<double>(f_variations) / double(N); }
-	//int set_outer_vertex_indices(int index, BoundaryConditions<T> conds);
+
 	int how_many() const;
 	vector <Vertex <Dim, T>* > get_vertices();
     SimplexFunction<T> get_function(int vertex_no);
@@ -59,20 +59,16 @@ public:
     Element<Dim,N,T>& operator=(const Element &el);
     bool operator==(const Element &el) const;
     bool operator!=(const Element &el) const;
-    //Matrix<double, Dim, Dim> get_simplex_matrix(Element &el) const;
 
 	map<array<int, 2>, T> get_midpoints_map();
-
-	vector <pair <int[2], T> > get_midpoints();
-	vector <Vertex <Dim, T>* >  get_midpoint_vertices();
-	vector <Vertex <Dim, T>* >  get_midpoint_vertices(map<array<int, 2>, T> m_points_map);
-    double get_volume() const;
+    
+	double get_volume() const;
 	T get_avg_location();
 	int vertices_size() const { return vertices.size(); }
     void show() const;
 
 private:
-	vector <Vertex <Dim, T>* > vertices; // with pointers #vertices does not increase when new element is added provided that vertices have already been built
+	vector <Vertex <Dim, T>* > vertices;
     vector <SimplexFunction <T> > functions;
 	IndexMaps index_maps;
 	VolumeCalculator<Dim, T> volume_calculator;
@@ -105,7 +101,7 @@ Element<Dim,N,T>::Element(const Element &el){
 
 template <int Dim, int N, typename T>
 Element<Dim,N,T>::~Element(){
-	if (vertices[0] != nullptr) {//If the first Vertex is null then all of them are
+	if (vertices[0] != nullptr) {//If the first Vertex is null then all of them are; no methods to instantiate El othoerwise exist!
 		decrease_shared_elements();
 		for (int i = 0; i < vertices.size(); i++) {
 			if (vertices[i]->get_shared_elements() <= 0) { delete vertices[i]; cout << "Vertex no " << i << " destroyed" << endl; }
@@ -181,17 +177,6 @@ void Element<Dim, N, T>::set_index_maps() {
 		index_maps.map_to_local[I] = i;
 	}
 }
-/*template <int Dim, int N, typename T>//Not ok!
-int Element<Dim, N, T>::set_outer_vertex_indices(int index, BoundaryConditions<T> conds) {
-	for (int i = 0; i < N; i++) {
-		if ((vertices[i]->get_index() == -1) && (conds.cond(vertices[i]->get_location()) == true)) {
-			vertices[i]->set_index(index + 1);
-			index++;
-		}
-	}
-	return index;
-}*/
-
 
 template <int Dim, int N, typename T>
 int Element<Dim, N, T>::how_many() const{
@@ -250,7 +235,7 @@ double Element<Dim,N,T>::get_volume() const{
 	return volume_calculator.get_volume(vertices);
 }
 
-template <int Dim, int N, typename T>//OK
+template <int Dim, int N, typename T>
 map<array<int, 2>, T> Element<Dim, N, T>::get_midpoints_map() {
 	map<array<int, 2>, T> midpoints_map;
 	int I,J = 0;
@@ -264,44 +249,6 @@ map<array<int, 2>, T> Element<Dim, N, T>::get_midpoints_map() {
 		}
 	}
 	return midpoints_map;
-}
-
-//1. item of pair gives the original point indices and the second in the midpoint
-template <int Dim, int N, typename T>//OK  Local map, indices are not vertex indices!!!
-vector <pair <int[2], T > > Element<Dim, N, T>::get_midpoints() {
-	vector <pair <int[2], T> >mid_points;
-	pair <int[2], T> mid_point;
-	T loc;
-	for (int i = 0; i < N; i++) {
-		for (int j = i + 1; j < N; j++) {
-			mid_point.first[0] = i;
-			mid_point.first[1] = j;
-			mid_point.second = 0.5*(vertices[i]->get_location() + vertices[j]->get_location());
-			mid_points.push_back(mid_point);
-		}
-	}
-	return mid_points;
-}
-
-template <int Dim, int N, typename T> //OK
-vector <Vertex <Dim, T>* >  Element<Dim, N, T>::get_midpoint_vertices() {
-	vector <pair <int[2], T> >mid_points = get_midpoints();
-	vector <Vertex <Dim, T>* >  midpoint_vertices((Dim*(Dim+1))/2, nullptr);
-	for (int i = 0; i < mid_points.size(); i++) {
-		midpoint_vertices[i] = new Vertex<Dim, T>(mid_points[i].second);
-	}
-	return midpoint_vertices;
-}
-template <int Dim, int N, typename T> //OK
-vector <Vertex <Dim, T>* >  Element<Dim, N, T>::get_midpoint_vertices(map<array<int, 2>, T> m_points_map) {
-	typedef map<array<int, 2>, T>::const_iterator PointsMapIter;
-	vector <Vertex <Dim, T>* >  midpoint_vertices;
-	T loc;
-	for (PointsMapIter iter = m_points_map.begin();  iter != m_points_map.end(); iter++) {
-		loc = iter->second;
-		midpoint_vertices.push_back(new Vertex<Dim, T>(loc));
-	}
-	return midpoint_vertices;
 }
 
 template <int Dim, int N, typename T>

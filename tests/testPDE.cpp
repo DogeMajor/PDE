@@ -1,9 +1,15 @@
 #include "../include/Point.h"
 #include "../include/Vertex.h"
 #include "../include/Element.h"
+#include "../include/Randomizer.h"
 #include "../include/PDE.h"
 #include "../include/HelpfulTools.h"
+#include "../include/Function.h"
 #include <math.h>
+#include "../C++ libs/eigen/Eigen/Dense"
+#include "../C++ libs/eigen/Eigen/Sparse"
+#include "../C++ libs/eigen/Eigen/Core"
+#include "../C++ libs/eigen/Eigen/IterativeLinearSolvers"
 
 using namespace std;
 using namespace Eigen;
@@ -27,6 +33,13 @@ bool bound_cond(VectorXd coords) {
 		if ((coords[i] == 0.0) || (coords[i] == 1.0)) {return true;}
 	}
 	return false;
+}
+
+bool bound_is_inside(VectorXd coords) {
+	for (int i = 0; i < coords.size(); i++) {
+		if ((coords[i] <= 0.0) || (coords[i] >= 1.0)) { return false; }
+	}
+	return true;
 }
 
 double bound_val(VectorXd coords) {
@@ -81,7 +94,7 @@ TEST_CASE( "Test PDE" ) {
     bl_fn.mat = MatrixXd::Identity(2,2);
     PDE<2, VectorXd>  pde(bl_fn, f_kern_sin);
 
-	BoundaryConditions<VectorXd> boundaries = {bound_cond, bound_val, bound_normal };
+	BoundaryConditions<VectorXd> boundaries = {bound_cond, bound_is_inside, bound_val, bound_normal };
 
 	chrono::high_resolution_clock::time_point start_t;
 	Seeder seeder = Seeder();

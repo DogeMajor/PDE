@@ -1,25 +1,9 @@
 #include "../include/Point.h"
-//#include "../include/element.h"
-//#include "../include/ElementFactory.h"
 #include "../include/Mesh.h"
-
+#include "../include/TestingTools.h"
 #include <math.h>
 
 using namespace std;
-
-//N-dim box's boundary [0,1]^N where N == coords.size()
-bool point_bound_cond(Point<2, double> coords) {
-	for (int i = 0; i < coords.size(); i++) {
-		if ((coords[i] == 0.0) || (coords[i] == 1.0)) { return true; }
-	}
-	return false;
-}
-
-double point_bound_val(Point<2, double> coords) {
-	if (coords[1] == 1.0) { return 1; }
-	return 0;
-}
-
 
 
 #define CATCH_CONFIG_MAIN  // This tells Catch to provide a main()
@@ -54,22 +38,44 @@ TEST_CASE("Test the real Mesh with Elements based on Points") {
 	node_vec2.push_back(node_vec[2]);
 	node_vec2.push_back(new Vertex<2, Point <2, double> >(point4));
 	Element<2, 3, Point <2, double> > el2 = factory.build(node_vec2);
-	el1.show();
-	el2.show();
+	//el1.show();
+	//el2.show();
 	Mesh<2, 3, Point <2, double> > el_mesh(el1);
 	el_mesh.push(el2);
 	
-
 	BoundaryConditions<Point<2, double> > boundaries;
-	boundaries.cond = point_bound_cond;
+	boundaries.cond_fn = point_bound_cond;
+	boundaries.is_inside_fn = point_bound_is_inside;
 	boundaries.val = point_bound_val;
+	boundaries.accuracy = 0.0001;
+	el_mesh.set_element_divider(boundaries);
 	el_mesh.reset_indices(boundaries);
 	//el_mesh.show();
 
 
+
+	Mesh<2, 3, Point <2, double> > circle_mesh(el1);
+	circle_mesh.push(el2);
+	
+
+	BoundaryConditions<Point<2, double> > circle_boundaries;
+	circle_boundaries.cond_fn = p_circle_cond;
+	circle_boundaries.is_inside_fn = p_circle_is_inside;
+	circle_boundaries.val = p_circle_val;
+	circle_boundaries.accuracy = 0.001;
+	circle_mesh.set_element_divider(circle_boundaries);
+	circle_mesh.reset_indices(circle_boundaries);
+
+	vector<double> corner_vec = {0.5, 1.15};
+	Point <2, double> corner(corner_vec);
+	REQUIRE(circle_boundaries.is_inside(corner));
+	//circle_mesh.show();
+	vector<double> ORIG = { .5, .5 };
+	//cout << sqrt(dist_squared<2, vector<double> >(point2.get_value(), ORIG));
+
 	SECTION("Mesh can be initialized with default constructor") {//OK
 		Mesh<2, 3, Point <2, double> > empty_mesh;
-		REQUIRE(empty_mesh.how_many() == 2);
+		REQUIRE(empty_mesh.how_many() == 3);
 	}
 
 	SECTION("One can access top element") {//OK
@@ -108,7 +114,7 @@ TEST_CASE("Test the real Mesh with Elements based on Points") {
 		Element<2, 3, Point <2, double> > new_el(el1);
 		REQUIRE(el_mesh.push(nullptr, new_el));
 		REQUIRE(el_mesh.how_many_nodes() == 4);
-		el_mesh.show();
+		//el_mesh.show();
 		REQUIRE(el_mesh.get_last() == el1);
 		//Rebuild the mesh!!
 		REQUIRE(el_mesh.pop() == true);
@@ -178,13 +184,65 @@ TEST_CASE("Test the real Mesh with Elements based on Points") {
 		REQUIRE(el_mesh.get_element(2)[1].get_location()[1] == 0.5);
 	}
 
-	/*SECTION("Setting indices (for Nodes inside of Elements!) in the mesh should succeed") {
+	SECTION("Refining the mesh with boundary adjustments should succeed") {
+		REQUIRE(el_mesh.how_many_nodes() == 2);
+		cout << "How many nodes totally exist" << el1.how_many() << endl;
+		el_mesh.refine();
+		cout << "How many nodes totally exist after refinement" << el1.how_many() << endl;
+
+		el_mesh.reset_indices(boundaries);
+		MatrixXd grid = el_mesh.get_grid_values();
+		cout << grid << endl;
+		REQUIRE(el_mesh.get_max_inner_index() == 0);
+		REQUIRE(el_mesh.get_max_outer_index() == 8);
+		el_mesh.refine();
+		el_mesh.reset_indices(boundaries);
 		
-		el_mesh.reset_indices();
+		REQUIRE(el_mesh.how_many_nodes() == 32);
+		cout << el_mesh.get_grid_values() << endl;
+
+		el_mesh.save_matrix("grid.txt", grid);
+		auto e_sharings = el_mesh.get_edge_sharings();
+		//for (auto iter = e_sharings.begin(); iter != e_sharings.end(); iter++) {
+			//cout << iter->first[0] << " " << iter->first[1] << endl;
+			//cout << iter->second << endl;
+		//}
+	}
+
+	SECTION("SEtting edge sharings should work") {
+		map<array<int, 2>, int> edge_sharings;
+		el_mesh.set_edge_sharings(el1, edge_sharings);
+		el_mesh.set_edge_sharings(el2, edge_sharings);
+		//for (auto iter = edge_sharings.begin(); iter != edge_sharings.end(); iter++) {
+			//cout << iter->first[0] << " " << iter->first[1] << endl;
+			//cout << iter->second << endl;
+		//}
+	}
+
+	SECTION("Setting indices (for Nodes inside of Elements!) in the mesh should succeed") {
+		
+		el_mesh.reset_indices(boundaries);
 		el_mesh.show();
 		REQUIRE(el_mesh.get_last()[1].get_index() == 3);
 		REQUIRE(el_mesh.get_top()[0].get_index() == 0);
-	}*/
+	}
+
+	SECTION("Filling a circle with triangles in a mesh should succeed") {
+		REQUIRE(circle_mesh.how_many_nodes() == 2);
+		cout << "How many nodes totally exist" << el1.how_many() << endl;
+		circle_mesh.refine();
+		circle_mesh.reset_indices(circle_boundaries);
+		circle_mesh.refine();
+		circle_mesh.reset_indices(circle_boundaries);
+		//circle_mesh.refine();
+		cout << "How many nodes totally exist after refinement" << el1.how_many() << endl;
+
+		//circle_mesh.reset_indices(circle_boundaries);
+		MatrixXd circle_grid = circle_mesh.get_grid_values();
+		cout << circle_grid << endl;
+	}
+
+
 }
 
 
