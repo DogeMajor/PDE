@@ -62,7 +62,6 @@ TEST_CASE( "Test Element template containing vertex template initiated with 2-D 
 	boundaries.val = bound_val;
 	
 
-
     SECTION( "Test default constructor()" ){
         Element <2, 3, VectorXd> empty_element;
 		vector<Vertex<2, VectorXd> *> empty_vertices = empty_element.get_vertices();
@@ -180,7 +179,6 @@ TEST_CASE( "Test Element template containing vertex template initiated with 2-D 
     SECTION( "Test get_volume()" ){
         REQUIRE(element.get_volume() == 0.5 );
     }
-
 }
 
 
@@ -274,6 +272,5 @@ TEST_CASE( "Test Element template containing vertex template initiated with 2-D 
         REQUIRE( func_1(vertex_vec[1]->get_location()) == 0 );
         REQUIRE( func_1(vertex_vec[2]->get_location()) == 0 );
     }
-
 
 }

@@ -201,7 +201,7 @@ TEST_CASE("Test the real Mesh with Elements based on Points") {
 		REQUIRE(el_mesh.how_many_nodes() == 32);
 		cout << el_mesh.get_grid_values() << endl;
 
-		el_mesh.save_grid_values("grid.txt", grid);
+		el_mesh.save_matrix("grid.txt", grid);
 		auto e_sharings = el_mesh.get_edge_sharings();
 		//for (auto iter = e_sharings.begin(); iter != e_sharings.end(); iter++) {
 			//cout << iter->first[0] << " " << iter->first[1] << endl;

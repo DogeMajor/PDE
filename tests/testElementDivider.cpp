@@ -7,53 +7,7 @@
 using namespace std;
 using namespace Eigen;
 
-/*
-double fn(VectorXd coords) {
-	return coords.transpose()*coords;
-}
 
-typedef map<array<int, 2>, Vertex<2, Point<2, double> >* >::const_iterator VerticesMapIter;
-typedef map<array<int, 2>, Vertex<2, Point<2, double> >* > VerticesMap;
-
-void show_map(VerticesMap &n_map) {
-	for (VerticesMapIter iter = n_map.begin(); iter != n_map.end(); iter++) {
-		cout << "Key and value" << endl;
-		cout << iter->first[0] << ", " << iter->first[1] << endl;
-		iter->second->show();
-	}
-}
-
-typedef map<array<int, 2>, Point<2, double> >::const_iterator PointsMapIter;
-typedef map<array<int, 2>, Point<2, double> > PointsMap;
-
-void show_map(PointsMap &p_map) {
-	for (PointsMapIter iter = p_map.begin(); iter != p_map.end(); iter++) {
-		cout << "Key and value" << endl;
-		cout << iter->first[0] << ", " << iter->first[1] << endl;
-		cout << iter->second[0] << ", " << iter->second[1] << endl;
-	}
-}
-
-
-bool point_bound_cond(Point<2, double> coords) {
-	for (int i = 0; i < coords.size(); i++) {
-		if ((coords[i] == 0.0) || (coords[i] == 1.0)) { return true; }
-	}
-	return false;
-}
-
-bool point_bound_is_inside(Point<2, double> coords) {
-	for (int i = 0; i < coords.size(); i++) {
-		if ((coords[i] <= 0.0) || (coords[i] >= 1.0)) { return false; }
-	}
-	return true;
-}
-
-double point_bound_val(Point<2, double> coords) {
-	if (coords[1] == 1.0) { return 1; }
-	return 0;
-}
-*/
 #define CATCH_CONFIG_MAIN
 #include "../C++ libs/catch/catch.hpp"
 
@@ -70,6 +24,18 @@ TEST_CASE("Test ElementDivider with Point template -based vertices") {
 	Point<2, double> point4(vec4);
 	Point<2, double> point5(vec5);
 	Point<2, double> point6(vec6);
+
+	vector <double> midvec12 = { 0.5, 0.0 };
+	vector <double> midvec13 = { 0.5, 0.5 };
+	vector <double> midvec23 = { 1.0, 0.5 };
+	Point<2, double> midpoint12(midvec12);
+	Point<2, double> midpoint13(midvec13);
+	Point<2, double> midpoint23(midvec23);
+	vector<Vertex<2, Point <2, double>  > * > midpoint_vertices(3, nullptr);
+	midpoint_vertices[0] = new Vertex<2, Point<2, double> >(midpoint12);
+	midpoint_vertices[1] = new Vertex<2, Point<2, double> >(midpoint13);
+	midpoint_vertices[2] = new Vertex<2, Point<2, double> >(midpoint23);
+
 	Vertex<2, Point <2, double> > n_1(point1);
 	Vertex<2, Point <2, double> > n_2(point2);
 	Vertex<2, Point <2, double> > n_3(point3);
@@ -79,7 +45,7 @@ TEST_CASE("Test ElementDivider with Point template -based vertices") {
 	vertex_vec[2] = new Vertex<2, Point <2, double> >(point3);
 	ElementFactory <2, 3, Point<2, double> > factory;
 	Element<2, 3, Point<2, double> > element = factory.build(vertex_vec);
-	vector<Vertex<2, Point <2, double> > *> vertex_vec2;//(3, nullptr);
+	vector<Vertex<2, Point <2, double> > *> vertex_vec2;
 	vertex_vec2.push_back(vertex_vec[0]);
 	vertex_vec2.push_back(vertex_vec[2]);
 	vertex_vec2.push_back(new Vertex<2, Point <2, double> >(point4));
@@ -108,6 +74,7 @@ TEST_CASE("Test ElementDivider with Point template -based vertices") {
 		}
 	}
 
+	map<array<int, 2>, int> empty_edges;
 
 	SECTION("dist_squared template function should work") {
 		VectorXd a(3);
@@ -159,10 +126,9 @@ TEST_CASE("Test ElementDivider with Point template -based vertices") {
 
 	SECTION("Adjusting midpoints according to boundary conds should succeed "){
 		PointsMap m_map = element.get_midpoints_map();
-		PointsMap adjusted_midpoints = divider.adjust_midpoints(element, m_map, -1);
+		PointsMap adjusted_midpoints = divider.adjust_midpoints(element, m_map, empty_edges);
 		cout << "Show adjusted mid points" << endl;
 		show_map(adjusted_midpoints);
-		REQUIRE(boundaries.cond(adjusted_midpoints[{0, 2}].get_value()));
 		REQUIRE(adjusted_midpoints[{0, 1}] == m_map[{0, 1}]);
 		REQUIRE(adjusted_midpoints[{1, 2}] == m_map[{1, 2}]);
 		
@@ -172,7 +138,7 @@ TEST_CASE("Test ElementDivider with Point template -based vertices") {
 		map<array<int, 2>, Point<2, double> > points_map = element.get_midpoints_map();
 		int vertices_no = n_1.how_many();
 		map<array<int, 2>, Vertex<2, Point<2, double> >* > commons;
-		map<array<int, 2>, Vertex<2,Point<2, double> >* > m_p_vertex_map = divider.get_mid_vertices_map(element, commons, 8999);//Testing with "it's almost 9000 meme"
+		map<array<int, 2>, Vertex<2,Point<2, double> >* > m_p_vertex_map = divider.get_mid_vertices_map(element, commons, empty_edges);//Testing with "it's almost 9000 meme"
 		REQUIRE(m_p_vertex_map.size() == 3 );
 		REQUIRE(vertices_no + 3 == n_1.how_many() );
 		for (VerticesMapIter iter = m_p_vertex_map.begin(); iter != m_p_vertex_map.end(); iter++) {
@@ -182,7 +148,7 @@ TEST_CASE("Test ElementDivider with Point template -based vertices") {
 		show_map(m_p_vertex_map);
 		REQUIRE(commons == m_p_vertex_map );//First element, at t_0 commons is empty!!
 		map<array<int, 2>, Point<2, double> > points_map2 = el2.get_midpoints_map();
-		map<array<int, 2>, Vertex<2, Point<2, double> >* > m_p_vertex_map2 = divider.get_mid_vertices_map(el2, commons, 8999);
+		map<array<int, 2>, Vertex<2, Point<2, double> >* > m_p_vertex_map2 = divider.get_mid_vertices_map(el2, commons, empty_edges);
 		REQUIRE(vertices_no + 5 == n_1.how_many());
 		for (VerticesMapIter iter = m_p_vertex_map2.begin(); iter != m_p_vertex_map2.end(); iter++) {
 			REQUIRE( iter->second->get_location() == points_map2[iter->first] );
@@ -193,18 +159,8 @@ TEST_CASE("Test ElementDivider with Point template -based vertices") {
 		REQUIRE(commons.size() == 5 );
 	}
 
-	SECTION("Generating new mid vertices from midpoints map should succeed") {
-		map<array<int, 2>, Point<2, double> > m_p_map = element.get_midpoints_map();
-		vector <Vertex<2, Point<2, double> >* > mid_nods = element.get_midpoint_vertices(m_p_map);
-
-		cout << "Showing midpoint of type Point <2, double> between vertices 0 and 1" << endl;
-		m_p_map[{0, 1}].show();
-		REQUIRE(mid_nods.size() == 3 );
-	}
-
 	SECTION("One can generate new vertex elements out of old element when refining the mesh") {
-		vector <Vertex<2, Point <2, double> >* > mid_vertices = element.get_midpoint_vertices();
-		Element <2, 3, Point <2, double> > el_AB = divider.get_corner_element(0, mid_vertices, element);
+		Element <2, 3, Point <2, double> > el_AB = divider.get_corner_element(0, midpoint_vertices, element);
 		REQUIRE(el_AB[0].get_location() == element[0].get_location());
 		REQUIRE(el_AB.get_function(0)(el_AB[0].get_location()) == 1);
 		REQUIRE(el_AB.get_function(1)(el_AB[0].get_location()) == 0);
@@ -213,8 +169,7 @@ TEST_CASE("Test ElementDivider with Point template -based vertices") {
 	}
 
 	SECTION("One can generate new inner elements out of old element when refining the mesh") {
-		vector <Vertex<2, Point <2, double> >* > m_vertices = element.get_midpoint_vertices();
-		Element <2, 3, Point <2, double> > inner_el = divider.get_inner_element(0, m_vertices);
+		Element <2, 3, Point <2, double> > inner_el = divider.get_inner_element(0, midpoint_vertices);
 		REQUIRE(inner_el.get_function(0)(inner_el[0].get_location()) == 1);
 		REQUIRE(inner_el.get_function(1)(inner_el[0].get_location()) == 0);
 		REQUIRE(inner_el[0].get_location() == 0.5*(element[0].get_location() + element[1].get_location()));
@@ -226,11 +181,12 @@ TEST_CASE("Test ElementDivider with Point template -based vertices") {
 		map< array<int, 2>, Vertex<2, Point <2, double> >* >  coms;
 		int vertices_at_t0 = n_1.how_many();
 		
-		vector <Element <2, 3, Point <2,double> >* > els = divider.divide(element, coms, 8999);
+		vector <Element <2, 3, Point <2,double> >* > els = divider.divide(element, coms, empty_edges);
 		
 		REQUIRE(els.size() == 4);
 		REQUIRE(vertices_at_t0 + 3 == n_1.how_many() );
-		vector <Element <2, 3, Point <2, double> >* > els2 = divider.divide(el2, coms, 8999);
+		empty_edges.erase(empty_edges.begin(), empty_edges.end());
+		vector <Element <2, 3, Point <2, double> >* > els2 = divider.divide(el2, coms, empty_edges);
 		REQUIRE(els2.size() == 4);
 		REQUIRE(vertices_at_t0 + 5 == n_1.how_many() );
 		coms.erase(coms.begin(), coms.end()); 
@@ -239,8 +195,8 @@ TEST_CASE("Test ElementDivider with Point template -based vertices") {
 	SECTION("Generating new Elements with boundary adjustments should succeed") {
 		map< array<int, 2>, Vertex<2, Point <2, double> >* >  adj_coms;
 		int vertices_amount = n_1.how_many();
-
-		vector <Element <2, 3, Point <2, double> >* > adjusted_els = divider.divide(element, adj_coms, -2);
+		cout << "Empty edges size" << empty_edges.size() << endl;
+		vector <Element <2, 3, Point <2, double> >* > adjusted_els = divider.divide(element, adj_coms, empty_edges);
 
 		REQUIRE(adjusted_els.size() == 4);
 		REQUIRE(adjusted_els.size() == 4);
@@ -249,7 +205,7 @@ TEST_CASE("Test ElementDivider with Point template -based vertices") {
 		for (int i = 0; i < adjusted_els.size(); i++) {
 			volume += adjusted_els[i]->get_volume();
 		}
-		REQUIRE(abs(volume - 1) < 0.01);//New boundary adjusted els have to cover the whole of square!!
+		REQUIRE(abs(volume - 0.5) < 0.01);
 		
 	}
 
