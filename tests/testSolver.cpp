@@ -26,11 +26,11 @@ double f_kern_sin(VectorXd coords) {//Particle in a N-Dim box...
 	return result;
 }
 
-double f_kern_const(VectorXd coords) {//max val should be roughly 0.07
+double f_kern_const(VectorXd coords) {//max val of the solution should be roughly 0.07
 	return 1.0;
 }
 
-double f_kern_zero(VectorXd coords) {//max val should be roughly 0.07
+double f_kern_zero(VectorXd coords) {
 	return 0.0;
 }
 
@@ -42,10 +42,24 @@ double analytic_sol(VectorXd coords) {//Particle in a N-Dim box...
 	return result;
 }
 
-double circle_sol(VectorXd coords) {//Particle in a N-Dim box...
-	double angle = atan(coords[1]/coords[0]);
+
+double circle_sol(VectorXd coords) {
+	if (coords[0] == 0 && coords[1] == 0) { return 0; }
 	double squared_r = coords[0] * coords[0] + coords[1] * coords[1];
+	double angle = acos(coords[0] / sqrt(squared_r));
 	return pow(squared_r, 5)*cos(10 * angle);
+}
+
+double c_error_norm(MatrixXd sol_values) {
+	double norm = 0;
+	int sz = sol_values.cols() - 1;
+	VectorXd loc;
+	for (int i = 0; i < sol_values.rows(); i++) {
+		loc = sol_values.row(i).head(sz);
+		norm = norm + pow(sol_values(i, sz) - circle_sol(loc), 2);
+	}
+	cout << "error sum" << norm << endl;
+	return norm * (1 / double(sol_values.rows()));
 }
 
 
@@ -57,6 +71,7 @@ double error_norm(MatrixXd sol_values) {
 		loc = sol_values.row(i).head(sz);
 		norm = norm + pow(sol_values(i, sz) - analytic_sol(loc), 2);
 	}
+	cout << "error sum" << norm << endl;
 	return norm * (1 / double(sol_values.rows()));
 }
 
@@ -186,7 +201,7 @@ TEST_CASE("Test Solver with Point -based Mesh") {
 		REQUIRE(refined_sol2.minCoeff() == 0);
 		MatrixXd ref_values = solver2.get_solution_values(refined_sol2);
 		cout << ref_values << endl;
-	}
+	}*/
 	
 	SECTION("Getting sparse stiffness matrix should succeed") {
 		map<array<int, 2>, double> sparse_map = solver.get_sparse_stiffness_map();
@@ -235,7 +250,7 @@ TEST_CASE("Test Solver with Point -based Mesh") {
 		cout << solver.get_stiffness_matrix(8) << endl;
 	}
 
-	SECTION("Solving the PDE should succeed") {
+	/*SECTION("Solving the PDE should succeed") {
 		//solver.refine();
 		//solver.refine();
 		Seeder timer = Seeder();
@@ -335,10 +350,25 @@ TEST_CASE("Test Solver with Point -based Mesh") {
 		SECTION("Solving pde in unit circle should succeed") {
 			c_solver.refine();
 			c_solver.refine();
+			c_solver.refine();
+			c_solver.refine();
+			//c_solver.refine();
 			//c_mesh.show();
 			map<array<int, 2>, double> c_stiffness_map = c_solver.get_sparse_stiffness_map();
-			show_map(c_stiffness_map);
-			cout << c_mesh.get_grid_values() << endl;
+			cout << c_mesh.get_max_inner_index() << endl;
+			cout << c_mesh.get_max_outer_index() << endl;
+			int A, B;
+			int max_index = 0;
+			for (auto iter = c_stiffness_map.begin(); iter != c_stiffness_map.end(); iter++) {
+				A = iter->first[0];
+				B = iter->first[1];
+				max_index = max(max_index, A);
+				max_index = max(max_index, B);
+				REQUIRE(iter->second == c_stiffness_map[{B, A}]);
+			}
+			cout << "max outer index: " << max_index << endl;
+			//cout << c_solver.get_sparse_inner_stiffness_matrix(c_stiffness_map).toDense() << endl;
+			c_mesh.save_matrix("refined_grid.txt", c_mesh.get_grid_values());
 			VectorXd temp(2);
 			temp << 1, 0;
 			cout << "Cos(c_v1)" << c_boundaries.val(temp);
@@ -350,9 +380,14 @@ TEST_CASE("Test Solver with Point -based Mesh") {
 			
 			MatrixXd c_values = c_solver.get_solution_values(c_sol);
 			cout << c_values << endl;
+			c_mesh.save_matrix("c_mesh_grid.txt", c_values);
+			double c_error_avg = c_error_norm(c_values);
+			REQUIRE(c_error_avg < 0.05);
+			cout << "Average error" << c_error_avg;
+			cout << "circle_sol at 0,1" << circle_sol(c_v2.get_location());
+			cout << "circle_sol at 0,0.5" << circle_sol(0.5*c_v2.get_location());
 		}
 	}
 
-	
 
 }

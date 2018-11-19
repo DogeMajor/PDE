@@ -144,7 +144,9 @@ bool c_is_inside(VectorXd coords, double acc) {
 }
 
 double c_val(VectorXd coords) {
-	double angle = atan(coords[1] / coords[0]);
+	if (coords[0] == 0 && coords[1] == 0) { return 0; }
+	double squared_r = coords[0] * coords[0] + coords[1] * coords[1];
+	double angle = acos(coords[0] / sqrt(squared_r));
 	return cos(10.0 * angle);
 }
 

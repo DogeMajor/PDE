@@ -57,7 +57,7 @@ public:
 
 	//----Put saving grid methods below into their own class later...
 	MatrixXd get_grid_values();
-	void Mesh<Dim, N, T>::save_grid_values(string file_name, MatrixXd grid);
+	void save_matrix(string file_name, MatrixXd grid, int type = 0);
 
 
 private:
@@ -275,13 +275,22 @@ MatrixXd Mesh<Dim, N, T>::get_grid_values() {
 	return values;
 }
 
-template <int Dim, int N, typename T>
-void Mesh<Dim, N, T>::save_grid_values(string file_name, MatrixXd grid) {
+template <int Dim, int N, typename T>//Save in Mathematica format
+void Mesh<Dim, N, T>::save_matrix(string file_name, MatrixXd grid, int type) {
 	ofstream file;
+
+	string row_begin = "{";
+	string row_end = "},";
+	string delimiter = "";
+	if (type == 0) { delimiter = ", "; }
 	try {
 		file.open(file_name);
 		for (int row = 0; row < grid.rows(); row++) {
-			file << grid.row(row) << endl;
+			file << row_begin;
+			for (int col = 0; col < grid.cols()-1; col++) {
+				file << grid(row, col) << delimiter;
+			}
+			file << grid(row, grid.cols()-1) << row_end;
 		}
 		file.close();
 	}

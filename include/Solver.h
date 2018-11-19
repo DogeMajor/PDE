@@ -129,7 +129,8 @@ template <int Dim, typename T>
 SparseMatrix<double> Solver<Dim, T>::get_sparse_inner_stiffness_matrix(map<array<int,2>, double> stiffness_map) {
 	int sz = mesh->get_max_inner_index() + 1;
 	SparseMatrix<double> inner_stiffness(sz, sz);
-	inner_stiffness.reserve(VectorXi::Constant(sz, factorial(sz)));
+	//inner_stiffness.reserve(VectorXi::Constant(sz, factorial(sz)));
+	inner_stiffness.reserve(sz*factorial(Dim+1));
 	typedef map< array<int, 2>, double>::iterator Map_iter;
 	for (Map_iter map_iter = stiffness_map.begin(); map_iter != stiffness_map.end(); map_iter++) {
 		if ((map_iter->first[0] < sz) && (map_iter->first[1] < sz)) {

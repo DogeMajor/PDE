@@ -6,14 +6,14 @@ using namespace std;
 using namespace Eigen;
 
 //N-dim box's boundary
-bool bound_cond(VectorXd coords) {
+bool bound_cond(VectorXd coords, double acc) {
 	for (int i = 0; i < coords.size(); i++) {
 		if ((coords[i] == 0.0) || (coords[i] == 1.0)) { return true; }
 	}
 	return false;
 }
 
-bool bound_cond_large_box(VectorXd coords) {
+bool bound_cond_large_box(VectorXd coords, double acc) {
 	for (int i = 0; i < coords.size(); i++) {
 		if ((coords[i] == 0.0) || (coords[i] == 2.0)) { return true; }
 	}
@@ -58,7 +58,7 @@ TEST_CASE( "Test Element template containing vertex template initiated with 2-D 
     Element <2, 3, VectorXd> element(vertices, funcs);
 
 	BoundaryConditions<VectorXd> boundaries;
-	boundaries.cond = bound_cond_large_box;//omega = [0,2]^2
+	boundaries.cond_fn = bound_cond_large_box;//omega = [0,2]^2
 	boundaries.val = bound_val;
 	
 
@@ -180,50 +180,7 @@ TEST_CASE( "Test Element template containing vertex template initiated with 2-D 
     SECTION( "Test get_volume()" ){
         REQUIRE(element.get_volume() == 0.5 );
     }
-	
-	SECTION("Test midpoints()") {
-		vector <pair <int[2], VectorXd> > midpoints = element.get_midpoints();
-		VectorXd mid_loc(2);
-		mid_loc << 0.5, 0.0;
-		REQUIRE( midpoints[0].second == mid_loc);
-		mid_loc << 1, 0.5;
-		REQUIRE(midpoints[2].second == mid_loc);
-		REQUIRE(midpoints[0].first[0] == 0);
-		REQUIRE(midpoints[0].first[1] == 1);
-		REQUIRE(midpoints[2].first[0] == 1);
-		REQUIRE(midpoints[2].first[1] == 2);
-		REQUIRE(midpoints.size() == 3);
-	}
 
-	
-	SECTION("Test midpoint_vertices()") {
-		VectorXd loc(2);
-		int vertex_no = element[0].how_many();
-		vector <pair <int[2], VectorXd> > mpoints = element.get_midpoints();
-		vector<Vertex<2, VectorXd> *> new_vertices = element.get_midpoint_vertices();
-		new_vertices[2]->show();
-		REQUIRE( element[0].how_many() == vertex_no+3 );
-		loc << 0.5, 0.0;
-		REQUIRE(new_vertices[0]->get_location() == loc);
-		loc << 0.5, 0.5;
-		REQUIRE(new_vertices[1]->get_location() == loc);
-		loc << 1.0, 0.5;
-		REQUIRE(new_vertices[2]->get_location() == loc);
-		//REQUIRE(midvertices[0].first[1] == 1);
-	}
-
-	SECTION("Test map of vertices") {
-		vector <pair <int[2], VectorXd> > m_points = element.get_midpoints();
-		vector< Vertex<2, VectorXd> * > m_vertices = element.get_midpoint_vertices();
-		map< array<int, 2>, Vertex<2, VectorXd>* > vertex_map;
-		for (int i = 0; i < 3; i++) {
-			for (int j = i + 1; j < 3; j++) {
-				vertex_map[{i, j}] = new Vertex<2, VectorXd>(*m_vertices[i+j-1]);
-			}
-		}
-		vertex_map[{0, 1}]->show();
-	}
-	
 }
 
 
@@ -273,14 +230,11 @@ TEST_CASE( "Test Element template containing vertex template initiated with 2-D 
         vertex_vec[0]->show();
     }
 
-	SECTION("Test get_squared_dist_mat()") {
-		MatrixXd D = volume_calculator.get_distance_squared_matrix(el.get_vertices());
-		cout << D << endl;
-	}
-
-    SECTION( "Test get_simplex_matrix(T &el)" ){
-        Matrix<double, 2, 2> s_mat = volume_calculator.get_simplex_matrix(el.get_vertices());
-        REQUIRE( s_mat == MatrixXd::Identity(2,2) );
+    SECTION( "Test get_distance_squared_matrix(T &el)" ){
+        MatrixXd s_mat = volume_calculator.get_distance_squared_matrix(el.get_vertices());
+		MatrixXd s_mat_should_be(4, 4);
+		s_mat_should_be << 0, 1, 2, 1, 1, 0, 1, 1, 2, 1, 0, 1, 1, 1, 1, 0;
+		REQUIRE( s_mat == s_mat_should_be);
     }
 
     SECTION( "Test get_volume()" ){
@@ -320,17 +274,6 @@ TEST_CASE( "Test Element template containing vertex template initiated with 2-D 
         REQUIRE( func_1(vertex_vec[1]->get_location()) == 0 );
         REQUIRE( func_1(vertex_vec[2]->get_location()) == 0 );
     }
-	
-	SECTION("Test midpoint_vertices()") {
-		VectorXd loc(2);
-		loc << 0.5, 0.0;
-		int vertex_no = el[0].how_many();
-		vector <pair <int[2], Point <2 ,double> > > m_points = el.get_midpoints();
-		vector <Vertex<2, Point <2 ,double> >* > m_vertices = el.get_midpoint_vertices();
-		REQUIRE(el[0].how_many() == vertex_no + 3);
-		REQUIRE(m_vertices[0]->get_location()[0] == 0.5*(vec1[0]+ vec2[0]));
-		REQUIRE(m_vertices[1]->get_location()[1] == 0.5*(vec1[1] + vec3[1]));
-		REQUIRE(m_vertices[2]->get_location()[0] == 0.5*(vec2[0] + vec3[0]));
-	}
+
 
 }
