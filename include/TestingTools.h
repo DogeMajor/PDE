@@ -72,6 +72,28 @@ Point<2, double> point_bound_normal(Point<2, double> coords) {
 	return Point<2, double>(normal);
 }
 
+//sqrt(2) circle at (.5,.5) boundaries for Point template
+
+bool p_circle_cond(Point<2, double> coords, double acc) {
+	vector<double> orig = { 0.5, 0.5 };
+	double dist = sqrt(dist_squared<2, vector<double> >(orig, coords.get_value()));
+	if ((dist > 1 / sqrt(2) - acc) && (dist < 1 / sqrt(2) + acc)) { return true; }
+	return false;
+}
+
+bool p_circle_is_inside(Point<2, double> coords, double acc) {
+	vector<double> orig = { 0.5, 0.5 };
+	double dist = sqrt(dist_squared<2, vector<double> >(orig, coords.get_value()));
+	if (dist < 1/sqrt(2) - acc) { return true; }
+	return false;
+}
+
+double p_circle_val(Point<2, double> coords) {
+	//if (coords[1] == 1.0) { return 1; }
+	return 0;
+}
+
+
 //N-dim box's boundary with VectorXd as Typename
 
 bool bound_cond(VectorXd coords, double acc) {
