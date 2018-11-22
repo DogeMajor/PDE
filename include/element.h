@@ -263,13 +263,13 @@ T Element<Dim, N, T>::get_avg_location() {
 template <int Dim, int N, typename T>
 void Element<Dim,N,T>::show() const{
     for(int i=0; i<vertices.size(); i++){vertices[i]->show();}
-    for(int i=0; i<functions.size(); i++){
+    /*for(int i=0; i<functions.size(); i++){
         cout << "Function coefficients for Vertex no " << i <<endl;
         for(int j=0; j<functions[i].coeff.rows(); j++){
             cout << functions[i].coeff[j] <<" " <<endl;
         }
         cout << endl;
-    }
+    }*/
 }
 
 #endif

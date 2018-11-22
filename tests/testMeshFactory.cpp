@@ -1,5 +1,6 @@
 #include "../include/Point.h"
 #include "../include/Mesh.h"
+#include "../include/MeshFactory.h"
 #include "../include/TestingTools.h"
 #include <math.h>
 
@@ -42,7 +43,7 @@ using namespace std;
 	//el2.show();
 	Mesh<2, 3, Point <2, double> > el_mesh(el1);
 	el_mesh.push(el2);
-	
+
 	BoundaryConditions<Point<2, double> > boundaries;
 	boundaries.cond_fn = point_bound_cond;
 	boundaries.is_inside_fn = point_bound_is_inside;
@@ -56,7 +57,7 @@ using namespace std;
 
 	Mesh<2, 3, Point <2, double> > circle_mesh(el1);
 	circle_mesh.push(el2);
-	
+
 
 	BoundaryConditions<Point<2, double> > circle_boundaries;
 	circle_boundaries.cond_fn = p_circle_cond;
@@ -128,7 +129,7 @@ using namespace std;
 		node_vec_D.push_back(node_vec[1]);
 		node_vec_D.push_back(node_vec[2]);
 		Element<2, 3, Point <2, double> > el4 = factory.build(node_vec_D);
-		
+
 		vector<Vertex<2, Point <2, double>  > * > node_vec_C;
 		node_vec_C.push_back(new Vertex<2, Point <2, double> >(point5));
 		node_vec_C.push_back(node_vec[1]);
@@ -172,11 +173,11 @@ using namespace std;
 		cout << "How many nodes totally exist" << el1.how_many() <<endl;
 		el_mesh.refine();
 		cout << "How many nodes totally exist after refinement" << el1.how_many() << endl;
-		
+
 		el_mesh.reset_indices(boundaries);
 		REQUIRE(el_mesh.get_max_inner_index() == 0);
 		REQUIRE(el_mesh.get_max_outer_index() == 8);
-		
+
 		REQUIRE(el_mesh.how_many_nodes() == 8);
 		REQUIRE(el_mesh.get_element(2)[0].get_location()[0] == 0);
 		REQUIRE(el_mesh.get_element(2)[0].get_location()[1] == 1.0);
@@ -197,7 +198,7 @@ using namespace std;
 		REQUIRE(el_mesh.get_max_outer_index() == 8);
 		el_mesh.refine();
 		el_mesh.reset_indices(boundaries);
-		
+
 		REQUIRE(el_mesh.how_many_nodes() == 32);
 		cout << el_mesh.get_grid_values() << endl;
 
@@ -220,7 +221,7 @@ using namespace std;
 	}
 
 	SECTION("Setting indices (for Nodes inside of Elements!) in the mesh should succeed") {
-		
+
 		el_mesh.reset_indices(boundaries);
 		el_mesh.show();
 		REQUIRE(el_mesh.get_last()[1].get_index() == 3);
@@ -246,61 +247,102 @@ using namespace std;
 }*/
 
 
-TEST_CASE("Generating a mesh based on 3-D Element<3,4,Vertex<2, VectorXd> > should succeed") {
+TEST_CASE("MeshFactory should be able to generate meshes") {
 
-	VectorXd p_loc(3);
+	MeshFactory<3, 4, VectorXd> mesh_factory;
+	SimplexDivisions<3> simplex_divisions;
+	VectorXd cube_point(3);
+	cube_point << 0.5, 0.5, 0.5;
+	VectorXd cube_lengths(3);
+	cube_lengths << 1, 1, 1;
+	ElementFactory<3, 4, VectorXd> el_factory;
 
-	vector<Vertex<3, VectorXd> *> p_vertices(4, nullptr);
-	p_loc << 0, 0, 0;
-	p_vertices[0] = new Vertex<3, VectorXd>(p_loc);
-	p_loc << 1, 0.5, 0.5;
-	p_vertices[1] = new Vertex<3, VectorXd>(p_loc);
-	p_loc << 0.5, 1, 0.5;
-	p_vertices[2] = new Vertex<3, VectorXd>(p_loc);
-	p_loc << 0, 0, 1;
-	p_vertices[3] = new Vertex<3, VectorXd>(p_loc);
+	SECTION("Getting box coordinates should succeed") {
+		VectorXd mp(3);
+		mp << 0.5, 0.5, 0.5;
+		VectorXd lengths(3);
+		lengths << 1, 1, 1;
+		MatrixXd cube_coords = get_box_coordinates<3>(mp, lengths);
+		REQUIRE(cube_coords(7, 0) == 1);
+		REQUIRE(cube_coords(7, 1) == 1);
+		REQUIRE(cube_coords(7, 2) == 1);
+		REQUIRE(cube_coords.rows() == 8);
+		REQUIRE(cube_coords.cols() == 3);
+		VectorXd mp2(2);
+		mp2 << 0.5, 1;
+		VectorXd lengths2(2);
+		lengths2 << 1, 2;
+		MatrixXd box_coords = get_box_coordinates<2>(mp2, lengths2);
+		REQUIRE(box_coords(3, 0) == 1);
+		REQUIRE(box_coords(3, 1) == 2);
+		REQUIRE(box_coords.rows() == 4);
+		REQUIRE(box_coords.cols() == 2);
+		//cout << cube_coords << endl;
+	}
 
-	ElementFactory<3, 4, VectorXd> p_factory;
-	Element<3, 4, VectorXd> p_element = p_factory.build(p_vertices);
-	p_element.set_indices(-1);
-	p_element.set_index_maps();
-
-	BoundaryConditions<VectorXd> p_boundaries = { bound_cond, bound_is_inside, bound_val, bound_normal, 0.000001 };
-	ElementDivider <3, 4, VectorXd> p_divider(p_boundaries);
-
-	Mesh<3, 4, VectorXd> p_mesh(p_element);
-	p_mesh.set_element_divider(p_boundaries);
-	p_mesh.reset_indices(p_boundaries);
-	
-	map< array<int, 2>, int> P_EDGES_MAP;
-	int A, B;
-	int I = 0;
-	for (int i = 0; i < 4; i++) {
-		A = p_element[i].get_index();
-		for (int j = i + 1; j < 4; j++) {
-			B = p_element[j].get_index();
-			P_EDGES_MAP.insert(pair< array<int, 2>, int>({ min(A,B), max(A,B) }, 1));
-			I++;
+	SECTION("Generating box vertices should succeed") {
+		VectorXd mid_point(3);
+		mid_point << 0.5, 0.5, 0.5;
+		VectorXd side_lengths(3);
+		side_lengths << 1, 1, 1;
+		VectorXd last_vert = side_lengths;
+		vector <Vertex<3, VectorXd>* > box_verts = mesh_factory.build_box_vertices(mid_point, side_lengths);
+		REQUIRE(box_verts[7]->get_location() == last_vert);
+		REQUIRE(box_verts.size());
+		for (int i = 0; i < box_verts.size(); i++) {
+			delete box_verts[i];
 		}
 	}
-	map<array<int, 2>, int> p_empty_edges;
 
+	SECTION("Picking Simplex vertices from box vertices should succeed ") {
+		vector <Vertex<3, VectorXd>* > box_vertices = mesh_factory.build_box_vertices(cube_point, cube_lengths);
+		vector <Vertex<3, VectorXd>* > simplexverts0 = mesh_factory.get_simplex_vertices(0, box_vertices);
 
-	SECTION("Refining mesh should succeed") {
-		cout << p_mesh.how_many_nodes() << endl;
-		cout << p_mesh.get_max_outer_index() << endl;
-		cout << p_mesh.get_grid_values() << endl;
-		p_mesh.refine();
-		p_mesh.reset_indices(p_boundaries);
-		p_mesh.refine();
-		p_mesh.reset_indices(p_boundaries);
-		p_mesh.refine();
-		p_mesh.reset_indices(p_boundaries);
-		p_mesh.refine();
-		p_mesh.reset_indices(p_boundaries);
-		cout << p_mesh.get_grid_values() << endl;
-		MatrixXd cube_grid = p_mesh.get_grid_values();
-		p_mesh.save_matrix("cube_grid.txt", cube_grid);
+		Element<3, 4, VectorXd> el0 = el_factory.build(simplexverts0);
+		//el0.show();
+		
+		vector <Vertex<3, VectorXd>* > simplexverts2 = mesh_factory.get_simplex_vertices(2, box_vertices);
+
+		Element<3, 4, VectorXd> el2 = el_factory.build(simplexverts2);
+		int vertice_amount = box_vertices[0]->how_many();
+		Element<3, 4, VectorXd> el5 = mesh_factory.build_simplex(5, box_vertices);
+		REQUIRE(vertice_amount == box_vertices[0]->how_many());
+
+		vector<Element<3, 4, VectorXd> > els;
+		for (int i = 0; i < 6; i++) {
+			els.push_back(mesh_factory.build_simplex(i, box_vertices));
+		}
+		//els[5].show();
+		VectorXd avg_loc = VectorXd::Zero(3);
+		for (int i = 0; i < 6; i++) {
+			cout <<endl<< i << ": " <<els[i].get_volume() << endl;
+			REQUIRE(limit_decimals(els[i].get_volume(),4) == 0.1666);
+			avg_loc += els[i].get_avg_location();
+			els[i].show();
+			//cout << els[i].get_avg_location() << endl;
+		}
+		avg_loc = (1/6.0)*avg_loc;
+		REQUIRE(avg_loc == cube_point);
+		/*Mesh<3, 4, VectorXd> mesh = mesh_factory.build_mesh(box_vertices);
+		BoundaryConditions<VectorXd> p_boundaries = { bound_cond, bound_is_inside, bound_val, bound_normal, 0.000001 };
+		//ElementDivider <3, 4, VectorXd> p_divider(p_boundaries);
+
+		mesh.set_element_divider(p_boundaries);
+		mesh.reset_indices(p_boundaries);
+		mesh.show();
+		//el5.show();
+		//el2.show();
+
+		for (int i = 0; i < box_vertices.size(); i++) {
+			delete box_vertices[i];
+		}*/
 	}
+
+	/*SECTION("Generating Simplex Elements covering a (unit)box [1]^3 should succeed") {
+		
+		vector<Element<3, 4, VectorXd> > simplexes = mesh_factory.cover_box_with_simplices(cube_point, cube_lengths);
+		cout << simplexes.size();
+		simplexes[0].show();
+	}*/
 
 }

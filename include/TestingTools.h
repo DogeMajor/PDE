@@ -111,7 +111,7 @@ bool bound_is_inside(VectorXd coords, double acc) {
 }
 
 double bound_val(VectorXd coords) {
-	if (coords[1] == 1.0) { return 1; }
+	//if (coords[1] == 1.0) { return 1; }
 	return 0;
 }
 
