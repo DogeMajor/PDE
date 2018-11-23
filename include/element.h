@@ -24,6 +24,11 @@ struct IndexMaps {
 		map_to_local.erase(map_to_local.begin(), map_to_local.end());
 		map_to_global.erase(map_to_global.begin(), map_to_global.end());
 	}
+	IndexMaps & operator=(const IndexMaps &maps_b) {
+		map_to_local = maps_b.map_to_local;
+		map_to_global = maps_b.map_to_global;
+		return *this;
+	}
 
 };
 
@@ -210,6 +215,9 @@ Element<Dim,N,T>& Element<Dim,N,T>::operator=(const Element &el){
         }
     }
     functions = el.functions;
+	index_maps = el.index_maps;
+	f_variations = el.f_variations;
+	//volume_calculator = el.volume_calculator;
     return *this;
 }
 
@@ -222,7 +230,8 @@ bool Element<Dim,N,T>::operator==(const Element &el) const{
     bool same_function_coeff = (functions == el.functions);
     bool both_funcs_lacking = ((functions.size() == 0) && (el.functions.size() == 0));
     bool same_funcs = same_function_coeff || both_funcs_lacking;
-    return same_vertices && same_funcs;
+	bool same_f_variations = (f_variations == el.f_variations);
+    return same_vertices && same_funcs && same_f_variations;
 }
 
 template <int Dim, int N, typename T>
@@ -263,13 +272,13 @@ T Element<Dim, N, T>::get_avg_location() {
 template <int Dim, int N, typename T>
 void Element<Dim,N,T>::show() const{
     for(int i=0; i<vertices.size(); i++){vertices[i]->show();}
-    for(int i=0; i<functions.size(); i++){
+    /*for(int i=0; i<functions.size(); i++){
         cout << "Function coefficients for Vertex no " << i <<endl;
         for(int j=0; j<functions[i].coeff.rows(); j++){
             cout << functions[i].coeff[j] <<" " <<endl;
         }
         cout << endl;
-    }
+    }*/
 }
 
 #endif

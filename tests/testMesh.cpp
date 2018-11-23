@@ -1,12 +1,10 @@
 #include "../include/Point.h"
 #include "../include/Mesh.h"
 #include "../include/TestingTools.h"
+#include "../include/DAO.h"
 #include <math.h>
 
-using namespace std;
-
-
-#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main()
+#define CATCH_CONFIG_MAIN
 #include "../C++ libs/catch/catch.hpp"
 
 
@@ -38,8 +36,7 @@ TEST_CASE("Test the real Mesh with Elements based on Points") {
 	node_vec2.push_back(node_vec[2]);
 	node_vec2.push_back(new Vertex<2, Point <2, double> >(point4));
 	Element<2, 3, Point <2, double> > el2 = factory.build(node_vec2);
-	//el1.show();
-	//el2.show();
+
 	Mesh<2, 3, Point <2, double> > el_mesh(el1);
 	el_mesh.push(el2);
 	
@@ -50,14 +47,10 @@ TEST_CASE("Test the real Mesh with Elements based on Points") {
 	boundaries.accuracy = 0.0001;
 	el_mesh.set_element_divider(boundaries);
 	el_mesh.reset_indices(boundaries);
-	//el_mesh.show();
-
-
 
 	Mesh<2, 3, Point <2, double> > circle_mesh(el1);
 	circle_mesh.push(el2);
 	
-
 	BoundaryConditions<Point<2, double> > circle_boundaries;
 	circle_boundaries.cond_fn = p_circle_cond;
 	circle_boundaries.is_inside_fn = p_circle_is_inside;
@@ -66,10 +59,11 @@ TEST_CASE("Test the real Mesh with Elements based on Points") {
 	circle_mesh.set_element_divider(circle_boundaries);
 	circle_mesh.reset_indices(circle_boundaries);
 
+	MeshDAO<2, 3, Point <2, double> > el_mesh_dao;
+
 	vector<double> corner_vec = {0.5, 1.15};
 	Point <2, double> corner(corner_vec);
 	REQUIRE(circle_boundaries.is_inside(corner));
-	//circle_mesh.show();
 	vector<double> ORIG = { .5, .5 };
 	//cout << sqrt(dist_squared<2, vector<double> >(point2.get_value(), ORIG));
 
@@ -114,7 +108,6 @@ TEST_CASE("Test the real Mesh with Elements based on Points") {
 		Element<2, 3, Point <2, double> > new_el(el1);
 		REQUIRE(el_mesh.push(nullptr, new_el));
 		REQUIRE(el_mesh.how_many_nodes() == 4);
-		//el_mesh.show();
 		REQUIRE(el_mesh.get_last() == el1);
 		//Rebuild the mesh!!
 		REQUIRE(el_mesh.pop() == true);
@@ -141,7 +134,6 @@ TEST_CASE("Test the real Mesh with Elements based on Points") {
 			large_mesh.push(el4);
 			large_mesh.push(large_mesh.get_top_mesh_node(), el3);
 			large_mesh.push(large_mesh.get_top_mesh_node()->next, el2);
-			//large_mesh.show();
 			REQUIRE(large_mesh.get_element(0) == el4);
 			REQUIRE(large_mesh.get_element(1) == el3);
 			REQUIRE(large_mesh.get_element(2) == el2);
@@ -191,38 +183,35 @@ TEST_CASE("Test the real Mesh with Elements based on Points") {
 		cout << "How many nodes totally exist after refinement" << el1.how_many() << endl;
 
 		el_mesh.reset_indices(boundaries);
-		MatrixXd grid = el_mesh.get_grid_values();
+		MatrixXd grid = el_mesh_dao.get_grid_values(&el_mesh);
 		cout << grid << endl;
 		REQUIRE(el_mesh.get_max_inner_index() == 0);
 		REQUIRE(el_mesh.get_max_outer_index() == 8);
 		el_mesh.refine();
 		el_mesh.reset_indices(boundaries);
+		REQUIRE(el_mesh.get_max_inner_index() == 8);
+		REQUIRE(el_mesh.get_max_outer_index() == 24);
 		
 		REQUIRE(el_mesh.how_many_nodes() == 32);
-		cout << el_mesh.get_grid_values() << endl;
+		cout << el_mesh_dao.get_grid_values(&el_mesh) << endl;
 
-		el_mesh.save_matrix("grid.txt", grid);
-		auto e_sharings = el_mesh.get_edge_sharings();
-		//for (auto iter = e_sharings.begin(); iter != e_sharings.end(); iter++) {
-			//cout << iter->first[0] << " " << iter->first[1] << endl;
-			//cout << iter->second << endl;
-		//}
 	}
 
 	SECTION("SEtting edge sharings should work") {
 		map<array<int, 2>, int> edge_sharings;
 		el_mesh.set_edge_sharings(el1, edge_sharings);
 		el_mesh.set_edge_sharings(el2, edge_sharings);
-		//for (auto iter = edge_sharings.begin(); iter != edge_sharings.end(); iter++) {
-			//cout << iter->first[0] << " " << iter->first[1] << endl;
-			//cout << iter->second << endl;
-		//}
+		for (auto iter = edge_sharings.begin(); iter != edge_sharings.end(); iter++) {
+			cout << iter->second << " ";
+			if (iter != edge_sharings.begin()) {
+				REQUIRE(iter->second == 1);
+			}
+		}
 	}
 
 	SECTION("Setting indices (for Nodes inside of Elements!) in the mesh should succeed") {
 		
 		el_mesh.reset_indices(boundaries);
-		el_mesh.show();
 		REQUIRE(el_mesh.get_last()[1].get_index() == 3);
 		REQUIRE(el_mesh.get_top()[0].get_index() == 0);
 	}
@@ -234,17 +223,77 @@ TEST_CASE("Test the real Mesh with Elements based on Points") {
 		circle_mesh.reset_indices(circle_boundaries);
 		circle_mesh.refine();
 		circle_mesh.reset_indices(circle_boundaries);
-		//circle_mesh.refine();
 		cout << "How many nodes totally exist after refinement" << el1.how_many() << endl;
 
-		//circle_mesh.reset_indices(circle_boundaries);
-		MatrixXd circle_grid = circle_mesh.get_grid_values();
-		cout << circle_grid << endl;
+		MatrixXd circle_grid = el_mesh_dao.get_grid_values(&circle_mesh);
+		double dist = 0;
+		double radius = sqrt(0.5);
+
+		for (int i =0; i < circle_mesh.get_max_inner_index() + 1; i++) {
+			dist = sqrt(pow(circle_grid(i, 0) - 0.5, 2) + pow(circle_grid(i, 1) - 0.5, 2));
+			REQUIRE(dist < radius);
+		}
+
+		for (int i = circle_mesh.get_max_inner_index()+1; i < circle_grid.rows(); i++) {
+			dist = sqrt(pow(circle_grid(i, 0) - 0.5, 2) + pow(circle_grid(i, 1) - 0.5, 2));
+			REQUIRE(abs(dist - radius) < circle_boundaries.accuracy);
+		}
 	}
-
-
 }
 
 
+TEST_CASE("Generating a mesh based on 3-D Element<3,4,Vertex<2, VectorXd> > should succeed") {
+	VectorXd p_loc(3);
+	vector<Vertex<3, VectorXd> *> p_vertices(4, nullptr);
+	p_loc << 0, 0, 0;
+	p_vertices[0] = new Vertex<3, VectorXd>(p_loc);
+	p_loc << 1, 0.5, 0.5;
+	p_vertices[1] = new Vertex<3, VectorXd>(p_loc);
+	p_loc << 0.5, 1, 0.5;
+	p_vertices[2] = new Vertex<3, VectorXd>(p_loc);
+	p_loc << 0, 0, 1;
+	p_vertices[3] = new Vertex<3, VectorXd>(p_loc);
+
+	ElementFactory<3, 4, VectorXd> p_factory;
+	Element<3, 4, VectorXd> p_element = p_factory.build(p_vertices);
+	p_element.set_indices(-1);
+	p_element.set_index_maps();
+
+	BoundaryConditions<VectorXd> p_boundaries = { bound_cond, bound_is_inside, bound_val, bound_normal, 0.000001 };
+	ElementDivider <3, 4, VectorXd> p_divider(p_boundaries);
+
+	Mesh<3, 4, VectorXd> p_mesh(p_element);
+	p_mesh.set_element_divider(p_boundaries);
+	p_mesh.reset_indices(p_boundaries);
+	
+	MeshDAO<3, 4, VectorXd> p_mesh_dao;
+
+	map< array<int, 2>, int> P_EDGES_MAP;
+	int A, B;
+	int I = 0;
+	for (int i = 0; i < 4; i++) {
+		A = p_element[i].get_index();
+		for (int j = i + 1; j < 4; j++) {
+			B = p_element[j].get_index();
+			P_EDGES_MAP.insert(pair< array<int, 2>, int>({ min(A,B), max(A,B) }, 1));
+			I++;
+		}
+	}
+	map<array<int, 2>, int> p_empty_edges;
 
 
+	SECTION("Refining mesh should succeed") {
+		cout << p_mesh.how_many_nodes() << endl;
+		cout << p_mesh.get_max_outer_index() << endl;
+		cout << p_mesh_dao.get_grid_values(&p_mesh) << endl;
+		p_mesh.refine();
+		p_mesh.reset_indices(p_boundaries);
+		cout << p_mesh_dao.get_grid_values(&p_mesh) << endl;
+		MatrixXd cube_grid = p_mesh_dao.get_grid_values(&p_mesh);
+		p_mesh_dao.save_matrix("cube_grid.txt", cube_grid);
+		cout << p_mesh.get_max_inner_index() << p_mesh.get_max_outer_index() << endl;
+		REQUIRE(p_mesh.get_max_inner_index() == 0);
+		REQUIRE(p_mesh.get_max_outer_index() == 9);
+	}
+
+}

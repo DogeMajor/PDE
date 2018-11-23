@@ -11,7 +11,7 @@ using namespace Eigen;
 #define CATCH_CONFIG_MAIN
 #include "../C++ libs/catch/catch.hpp"
 
-TEST_CASE("Test ElementDivider with Point template -based vertices") {
+/*TEST_CASE("Test ElementDivider with Point template -based vertices") {
 	vector <double> vec1 = { 0.0, 0.0 };
 	vector <double> vec2 = { 1.0, 0.0 };
 	vector <double> vec3 = { 1.0, 1.0 };
@@ -209,10 +209,7 @@ TEST_CASE("Test ElementDivider with Point template -based vertices") {
 		
 	}
 
-}
-
-
-
+}*/
 
 
 /*TEST_CASE("Test ElementDivider with Vertex<2, VectorXd>") {
@@ -330,3 +327,157 @@ TEST_CASE("Test ElementDivider with Point template -based vertices") {
 
 }*/
 
+TEST_CASE("Dividing elements in 3-D Element<3,4,Vertex<2, VectorXd> > should succeed") {
+
+	VectorXd p_loc(3);
+	p_loc << 0, 0, 0;
+	Vertex<3, VectorXd> v1(p_loc);
+	p_loc << 1, 0, 0;
+	Vertex<3, VectorXd> v2(p_loc);
+	p_loc << 0, 1, 0;
+	Vertex<3, VectorXd> v3(p_loc);
+	p_loc << 0, 0, 1;
+	Vertex<3, VectorXd> v4(p_loc);
+	vector<Vertex<3, VectorXd> *> p_vertices(4, nullptr);
+	p_loc << 0, 0, 0;
+	p_vertices[0] = new Vertex<3, VectorXd>(p_loc);
+	p_loc << 1, 0, 0;
+	p_vertices[1] = new Vertex<3, VectorXd>(p_loc);
+	p_loc << 0, 1, 0;
+	p_vertices[2] = new Vertex<3, VectorXd>(p_loc);
+	p_loc << 0, 0, 1;
+	p_vertices[3] = new Vertex<3, VectorXd>(p_loc);
+
+
+
+	vector<Vertex<3, VectorXd> *> p_mid_vertices(6, nullptr);//6 = sum(i=0, i=n) (i)  when n = 3
+	p_loc << 0.5, 0, 0;
+	p_mid_vertices[0] = new Vertex<3, VectorXd>(p_loc);
+	p_loc << 0, 0.5, 0;
+	p_mid_vertices[1] = new Vertex<3, VectorXd>(p_loc);
+	p_loc << 0, 0, 0.5;
+	p_mid_vertices[2] = new Vertex<3, VectorXd>(p_loc);
+
+
+	p_loc << 0.5, 0.5, 0;
+	p_mid_vertices[3] = new Vertex<3, VectorXd>(p_loc);
+	p_loc << 0.5, 0, 0.5;
+	p_mid_vertices[4] = new Vertex<3, VectorXd>(p_loc);
+
+	p_loc << 0, 0.5, 0.5;
+	p_mid_vertices[5] = new Vertex<3, VectorXd>(p_loc);
+
+	ElementFactory<3, 4, VectorXd> p_factory;
+	Element<3, 4, VectorXd> p_element = p_factory.build(p_vertices);
+	p_element.set_indices(-1);
+	p_element.set_index_maps();
+
+	vector<Vertex<3, VectorXd> *> p_vertices2(4, nullptr);
+	
+	p_vertices2[0] = p_vertices[0];
+	p_vertices2[3] = p_vertices[3];
+	p_loc << 1, 0.5, 0.5;
+	p_vertices2[1] = new Vertex<3, VectorXd>(p_loc);
+	p_loc << 0.5, 1, 0.5;
+	p_vertices2[2] = new Vertex<3, VectorXd>(p_loc);
+	Element<3, 4, VectorXd> p_element2 = p_factory.build(p_vertices2);
+	p_element2.set_indices(3);
+	p_element2.set_index_maps();
+
+	BoundaryConditions<VectorXd> p_boundaries = { bound_cond, bound_is_inside, bound_val, bound_normal, 0.0001 };
+	ElementDivider <3, 4, VectorXd> p_divider(p_boundaries);
+
+	map< array<int, 2>, int> P_EDGES_MAP;
+	int A, B;
+	int I = 0;
+	for (int i = 0; i < 4; i++) {
+		A = p_element2[i].get_index();
+		for (int j = i + 1; j < 4; j++) {
+			B = p_element2[j].get_index();
+			P_EDGES_MAP.insert(pair< array<int, 2>, int>({ min(A,B), max(A,B) }, 1));
+			I++;
+		}
+	}
+	map<array<int, 2>, int> p_empty_edges;
+
+	/*SECTION("Generating corner element should succeed") {
+		Element<3, 4, VectorXd> corner0 = p_divider.get_corner_element(0, p_mid_vertices, p_element);
+		REQUIRE(corner0[0] == *p_vertices[0]);
+		REQUIRE(corner0[1] == *p_mid_vertices[0]);
+		REQUIRE(corner0[2] == *p_mid_vertices[1]);
+		REQUIRE(corner0[3] == *p_mid_vertices[2]);
+
+		Element<3, 4, VectorXd> corner3 = p_divider.get_corner_element(3, p_mid_vertices, p_element);
+		//corner3.show();
+		cout << corner3.get_volume() << endl;
+		cout << p_element.get_volume() << endl;
+	}
+
+	SECTION("Generating inner element should succeed") {
+		Element<3, 4, VectorXd> inner0 = p_divider.get_inner_element(0, p_mid_vertices);
+		//REQUIRE(inner0[0] == *p_vertices[0]);
+		Element<3, 4, VectorXd> inner2 = p_divider.get_inner_element(2, p_mid_vertices);
+		//REQUIRE(inner0[0] == *p_vertices[0]);
+		REQUIRE(inner0[3] == inner2[3]);
+	}
+
+	SECTION("Generating mid vertices should succeed") {
+		map<array<int, 2>, Vertex<3, VectorXd>* > p_common_vert;
+		map <array<int, 2>, Vertex<3, VectorXd>* > mid_verts = p_divider.get_mid_vertices_map(p_element, p_common_vert, p_empty_edges);
+
+		//REQUIRE(inner0[0] == *p_vertices[0]);
+		cout << mid_verts.size() << endl;
+		for (auto iter = mid_verts.begin(); iter != mid_verts.end(); iter++) {
+			cout << iter->second->get_location() << endl;
+			cout << endl;
+		}
+	}
+
+	SECTION("Dividing element should succeed") {
+		map<array<int, 2>, Vertex<3, VectorXd>* > p_comms;
+		vector<Element<3, 4, VectorXd>* > p_els = p_divider.divide(p_element, p_comms, p_empty_edges);
+		
+		//REQUIRE(inner0[0] == *p_vertices[0]);
+		double vol = 0;
+		VectorXd avg(3);
+		avg << 0, 0, 0;
+		for (int i = 0; i < p_els.size(); i++) {
+			vol += p_els[i]->get_volume();
+			avg = avg + p_els[i]->get_avg_location()*p_els[i]->get_volume();
+			//p_els[i]->show();
+			cout << p_els[i]->get_avg_location() << endl;
+			cout << endl;
+		}
+		avg = avg * (1 / vol);
+		REQUIRE(limit_decimals(p_element.get_volume(), 4) == 0.1666);
+		REQUIRE(limit_decimals(vol, 4) == 0.1666);
+		REQUIRE(avg == p_element.get_avg_location());
+
+	}*/
+
+	SECTION("Dividing element with adjustments towards the boundary should succeed") {
+		map < array<int, 2>, int> edges;
+		map<array<int, 2>, Vertex<3, VectorXd>* > p_comm;
+		vector<Element<3, 4, VectorXd>* > adj_p_els = p_divider.divide(p_element2, p_comm, P_EDGES_MAP);
+
+		//REQUIRE(inner0[0] == *p_vertices[0]);
+		double vol = 0;
+		VectorXd avg(3);
+		avg << 0, 0, 0;
+		for (int i = 0; i < adj_p_els.size(); i++) {
+			vol += adj_p_els[i]->get_volume();
+			avg = avg + adj_p_els[i]->get_avg_location()*adj_p_els[i]->get_volume();
+			//p_els[i]->show();
+			cout << (*adj_p_els[i])[3].get_location() << endl;
+			cout << p_boundaries.cond((*adj_p_els[i])[3].get_location()) << endl;
+			cout << endl;
+			//REQUIRE(p_boundaries.cond((*adj_p_els[i])[3].get_location()) == true);
+		}
+		avg = avg * (1 / vol);
+		adj_p_els[2]->show();
+
+	}
+
+	
+
+}

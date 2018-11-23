@@ -27,7 +27,7 @@ class PDE{
 public:
 	PDE();
     PDE(BilinearFunction bl_fn, Function fn){A_kernel = bl_fn; f_kernel = fn;}
-	void set_seeder(Seeder s) { seeder = s; }
+	void set_timer(Timer s) { timer = s; }
 	const BilinearFunction & get_bilinear_func() const { return A_kernel; }
     const double A(Element<Dim, Dim+1,T> el, SimplexFunction<T> a, SimplexFunction<T> b) const;//Integrates A_kernel*a*b over Element simplex
     double f(Element<Dim, Dim+1, T> &el, SimplexFunction<T> a) const;//Integrates f_kernel*a over Element simplex
@@ -42,14 +42,14 @@ public:
      BilinearFunction A_kernel;
      Function f_kernel;
 	 VolumeCalculator<Dim, T> volume_calculator;
-	 Seeder seeder;
+	 Timer timer;
 
 };
 
 template <int Dim, typename T>
 PDE<Dim, T>::PDE() {
 	volume_calculator = VolumeCalculator<Dim, T>();
-	seeder = Seeder();
+	timer = Timer();
 }
 
 template <int Dim, typename T>
@@ -83,7 +83,7 @@ double PDE<Dim, T>::f_monte_carlo(Element<Dim, Dim + 1, T> &el, SimplexFunction<
 	double sum = 0;
 	double var = 0;
 	T avg = el.get_avg_location();//OBS! If randomizer works poorly or n is small then the actual avg location of the generated locs is different
-	Randomizer randomizer(seeder.get_nanoseconds());
+	Randomizer randomizer(timer.get_nanoseconds());
 	for (int i = 0; i <n; i++) {
 		loc = get_random_location(el, randomizer);
 		var += dist_squared<Dim, T>(avg,loc);

@@ -4,6 +4,24 @@
 #include "ElementFactory.h"
 #include "Function.h"
 
+template <int Dim>
+int choose_corner_for_inner_el(int i, map< array<int, 2>, int> &unused_vertices_map) {
+};
+
+template <>
+int choose_corner_for_inner_el<2>(int i, map< array<int, 2>, int> &unused_vertices_map) {
+	return unused_vertices_map.begin()->second;//Only vertex left of 3 mid vertices!
+}
+
+template <>
+int choose_corner_for_inner_el<3>(int i, map< array<int, 2>, int> &unused_vertices_map) {
+	if (i % 2 == 0) {
+		return unused_vertices_map[{1, 3}];
+	}
+	return unused_vertices_map[{0, 2}];
+}//We could choose the corner otherwise too, but we need to keep opposing inner el corners the same!!!!!
+
+
 template <int Dim, int N, typename T>
 class ElementDivider {
 
@@ -107,17 +125,18 @@ map<array<int, 2>, Vertex<Dim, T>* > ElementDivider<Dim, N, T>::get_mid_vertices
 
 template <int Dim, int N, typename T>
 vector <Element <Dim, N, T>* > ElementDivider<Dim, N, T>::divide(Element <Dim, N, T>& el, map <array<int, 2>, Vertex<Dim, T>* > &commons, map<array<int, 2>, int> &edges) {
-	vector <Element <Dim, N, T>* > els;//( Dim*(Dim + 1)) / 2, nullptr);
-	vector <Vertex <Dim, T>* >  midpoint_vertices(N, nullptr);
+	vector <Element <Dim, N, T>* > els;
+	vector <Vertex <Dim, T>* >  midpoint_vertices( (Dim*(Dim + 1)) / 2, nullptr);
 	map <array<int, 2>, Vertex<Dim, T>* > m_vertices_map = get_mid_vertices_map(el, commons, edges);
 	int i, j, k;
+	
 	for (map< array<int, 2>, Vertex<Dim, T>* >::const_iterator iter = m_vertices_map.begin(); iter != m_vertices_map.end(); iter++) {
 		i = el.to_local(iter->first[0]);
 		j = el.to_local(iter->first[1]);
 		k = midpoint_indices_map[{i, j}];
 		midpoint_vertices[k] = iter->second;
 	}
-	
+
 	for (int i = 0; i < N; i++) {
 		els.push_back(new Element <Dim, N, T>(get_corner_element(i, midpoint_vertices, el)));
 	}
@@ -130,17 +149,12 @@ vector <Element <Dim, N, T>* > ElementDivider<Dim, N, T>::divide(Element <Dim, N
 	return els;
 }
 
-
 template <int Dim, int N, typename T>
 Element<Dim, N, T> ElementDivider<Dim, N, T>::get_corner_element(int k, vector <Vertex <Dim, T>* >  midpoint_vertices, Element <Dim, N, T>& el) {
 	vector <Vertex <Dim, T>* > added_vertices;
-	int I, J;
-	int K = el.to_global(k);
 	added_vertices.push_back(&el[k]);
 	for (int i = 0; i < N; i++) {
-		int I = el.to_global(i);
 		for (int j = i + 1; j < N; j++) {
-			int I = el.to_global(i);
 			if (i == k || j == k) {
 				added_vertices.push_back(midpoint_vertices[midpoint_indices_map[{i, j}]]);
 			}
@@ -160,8 +174,11 @@ Element<Dim, N, T> ElementDivider<Dim, N, T>::get_inner_element(int I, vector<Ve
 			else { unused_vertices_map[{i, j}] = midpoint_indices_map[{i, j}]; }
 		}
 	}
-	new_vertices.push_back(midpoint_vertices[unused_vertices_map.begin()->second]);//chooses first element
+	int top_index = choose_corner_for_inner_el<Dim>(I, unused_vertices_map);
+	new_vertices.push_back(midpoint_vertices[top_index]);
 	return factory.build(new_vertices);
 }
+
+
 
 #endif

@@ -67,14 +67,16 @@ vector<double> Randomizer::randomize_items(vector<double> x) {
 }
 
 
-class Seeder {
+class Timer {
 private:
 	chrono::high_resolution_clock::time_point start_time;
 public:
-	Seeder() {
+	Timer() {
 		start_time = chrono::high_resolution_clock::now();
 	}
-
+	void reset() {
+		start_time = chrono::high_resolution_clock::now();
+	}
 	int get_nanoseconds() const {
 		chrono::high_resolution_clock::time_point current_time =
 			chrono::high_resolution_clock::now();
