@@ -1,5 +1,5 @@
-#ifndef MESHFACTORY_H
-#define MESHFACTORY_H
+#ifndef MESHFILLER_H
+#define MESHFILLER_H
 #include <iostream>
 #include <map>
 #include <array>
@@ -11,10 +11,10 @@ using namespace Eigen;
 using namespace std;
 
 template<int Dim>
-class SimplexDivisions {
+class BoxDivisions {
 public:
-	SimplexDivisions();
-	~SimplexDivisions() {}
+	BoxDivisions();
+	~BoxDivisions() {}
 	array<int, Dim + 1> simplex_indices(int n) { return to_simplex[n]; }
 
 private:
@@ -24,10 +24,10 @@ private:
 
 
 template<>
-class SimplexDivisions<2> {
+class BoxDivisions<2> {
 public:
-	SimplexDivisions();
-	~SimplexDivisions() {}
+	BoxDivisions();
+	~BoxDivisions() {}
 	array<int, 3> simplex_indices(int n) { return to_simplex[n]; }
 
 private:
@@ -35,17 +35,17 @@ private:
 
 };
 
-SimplexDivisions<2>::SimplexDivisions() {
+BoxDivisions<2>::BoxDivisions() {
 	to_simplex[0] = array<int, 3>({ 0,1,3 });
 	to_simplex[1] = array<int, 3>({ 1,2,3 });
 }
 
 
 template<>
-class SimplexDivisions<3> {
+class BoxDivisions<3> {
 public:
-	SimplexDivisions();
-	~SimplexDivisions() {}
+	BoxDivisions();
+	~BoxDivisions() {}
 	array<int, 4> simplex_indices(int n) { return to_simplex[n]; }
 
 private:
@@ -53,7 +53,7 @@ private:
 
 };
 
-SimplexDivisions<3>::SimplexDivisions() {
+BoxDivisions<3>::BoxDivisions() {
 	to_simplex[0] = array<int, 4>({ 1,2,0,4 });
 	to_simplex[1] = array<int, 4>({ 1,2,4,5 });
 	to_simplex[2] = array<int, 4>({ 1,2,3,5 });
@@ -103,30 +103,27 @@ MatrixXd get_box_coordinates<3>(VectorXd midpoint, VectorXd lengths) {
 
 
 template<int Dim, int N, typename T>
-class MeshFactory {
+class MeshFiller {
 
 private:
-	SimplexDivisions<Dim> simplex_divisions;
-	VertexFactory<Dim, T> vertex_factory;
+	BoxDivisions<Dim> box_divisions;
 	ElementFactory<Dim, N, T> element_factory;
 
 public:
-	MeshFactory() {
-		simplex_divisions = SimplexDivisions<Dim>();
-		vertex_factory = VertexFactory<Dim, T>();
+	MeshFiller() {
+		box_divisions = BoxDivisions<Dim>();
 		element_factory = ElementFactory<Dim, N, T>();
 	}
-	~MeshFactory() {}
+	~MeshFiller() {}
 	T to_location(VectorXd coords);
 	vector <Vertex<Dim, T>* > build_box_vertices(T mid_point, VectorXd lengths);
 	vector <Vertex<Dim, T>* > get_simplex_vertices(int i, vector <Vertex<Dim, T>* > box_vertices);
-	vector < Element<Dim, N, T> > cover_box_with_simplices(T mid_point, VectorXd lengths);
 	Element<Dim, N, T> build_simplex(int i, vector <Vertex<Dim, T>* > box_vertices);
-	Mesh<Dim, N, T> build_mesh(vector <Vertex<Dim, T>* > box_vertices);
+	void build_mesh(vector <Vertex<Dim, T>* > box_vertices, Mesh<Dim, N, T> *mesh, BoundaryConditions<T> &boundaries);
 };
 
 template<int Dim, int N, typename T>//Add non-const access method [] in Point class if needed
-T MeshFactory<Dim, N, T>::to_location(VectorXd coords) {
+T MeshFiller<Dim, N, T>::to_location(VectorXd coords) {
 	T loc(Dim);
 	for (int i = 0; i < coords.size(); i++) {
 		loc[i] = coords[i];
@@ -135,7 +132,7 @@ T MeshFactory<Dim, N, T>::to_location(VectorXd coords) {
 }
 
 template<int Dim, int N, typename T>
-vector <Vertex<Dim, T>* > MeshFactory<Dim, N, T>::build_box_vertices(T mid_point, VectorXd lengths) {
+vector <Vertex<Dim, T>* > MeshFiller<Dim, N, T>::build_box_vertices(T mid_point, VectorXd lengths) {
 	vector <Vertex<Dim, T>* > box_vertices;
 	VectorXd coord_vec(Dim);
 	T loc(Dim);
@@ -153,47 +150,30 @@ vector <Vertex<Dim, T>* > MeshFactory<Dim, N, T>::build_box_vertices(T mid_point
 }
 
 template<int Dim, int N, typename T>
-vector <Vertex<Dim, T>* > MeshFactory<Dim, N, T>::get_simplex_vertices(int i, vector <Vertex<Dim, T>* > box_vertices) {
+vector <Vertex<Dim, T>* > MeshFiller<Dim, N, T>::get_simplex_vertices(int i, vector <Vertex<Dim, T>* > box_vertices) {
 	vector <Vertex<Dim, T>* > simplex_vertices(Dim + 1, nullptr);
-	array<int, Dim + 1> indices = simplex_divisions.simplex_indices(i);
+	array<int, Dim + 1> indices = box_divisions.simplex_indices(i);
 	for (int j = 0; j < Dim + 1; j++) {
 		simplex_vertices[j] = box_vertices[indices[j]];
 	}
 	return simplex_vertices;
 }
 
-template<int Dim, int N, typename T>
-vector <Element<Dim, N, T> > MeshFactory<Dim, N, T>::cover_box_with_simplices(T mid_point, VectorXd lengths) {
-	vector <Element<Dim, N, T> > simplices(Dim * (Dim + 1) / 2);
-	vector <Vertex<Dim, T>* > box_vertices = build_box_vertices(mid_point, lengths);
-	vector<Vertex<Dim, T>* > simplex_verts;
-	Element<Dim, N, T>  el;
-	int max_ind = Dim * (Dim + 1) / 2;
-	for (int i = 0; i < max_ind; i++) {
-		simplex_verts = get_simplex_vertices(i, box_vertices);
-		el = element_factory.build(simplex_verts);
-		simplices[i] = element_factory.build(simplex_verts);
-	}
-	return simplices;
-}
 
 template<int Dim, int N, typename T>
-Element<Dim, N, T> MeshFactory<Dim, N, T>::build_simplex(int i, vector <Vertex<Dim, T>* > box_vertices) {
+Element<Dim, N, T> MeshFiller<Dim, N, T>::build_simplex(int i, vector <Vertex<Dim, T>* > box_vertices) {
 	vector<Vertex<Dim, T>* > simplex_verts = get_simplex_vertices(i, box_vertices);
 	return element_factory.build(simplex_verts);
 }
 
 template<int Dim, int N, typename T>
-Mesh<Dim, N, T> MeshFactory<Dim, N, T>::build_mesh(vector <Vertex<Dim, T>* > box_vertices) {
-	Mesh<Dim, N, T> mesh;
+void MeshFiller<Dim, N, T>::build_mesh(vector <Vertex<Dim, T>* > box_vertices, Mesh<Dim, N, T> *mesh, BoundaryConditions<T> &boundaries) {
 	int max = Dim * (Dim + 1) / 2;
 	for(int i = 0; i < max; i++) {
-		mesh.push(build_simplex(i, box_vertices));
-		cout << "Element no " << i <<endl;
-		mesh.get_top().show();
-	}
-
-	return mesh;
+		mesh->push(build_simplex(i, box_vertices));
+		}
+	mesh->set_element_divider(boundaries);
+	mesh->reset_indices(boundaries);
 }
 
 #endif

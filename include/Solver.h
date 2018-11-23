@@ -3,6 +3,7 @@
 #include <iostream>
 #include "PDE.h"
 #include "Mesh.h"
+#include "MeshFiller.h"
 #include <math.h>
 
 #include "../C++ libs/eigen/Eigen/Sparse"
@@ -40,6 +41,7 @@ private:
 	PDE<Dim, T> pde;
 	Mesh<Dim, Dim + 1, T>* mesh;
 	BoundaryConditions<T> boundaries;
+	MeshFiller<Dim, Dim + 1, T> mesh_filler;
 
 };
 
