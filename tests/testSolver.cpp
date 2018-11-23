@@ -1,9 +1,10 @@
-#include "../include/point.h"
+#include "../include/Point.h"
 #include "../include/Function.h"
 #include "../include/Vertex.h"
-#include "../include/element.h"
+#include "../include/Element.h"
 #include "../include/ElementFactory.h"
 #include "../include/PDE.h"
+#include "../include/DAO.H"
 #include "../include/Solver.h"
 #include "../include/HelpfulTools.h"
 #include "../include/TestingTools.h"
@@ -35,7 +36,8 @@ double f_kern_zero(VectorXd coords) {
 }
 
 double analytic_sol(VectorXd coords) {//Particle in a N-Dim box...
-	double result = (1/(2*PI*PI))*sin(coords[0] * PI);
+	int dim = coords.size();
+	double result = (1/(dim*PI*PI))*sin(coords[0] * PI);
 	for (int i = 1; i < coords.rows(); i++) {
 		result *= sin(coords[i] * PI);
 	}
@@ -77,64 +79,6 @@ double error_norm(MatrixXd sol_values) {
 
 #define CATCH_CONFIG_MAIN
 #include "../C++ libs/catch/catch.hpp"
-
-
-/*TEST_CASE("Test Solver") {
-
-	VectorXd location(2);
-	location << 0.0, 0.0;
-	Node <2, VectorXd> node1(location);
-	location << 1.0, 0.0;
-	Node <2, VectorXd> node2(location);
-	location << 1.0, 1.0;
-	Node <2, VectorXd> node3(location);
-	vector<Vertex<2, VectorXd> *> nodes(3, nullptr);
-	location << 0.0, 0.0;
-	nodes[0] = new Vertex<2, VectorXd>(location);
-	location << 1.0, 0.0;
-	nodes[1] = new Vertex<2, VectorXd>(location);
-	location << 1.0, 1.0;
-	nodes[2] = new Vertex<2, VectorXd>(location);
-	vector<SimplexFunction <VectorXd> > funcs(3);
-	VectorXd coeffs(3);
-	coeffs << -1, 0, 1;
-	funcs[0].coeff = coeffs;
-	coeffs << 1, -1, 0;
-	funcs[1].coeff = coeffs;
-	coeffs << 0, 1, 0;
-	funcs[2].coeff = coeffs;
-	Element <2, 3, VectorXd> element(nodes, funcs);
-
-	vector<Vertex<2, VectorXd> *> nodes2;
-	nodes2.push_back(nodes[0]);
-	nodes2.push_back(nodes[2]);
-	location << 0, 1;
-	nodes2.push_back(new Vertex<2, VectorXd>(location));
-	ElementFactory <2, 3, VectorXd> factory;
-	Element <2, 3, VectorXd> element2 = factory.build(nodes2);//Too lazy to find out what the funcs would be...
-
-	
-	Mesh <2, 3, VectorXd> mesh(element);
-	mesh.push(element2);
-	Mesh <2, 3, VectorXd>* mesh_ptr;
-	mesh_ptr = &mesh;
-	
-	BilinearFunction bl_fn;
-	bl_fn.mat = MatrixXd::Identity(2, 2);
-	PDE<2, VectorXd> pde(bl_fn, f_kern);
-	//Solver<2, VectorXd> solver;
-	Solver<2, VectorXd> solver(pde, mesh_ptr);
-
-	SECTION("Test default constructor") {
-		Solver<2, VectorXd>  new_solver;
-	}
-
-	SECTION("Test get_stiffness matrix(MatrixXd)") {
-		MatrixXd stiffness_mat = solver.get_stiffness_matrix(6);
-		cout << stiffness_mat << endl;
-	}
-
-}*/
 
 
 /*TEST_CASE("Test Solver with Point -based Mesh") {
@@ -185,17 +129,11 @@ double error_norm(MatrixXd sol_values) {
 
 	SECTION("Test solving the pde2") {
 		Solver<2, Point <2, double>>  solver2(pde2, mesh_ptr, boundaries);
-		REQUIRE(solver.get_stiffness_matrix(3) == STIFFNESS_MAT);
 		solver2.refine();
 		solver2.refine();
 		solver2.refine();
-		cout << mesh.get_grid_values() << endl;
-		
-
 		VectorXd refined_sol2 = solver2.solve();
-		cout << refined_sol2 << endl;
-		cout << refined_sol2.maxCoeff() << endl;
-		cout << endl;
+
 		REQUIRE(0.070 < refined_sol2.maxCoeff());
 		REQUIRE(refined_sol2.maxCoeff() < 0.075);
 		REQUIRE(refined_sol2.minCoeff() == 0);
@@ -207,15 +145,12 @@ double error_norm(MatrixXd sol_values) {
 		map<array<int, 2>, double> sparse_map = solver.get_sparse_stiffness_map();
 		SparseMatrix<double> test = solver.get_sparse_stiffness_matrix(3);
 		MatrixXd to_dense = test.toDense();
-		cout << to_dense << endl;
-		cout << solver.get_stiffness_matrix(3) << endl;
 		REQUIRE(to_dense == STIFFNESS_MAT);
 	}
 
 	SECTION("Getting sparse stiffness map should succeed") {
 		int n = mesh.get_max_outer_index();
 		map<array<int, 2>, double> s_map = solver.get_sparse_stiffness_map();
-		show_map(s_map);
 		REQUIRE(s_map[{0, 0}] == STIFFNESS_MAT(0, 0));
 		REQUIRE(s_map[{1, 2}] == STIFFNESS_MAT(1, 2));
 	}
@@ -243,17 +178,10 @@ double error_norm(MatrixXd sol_values) {
 		//cout << solver.get_boundary_matrix(solver.get_stiffness_matrix(8));
 	}
 
-	SECTION("Test get_stiffness matrix(MatrixXd)") {
-		MatrixXd stiffness_mat = solver.get_stiffness_matrix(3);
-		REQUIRE(stiffness_mat == STIFFNESS_MAT);
-		solver.refine();
-		cout << solver.get_stiffness_matrix(8) << endl;
-	}
-
 	SECTION("Solving the PDE should succeed") {
 		//solver.refine();
 		//solver.refine();
-		Seeder timer = Seeder();
+		Timer timer = Timer();
 		int nanosecs = 0;
 		solver.refine();
 		solver.refine();
@@ -368,7 +296,7 @@ double error_norm(MatrixXd sol_values) {
 			}
 			cout << "max outer index: " << max_index << endl;
 			//cout << c_solver.get_sparse_inner_stiffness_matrix(c_stiffness_map).toDense() << endl;
-			c_mesh.save_matrix("refined_grid.txt", c_mesh.get_grid_values());
+			c_solver.save_grid("refined_grid.txt");
 			VectorXd temp(2);
 			temp << 1, 0;
 			cout << "Cos(c_v1)" << c_boundaries.val(temp);
@@ -380,7 +308,7 @@ double error_norm(MatrixXd sol_values) {
 			
 			MatrixXd c_values = c_solver.get_solution_values(c_sol);
 			cout << c_values << endl;
-			c_mesh.save_matrix("c_mesh_grid.txt", c_values);
+			c_solver.save_grid("c_mesh_grid.txt");
 			double c_error_avg = c_error_norm(c_values);
 			REQUIRE(c_error_avg < 0.05);
 			cout << "Average error" << c_error_avg;
@@ -388,11 +316,13 @@ double error_norm(MatrixXd sol_values) {
 			cout << "circle_sol at 0,0.5" << circle_sol(0.5*c_v2.get_location());
 		}
 	}
-
-
 }*/
 
 TEST_CASE("solving 3-D poisson should succeed") {
+	VectorXd cube_center(3);
+	cube_center << 0.5, 0.5, 0.5;
+	VectorXd cube_lengths(3);
+	cube_lengths << 1, 1, 1;
 	VectorXd p_loc(3);
 
 	vector<Vertex<3, VectorXd> *> p_vertices(4, nullptr);
@@ -413,9 +343,9 @@ TEST_CASE("solving 3-D poisson should succeed") {
 	BoundaryConditions<VectorXd> p_boundaries = { bound_cond, bound_is_inside, bound_val, bound_normal, 0.000001 };
 	ElementDivider <3, 4, VectorXd> p_divider(p_boundaries);
 
+	MeshDAO<3, 4, VectorXd> p_mesh_dao;
+	SolverDAO<3, 4, VectorXd> p_solver_dao;
 	Mesh<3, 4, VectorXd> p_mesh(p_element);
-	p_mesh.set_element_divider(p_boundaries);
-	p_mesh.reset_indices(p_boundaries);
 
 	map< array<int, 2>, int> P_EDGES_MAP;
 	int A, B;
@@ -429,23 +359,37 @@ TEST_CASE("solving 3-D poisson should succeed") {
 		}
 	}
 	map<array<int, 2>, int> p_empty_edges;
-	Mesh <3, 4, VectorXd>* p_mesh_ptr;
-	p_mesh_ptr = &p_mesh;
+	Mesh<3, 4, VectorXd> p_empty_mesh;
+	Mesh <3, 4, VectorXd>* p_mesh_ptr = &p_empty_mesh;
 
 	BilinearFunction p_bl_fn;
-	p_bl_fn.mat = MatrixXd::Identity(2, 2);
+	p_bl_fn.mat = MatrixXd::Identity(3, 3);
 	PDE<3, VectorXd> p_pde(p_bl_fn, f_kern_const);
-	//Solver<2, VectorXd> solver;
 	Solver<3, VectorXd> p_solver(p_pde, p_mesh_ptr, p_boundaries);
+	Timer timer = Timer();
 
-	SECTION("Solving after refinement should succeed") {
-		p_solver.show();
-		//p_solver.refine();
-		//p_solver.refine();
-		cout << "Here we go!" << endl;
-		map<array<int, 2>, double> p_stiffness_map = p_solver.get_sparse_stiffness_map();
-		show_map(p_stiffness_map);
-		VectorXd p_sol = p_solver.solve();
-		cout << p_sol;
+	SECTION("Filling mesh with simplices covering unit box with origo (0.5,0.5,0.5) should succeed") {
+		p_solver.fill_mesh_covering_box(cube_center, cube_lengths);
+		SECTION("Refining and solving should succeed") {
+			p_solver.refine();
+			p_solver.refine();
+			REQUIRE(p_mesh_ptr->get_max_inner_index() == 26);
+			REQUIRE(p_mesh_ptr->get_max_outer_index() == 124);
+			VectorXd p_sol = p_solver.solve();
+			MatrixXd p_grid = p_mesh_dao.get_grid_values(p_mesh_ptr);
+			MatrixXd p_sol_values = p_solver_dao.get_solution_values(p_mesh_ptr, p_sol);
+			REQUIRE(abs(p_sol.maxCoeff() - 0.05) < 0.01);
+			REQUIRE(error_norm(p_sol_values) < 3 * pow(10, - 5));
+		}
+		SECTION("Testing the speed of Solver") {
+			cout << timer.get_milliseconds() << endl;
+			p_solver.refine();
+			p_solver.refine();
+			cout << timer.get_milliseconds() << endl;
+			VectorXd p_sol2 = p_solver.solve();
+			cout << timer.get_milliseconds() << endl;
+		}
+
 	}
+
 }
