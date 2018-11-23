@@ -11,7 +11,6 @@
 #include "../C++ libs/eigen/Eigen/Dense"
 #include "../C++ libs/eigen/Eigen/Core"
 #include <math.h>
-#include <fstream>
 
 using namespace std;
 using namespace Eigen;
@@ -54,11 +53,6 @@ public:
 
 	map<array<int, 2>, int> get_edge_sharings() { return edge_sharings; }
 	void set_edge_sharings(Element<Dim, N, T> &el, map<array<int, 2>, int> &edges);
-
-	//----Put saving grid methods below into their own class later...
-	MatrixXd get_grid_values();
-	void save_matrix(string file_name, MatrixXd grid, int type = 0);
-
 
 private:
 	MeshNode<Element<Dim, N, T> > *top;
@@ -251,51 +245,6 @@ void Mesh<Dim, N, T>::set_edge_sharings(Element<Dim, N, T> &el, map<array<int, 2
 			J = el[j].get_index();
 			edges[{min(I, J), max(I, J)}] += 1;
 		}
-	}
-}
-
-//-----------Additional methods to be transferred to DAO clas etc.------------
-
-template <int Dim, int N, typename T>
-MatrixXd Mesh<Dim, N, T>::get_grid_values() {
-	MatrixXd values = MatrixXd::Zero(max_outer_index + 1, Dim);
-	MeshNode <Element<Dim, N, T> >* iter = top;
-	int I;
-	T loc;
-	while (iter != nullptr) {
-		for (int i = 0; i < N; i++) {
-			I = iter->data[i].get_index();
-			loc = iter->data[i].get_location();
-			for (int J = 0; J < Dim; J++) {
-				values(I, J) = loc[J];
-			}
-		}
-		iter = iter->next;
-	}
-	return values;
-}
-
-template <int Dim, int N, typename T>//Save in Mathematica format
-void Mesh<Dim, N, T>::save_matrix(string file_name, MatrixXd grid, int type) {
-	ofstream file;
-
-	string row_begin = "{";
-	string row_end = "},";
-	string delimiter = "";
-	if (type == 0) { delimiter = ", "; }
-	try {
-		file.open(file_name);
-		for (int row = 0; row < grid.rows(); row++) {
-			file << row_begin;
-			for (int col = 0; col < grid.cols()-1; col++) {
-				file << grid(row, col) << delimiter;
-			}
-			file << grid(row, grid.cols()-1) << row_end;
-		}
-		file.close();
-	}
-	catch (std::exception err) {
-		cout << "Saving grid failed!" << endl;
 	}
 }
 

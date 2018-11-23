@@ -159,7 +159,6 @@ vector <Vertex<Dim, T>* > MeshFiller<Dim, N, T>::get_simplex_vertices(int i, vec
 	return simplex_vertices;
 }
 
-
 template<int Dim, int N, typename T>
 Element<Dim, N, T> MeshFiller<Dim, N, T>::build_simplex(int i, vector <Vertex<Dim, T>* > box_vertices) {
 	vector<Vertex<Dim, T>* > simplex_verts = get_simplex_vertices(i, box_vertices);

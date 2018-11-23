@@ -6,7 +6,6 @@
 #include <iostream>
 #include <fstream>
 #include "Mesh.h"
-using namespace std;
 
 enum OutputType { Normal, Mathematica };
 
