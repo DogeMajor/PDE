@@ -29,7 +29,9 @@ public:
 	void fill_mesh_covering_box(T mid_point, VectorXd lenghts);
 	void refine();
 	pair<SparseMatrix<double>, VectorXd> get_sparse_stiffness_matrix_and_f_vec(int sz);
+	SparseMatrix<double> get_sparse_stiffness_matrix_part(int start_ind, int stop_ind) const;
 	SparseMatrix<double> get_sparse_stiffness_matrix(int sz) const;
+	SparseMatrix<double> get_sparse_stiffness_matrix_async(int parts) const;
 	VectorXd get_f_vec(int n);
 	VectorXd get_f_vec_async(int parts);
 	VectorXd get_f_vec_part(int start_ind, int stop_ind);
@@ -110,6 +112,40 @@ pair<SparseMatrix<double>, VectorXd> Solver<Dim, T>::get_sparse_stiffness_matrix
 
 
 template <int Dim, typename T>
+SparseMatrix<double> Solver<Dim, T>::get_sparse_stiffness_matrix_part(int start_ind, int stop_ind) const{
+	
+	if (stop_ind > mesh->how_many_nodes()) { stop_ind = mesh->how_many_nodes(); }
+	int sz = mesh->get_max_outer_index() + 1;
+	SparseMatrix<double> stiffness(sz, sz);
+	stiffness.reserve(sz*factorial(Dim + 1));
+
+	int index = start_ind;
+	MeshNode <Element<Dim, Dim + 1, T> >* iter = mesh->get_node(index);
+	int I, J;
+	
+	SimplexFunction<T> fn_i, fn_j;
+	while (index < stop_ind) {
+		for (int i = 0; i < Dim + 1; i++) {
+			I = iter->data[i].get_index();
+			fn_i = iter->data.get_function(i);
+			for (int j = i; j < Dim + 1; j++) {
+				fn_j = iter->data.get_function(j);
+				J = iter->data[j].get_index();
+				stiffness.coeffRef(I, J) = stiffness.coeffRef(I, J) + pde.A(iter->data, fn_i, fn_j);
+				if (I != J) {
+					stiffness.coeffRef(J, I) = stiffness.coeffRef(J, I) + pde.A(iter->data, fn_i, fn_j);
+				}
+			}
+		}
+		//cout << "Calculate A_i,j for node no " << index << endl;
+		index++;
+		iter = iter->next;
+	}
+	//stiffness.makeCompressed();
+	return stiffness;
+}
+
+template <int Dim, typename T>
 SparseMatrix<double> Solver<Dim, T>::get_sparse_stiffness_matrix(int sz) const{
 	
 	SparseMatrix<double> stiffness(sz, sz);
@@ -134,6 +170,31 @@ SparseMatrix<double> Solver<Dim, T>::get_sparse_stiffness_matrix(int sz) const{
 		iter = iter->next;
 	}
 	stiffness.makeCompressed();
+	return stiffness;
+}
+
+template <int Dim, typename T>
+SparseMatrix<double> Solver<Dim, T>::get_sparse_stiffness_matrix_async(int parts) const {
+	int sz = mesh->get_max_outer_index() + 1;
+	int max_nodes = mesh->how_many_nodes() + 1;
+	SparseMatrix<double> stiffness(sz, sz);
+	stiffness.reserve(sz*factorial(Dim + 1));
+
+	int n_k = max_nodes / parts;
+	vector<std::future<SparseMatrix<double> > > futures;
+
+	int start_ind = 0;
+	int stop_ind = 0;
+	for (int k = 0; k < parts + 1; k++) {
+		start_ind = k * n_k;
+		stop_ind = (k + 1)*n_k;
+		futures.push_back(std::async(&Solver::get_sparse_stiffness_matrix_part, this, start_ind, stop_ind));
+	}
+
+	for (int k = 0; k < parts + 1; k++) {
+		stiffness = stiffness + futures[k].get();
+	}
+	//stiffness.makeCompressed();
 	return stiffness;
 }
 
@@ -239,7 +300,8 @@ VectorXd Solver<Dim, T>::solve(int parts) {
 	int inner_size = mesh->get_max_inner_index() + 1;
 	int outer_size = mesh->get_max_outer_index() + 1;
 
-	SparseMatrix<double> total_stiffness = get_sparse_stiffness_matrix(outer_size);
+	//SparseMatrix<double> total_stiffness = get_sparse_stiffness_matrix(outer_size);
+	SparseMatrix<double> total_stiffness = get_sparse_stiffness_matrix_async(parts);
 	//VectorXd f_vec = get_f_vec(inner_size - 1);
 	VectorXd f_vec = get_f_vec_async(parts);
 	SparseMatrix<double> stiffness = total_stiffness.block(0, 0, inner_size, inner_size);

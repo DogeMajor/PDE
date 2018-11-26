@@ -341,12 +341,36 @@ TEST_CASE("solving 3-D poisson should succeed") {
 	SECTION("Filling mesh with simplices covering unit box with origo (0.5,0.5,0.5) should succeed") {
 		p_solver.fill_mesh_covering_box(cube_center, cube_lengths);
 		p_solver.refine();
-		p_solver.refine();
+		//p_solver.refine();
 		int MAX_INNER = p_mesh_ptr->get_max_inner_index();
 		int MAX_OUTER = p_mesh_ptr->get_max_outer_index();
 		int MAX_NODE = p_mesh_ptr->how_many_nodes();
 
-		/*SECTION("Get f_vec should succeed") {
+		/*SECTION("Getting sparse matrix in parts should succeed") {
+			SparseMatrix<double> A_tot = p_solver.get_sparse_stiffness_matrix(MAX_OUTER +1);
+			
+			SparseMatrix<double> A_part1 = p_solver.get_sparse_stiffness_matrix_part(0, MAX_NODE/2);
+			SparseMatrix<double> A_part2 = p_solver.get_sparse_stiffness_matrix_part(MAX_NODE/2, MAX_NODE +1);
+
+			SparseMatrix<double> A_in_parts = A_part1 + A_part2;
+			
+			MatrixXd A_diff = A_in_parts.toDense() - A_tot.toDense();
+			
+			REQUIRE(A_diff.maxCoeff() < pow(10, -14));
+		}
+
+		SECTION("Getting sparse matrix in async. way should succeed") {
+			SparseMatrix<double> A_normal = p_solver.get_sparse_stiffness_matrix(MAX_OUTER + 1);
+
+			SparseMatrix<double> A_async = p_solver.get_sparse_stiffness_matrix_async(2);
+			cout << A_async.rows() << A_async.cols() << endl;
+			cout << A_normal.rows() << A_normal.cols() << endl;
+			MatrixXd A_async_diff = A_normal.toDense() - A_async.toDense();
+
+			REQUIRE(A_async_diff.maxCoeff() < pow(10, -14));
+		}
+
+		SECTION("Get f_vec should succeed") {
 			VectorXd p_f_vec = p_solver.get_f_vec(MAX_INNER);
 			//cout << p_f_vec << endl;
 			REQUIRE(p_f_vec.maxCoeff() < 0.022);
@@ -390,7 +414,7 @@ TEST_CASE("solving 3-D poisson should succeed") {
 		}*/
 
 		SECTION("Refining and solving should succeed") {
-			
+			p_solver.refine();
 			REQUIRE(p_mesh_ptr->get_max_inner_index() == 26);
 			REQUIRE(p_mesh_ptr->get_max_outer_index() == 124);
 			VectorXd p_sol = p_solver.solve();
@@ -401,8 +425,11 @@ TEST_CASE("solving 3-D poisson should succeed") {
 		}
 
 		SECTION("Testing the speed of Solver") {
-
+			timer.reset();
 			//p_solver.refine();
+			//p_solver.refine();
+			p_solver.refine();
+			cout << p_mesh_ptr->how_many_nodes() << endl;
 			cout << timer.get_milliseconds() << endl;
 			VectorXd p_sol2 = p_solver.solve();
 			cout << timer.get_milliseconds() << endl;
