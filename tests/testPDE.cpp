@@ -4,6 +4,7 @@
 #include "../include/Randomizer.h"
 #include "../include/PDE.h"
 #include "../include/HelpfulTools.h"
+#include "../include/TestingTools.h"
 #include "../include/Function.h"
 #include <math.h>
 #include "../C++ libs/eigen/Eigen/Dense"
@@ -27,37 +28,6 @@ double f_kern_sin(VectorXd coords) {//Particle in a N-Dim box...
 	return result;
 }
 
-//N-dim box's boundary
-bool bound_cond(VectorXd coords) {
-	for (int i = 0; i < coords.size(); i++) {
-		if ((coords[i] == 0.0) || (coords[i] == 1.0)) {return true;}
-	}
-	return false;
-}
-
-bool bound_is_inside(VectorXd coords) {
-	for (int i = 0; i < coords.size(); i++) {
-		if ((coords[i] <= 0.0) || (coords[i] >= 1.0)) { return false; }
-	}
-	return true;
-}
-
-double bound_val(VectorXd coords) {
-	if (coords[1] == 1.0) { return 1; }
-	return 0;
-}
-
-VectorXd bound_normal(VectorXd coords) {
-	int sz = coords.size();
-	VectorXd result = VectorXd::Zero(sz);
-	for (int i = 0; i < coords.size(); i++) {
-		if ((coords[i] == 0.0) || (coords[i] == 1.0)) {
-			result(i) = (coords[i] == 0.0) ? -1 : 1;
-			return result;
-		}
-	}
-	return result;
-}
 
 #define CATCH_CONFIG_MAIN  // This tells Catch to provide a main()
 #include "../C++ libs/catch/catch.hpp"
@@ -94,22 +64,21 @@ TEST_CASE( "Test PDE" ) {
     bl_fn.mat = MatrixXd::Identity(2,2);
     PDE<2, VectorXd>  pde(bl_fn, f_kern_sin);
 
-	BoundaryConditions<VectorXd> boundaries = {bound_cond, bound_is_inside, bound_val, bound_normal };
+	BoundaryConditions<VectorXd> boundaries = {bound_cond, bound_is_inside, bound_val, bound_normal, 0.0001 };
 
 	chrono::high_resolution_clock::time_point start_t;
-	Seeder seeder = Seeder();
+	Timer timer = Timer();
 
-	Randomizer randomizer = Randomizer(seeder.get_nanoseconds());
+	Randomizer randomizer = Randomizer(timer.get_nanoseconds());
 	
 	SECTION("Random_prob funtions should work") {
-		Generator rng_gen(0, 1, seeder.get_nanoseconds());
+		Generator rng_gen(0, 1, timer.get_nanoseconds());
 		double result;
 		double avg = 0;
 		int max_iter = 30;
 		for (int i = 0; i < max_iter; i++) {
 			result = randomizer.prob();
 			avg += result;
-			cout  << result << endl;
 		}
 		avg = avg * (1 / double(max_iter));
 		cout << "Avg: " << avg << endl;
@@ -134,7 +103,7 @@ TEST_CASE( "Test PDE" ) {
 		REQUIRE(boundaries.val(temp) == 0.0);
 		temp << 0.5, 1;
 		REQUIRE(boundaries.cond(temp) == true);
-		REQUIRE(boundaries.val(temp) == 1.0);
+		REQUIRE(boundaries.val(temp) == 0.0);
     }
 
 	SECTION( "Test inner product A(.,.)" ){
@@ -156,7 +125,7 @@ TEST_CASE( "Test PDE" ) {
 	SECTION("Getting random location should succeed") {
 		vector<double> probs = randomizer.get_convex_coeffs(2);
 		cout << probs[0] <<", " << probs[1] << endl;
-		VectorXd rand_loc = pde.get_random_location(element, randomizer);
+		VectorXd rand_loc = pde.get_random_location(element);
 		cout << rand_loc << endl;
 		for (int i = 0; i > rand_loc.size(); i++) {
 			REQUIRE(rand_loc[i] <= 1);
@@ -165,13 +134,20 @@ TEST_CASE( "Test PDE" ) {
 	}
 
 	SECTION("Test f_monte_carlo(.,.)") {//More accurate integration!!
-
+		
 		cout << funcs[2].coeff << endl;
 		cout << "Monte carlo intergals" << endl;
 		cout << pde.f_monte_carlo(element, funcs[2], 2, 10) << endl;
-		REQUIRE(pde.f_monte_carlo(element, funcs[2], 2, 20) < 0.09);
-		cout << pde.f_monte_carlo(element, funcs[2], 2, 50) << endl;
-		REQUIRE(abs(pde.f_monte_carlo(element, funcs[2], 2, 100) - PRODUCT_F_PHI2) < 0.02);
+		REQUIRE(pde.f_monte_carlo(element, funcs[2], 2, 20) < 0.10);
+		int t_star = timer.get_milliseconds();
+		double res;
+		for (int i = 0; i < 100; i++) {
+			res = pde.f_monte_carlo(element, funcs[2], 2, 50);
+		}
+		
+		t_star = timer.get_milliseconds() - t_star;
+		cout << res << "  Duration of f_mc with n == 50:  " << t_star << endl;
+		REQUIRE(abs(pde.f_monte_carlo(element, funcs[2], 2, 100) - PRODUCT_F_PHI2) < 0.035);
 		cout << pde.f_monte_carlo(element, funcs[2], 2, 1000) << endl;
 		REQUIRE(element.get_avg_f_variation() < 0.10);
 		cout << "var" << element.get_avg_f_variation() << endl;

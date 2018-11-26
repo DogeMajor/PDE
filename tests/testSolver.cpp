@@ -142,40 +142,20 @@ double error_norm(MatrixXd sol_values) {
 	}
 	
 	SECTION("Getting sparse stiffness matrix should succeed") {
-		map<array<int, 2>, double> sparse_map = solver.get_sparse_stiffness_map();
-		SparseMatrix<double> test = solver.get_sparse_stiffness_matrix(3);
+		int tot_sz = mesh_ptr->get_max_outer_index() + 1;
+		SparseMatrix<double> test = solver.get_sparse_stiffness_matrix(tot_sz);
 		MatrixXd to_dense = test.toDense();
 		REQUIRE(to_dense == STIFFNESS_MAT);
 	}
 
-	SECTION("Getting sparse stiffness map should succeed") {
-		int n = mesh.get_max_outer_index();
-		map<array<int, 2>, double> s_map = solver.get_sparse_stiffness_map();
-		REQUIRE(s_map[{0, 0}] == STIFFNESS_MAT(0, 0));
-		REQUIRE(s_map[{1, 2}] == STIFFNESS_MAT(1, 2));
-	}
-
-	SECTION("Getting sparse inner stiffness matrix should succeed") {
+	SECTION("Getting sparse stiffness matrix should succeed") {
 		solver.refine();
-		int max_outer = mesh.get_max_outer_index();
+		int max_outer = mesh.get_max_outer_index()+1;
 		SparseMatrix<double> stiff_base = solver.get_sparse_stiffness_matrix(max_outer);
-		MatrixXd hehehe = stiff_base.toDense();
-		cout << hehehe << endl;
-		int sz = mesh.get_max_inner_index() + 1;
-		cout << sz << endl;
-		cout << stiff_base.coeff(0,1) << endl;
-		SparseMatrix<double> inner_stiff = solver.get_sparse_inner_stiffness_matrix(solver.get_sparse_stiffness_map());
-		REQUIRE(inner_stiff.coeff(0, 0) == 4);
-		REQUIRE(inner_stiff.cols() == 1);
-		REQUIRE(inner_stiff.rows() == 1);
-	}
-
-	SECTION("Getting sparse boundary matrix should succeed") {
-		solver.refine();
-		SparseMatrix<double> b_mat = solver.get_sparse_boundary_matrix(solver.get_sparse_stiffness_map());
-		cout << b_mat.toDense() << endl;
-		//cout << "ehehe!" << endl;
-		//cout << solver.get_boundary_matrix(solver.get_stiffness_matrix(8));
+		MatrixXd tot_stiffness = stiff_base.toDense();
+		REQUIRE(tot_stiffness.coeff(0, 0) == 4);
+		REQUIRE(tot_stiffness.cols() == 9);
+		REQUIRE(tot_stiffness.rows() == 9);
 	}
 
 	SECTION("Solving the PDE should succeed") {
@@ -282,19 +262,9 @@ double error_norm(MatrixXd sol_values) {
 			c_solver.refine();
 			//c_solver.refine();
 			//c_mesh.show();
-			map<array<int, 2>, double> c_stiffness_map = c_solver.get_sparse_stiffness_map();
 			cout << c_mesh.get_max_inner_index() << endl;
 			cout << c_mesh.get_max_outer_index() << endl;
-			int A, B;
-			int max_index = 0;
-			for (auto iter = c_stiffness_map.begin(); iter != c_stiffness_map.end(); iter++) {
-				A = iter->first[0];
-				B = iter->first[1];
-				max_index = max(max_index, A);
-				max_index = max(max_index, B);
-				REQUIRE(iter->second == c_stiffness_map[{B, A}]);
-			}
-			cout << "max outer index: " << max_index << endl;
+
 			//cout << c_solver.get_sparse_inner_stiffness_matrix(c_stiffness_map).toDense() << endl;
 			c_solver.save_grid("refined_grid.txt");
 			VectorXd temp(2);
@@ -370,21 +340,69 @@ TEST_CASE("solving 3-D poisson should succeed") {
 
 	SECTION("Filling mesh with simplices covering unit box with origo (0.5,0.5,0.5) should succeed") {
 		p_solver.fill_mesh_covering_box(cube_center, cube_lengths);
+		p_solver.refine();
+		p_solver.refine();
+		int MAX_INNER = p_mesh_ptr->get_max_inner_index();
+		int MAX_OUTER = p_mesh_ptr->get_max_outer_index();
+		int MAX_NODE = p_mesh_ptr->how_many_nodes();
+
+		/*SECTION("Get f_vec should succeed") {
+			VectorXd p_f_vec = p_solver.get_f_vec(MAX_INNER);
+			//cout << p_f_vec << endl;
+			REQUIRE(p_f_vec.maxCoeff() < 0.022);
+			REQUIRE(p_f_vec.minCoeff() > 0.008);
+
+		}
+
+		SECTION("Getting partial f_vec should succeed") {
+			VectorXd f_vec1 = p_solver.get_f_vec_part(0, MAX_NODE/2);
+			//cout << f_vec1 << endl;
+			REQUIRE(f_vec1.maxCoeff() < 0.022);
+			REQUIRE(f_vec1.minCoeff() == 0.0);
+			VectorXd f_vec2 = p_solver.get_f_vec_part(MAX_NODE / 2 + 1, MAX_NODE);
+			//cout << f_vec2 << endl;
+			REQUIRE(f_vec2.maxCoeff() < 0.022);
+			REQUIRE(f_vec2.minCoeff() == 0.0);
+			VectorXd f_vec_tot = f_vec1 + f_vec2;
+			VectorXd difference = f_vec_tot - p_solver.get_f_vec(MAX_INNER);
+			//cout << difference << endl;
+			REQUIRE(difference.maxCoeff() < 0.002);
+
+		}
+
+		SECTION("Get f_vec2 should succeed") {
+			int start_time = timer.get_milliseconds();
+			VectorXd p_f_vec_async = p_solver.get_f_vec_async(4);
+			int t_async = timer.get_milliseconds() - start_time;
+			cout << "Calculating f_vec asynchronously takes this much time in ms: " << t_async << endl;
+			cout << p_f_vec_async << endl;
+			REQUIRE(p_f_vec_async.maxCoeff() < 0.022);
+			REQUIRE(p_f_vec_async.minCoeff() > 0.008);
+			cout << "Max index" << p_mesh_ptr->how_many_nodes() -1 << endl;
+			start_time = timer.get_milliseconds();
+			VectorXd p_f_vec_normal = p_solver.get_f_vec(MAX_INNER);
+			int t_normal = timer.get_milliseconds() - start_time;
+			cout << "Calculating f_vec normally takes this much time in ms: " << t_normal << endl;
+			cout << p_f_vec_normal << endl;
+			VectorXd async_diff = p_f_vec_normal - p_f_vec_async;
+			REQUIRE(async_diff.maxCoeff() < 0.002);
+			REQUIRE(t_async < 0.6*t_normal);
+		}*/
+
 		SECTION("Refining and solving should succeed") {
-			p_solver.refine();
-			p_solver.refine();
+			
 			REQUIRE(p_mesh_ptr->get_max_inner_index() == 26);
 			REQUIRE(p_mesh_ptr->get_max_outer_index() == 124);
 			VectorXd p_sol = p_solver.solve();
 			MatrixXd p_grid = p_mesh_dao.get_grid_values(p_mesh_ptr);
 			MatrixXd p_sol_values = p_solver_dao.get_solution_values(p_mesh_ptr, p_sol);
 			REQUIRE(abs(p_sol.maxCoeff() - 0.05) < 0.01);
-			REQUIRE(error_norm(p_sol_values) < 3 * pow(10, - 5));
+			REQUIRE(error_norm(p_sol_values) < 4 * pow(10, - 5));
 		}
+
 		SECTION("Testing the speed of Solver") {
-			cout << timer.get_milliseconds() << endl;
-			p_solver.refine();
-			p_solver.refine();
+
+			//p_solver.refine();
 			cout << timer.get_milliseconds() << endl;
 			VectorXd p_sol2 = p_solver.solve();
 			cout << timer.get_milliseconds() << endl;

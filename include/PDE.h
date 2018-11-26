@@ -26,14 +26,16 @@ class PDE{
 
 public:
 	PDE();
-    PDE(BilinearFunction bl_fn, Function fn){A_kernel = bl_fn; f_kernel = fn;}
-	void set_timer(Timer s) { timer = s; }
+    PDE(BilinearFunction bl_fn, Function fn){A_kernel = bl_fn; f_kernel = fn;
+		timer = Timer(); randomizer = Randomizer(timer.get_nanoseconds());
+	}
+	void set_timer(Timer t) { timer = t; }
 	const BilinearFunction & get_bilinear_func() const { return A_kernel; }
     const double A(Element<Dim, Dim+1,T> el, SimplexFunction<T> a, SimplexFunction<T> b) const;//Integrates A_kernel*a*b over Element simplex
     double f(Element<Dim, Dim+1, T> &el, SimplexFunction<T> a) const;//Integrates f_kernel*a over Element simplex
-	T get_random_location(Element<Dim, Dim + 1, T> &el, Randomizer &randomizer) const;
-	double f_monte_carlo(Element<Dim, Dim + 1, T> &el, SimplexFunction<T> a, int fn_index, int n=20) const;//Integrates f_kernel*a over Element simplex
-
+	T get_random_location(Element<Dim, Dim + 1, T> &el);
+	double f_monte_carlo(Element<Dim, Dim + 1, T> &el, SimplexFunction<T> a, int fn_index, int n=20);//Integrates f_kernel*a over Element simplex
+	double f_monte_carlo_and_set_variation(Element<Dim, Dim + 1, T> &el, SimplexFunction<T> a, int fn_index, int n = 20);
 	double b(Element<Dim, Dim + 1, T> &el, SimplexFunction<T> a, SimplexFunction<T> b, BoundaryConditions<T> boundaries) const;//Surface integral of phi_i * grad(boundary_fn) on element's edge
 	VectorXd to_VectorXd(T &location) const;
 	PDE<Dim, T>& operator=(const PDE<Dim, T> &p);
@@ -43,6 +45,7 @@ public:
      Function f_kernel;
 	 VolumeCalculator<Dim, T> volume_calculator;
 	 Timer timer;
+	 Randomizer randomizer;
 
 };
 
@@ -50,6 +53,7 @@ template <int Dim, typename T>
 PDE<Dim, T>::PDE() {
 	volume_calculator = VolumeCalculator<Dim, T>();
 	timer = Timer();
+	randomizer = Randomizer(timer.get_nanoseconds());
 }
 
 template <int Dim, typename T>
@@ -69,39 +73,42 @@ VectorXd PDE<Dim, T>::to_VectorXd(T &location) const {
 
 template <int Dim, typename T>//Chooses one point in the middle of simplex, returns f(P_mid)*a(P_mid)*el.volume()
 double PDE<Dim, T>::f(Element<Dim, Dim+1, T> &el, SimplexFunction<T> a) const{
-    T avg_location = el[0].get_location();
-    for(int i=1; i<Dim+1; i++){
-        avg_location = avg_location + el[i].get_location();
-    }
-    avg_location = (1.0/double(Dim+1))*avg_location;
+	T avg_location = el.get_avg_location();
     return f_kernel(to_VectorXd(avg_location))*a(avg_location)*el.get_volume();
 }
 
 template <int Dim, typename T>
-double PDE<Dim, T>::f_monte_carlo(Element<Dim, Dim + 1, T> &el, SimplexFunction<T> a, int fn_index, int n) const {
+double PDE<Dim, T>::f_monte_carlo(Element<Dim, Dim + 1, T> &el, SimplexFunction<T> a, int fn_index, int n) {
+	T loc;
+	double sum = 0;
+	for (int i = 0; i <n; i++) {
+		loc = get_random_location(el);
+		sum = sum + f_kernel(to_VectorXd(loc))*a(loc);
+	}
+	return sum*el.get_volume()*(1/double(n));
+}
+
+template <int Dim, typename T>
+double PDE<Dim, T>::f_monte_carlo_and_set_variation(Element<Dim, Dim + 1, T> &el, SimplexFunction<T> a, int fn_index, int n) {
 	T loc;
 	double sum = 0;
 	double var = 0;
 	T avg = el.get_avg_location();//OBS! If randomizer works poorly or n is small then the actual avg location of the generated locs is different
-	Randomizer randomizer(timer.get_nanoseconds());
-	for (int i = 0; i <n; i++) {
-		loc = get_random_location(el, randomizer);
+	for (int i = 0; i < n; i++) {
+		loc = get_random_location(el);
 		var += dist_squared<Dim, T>(avg,loc);
 		sum = sum + f_kernel(to_VectorXd(loc))*a(loc);
 	}
 	var = (1 / double(n))*var;
 	el.set_f_variation(fn_index, var);
-	return sum*el.get_volume()*(1/double(n));
+	return sum * el.get_volume()*(1 / double(n));
 }
 
-template <int Dim, typename T>//Chooses one point in the middle of simplex, returns f(P_mid)*a(P_mid)*el.volume()
-T PDE<Dim, T>::get_random_location(Element<Dim, Dim + 1, T> &el, Randomizer &randomizer) const{
-	T loc;
-	int sz = el.vertices_size();
-	vector<double> prob(sz);
-	prob = randomizer.get_convex_coeffs(sz);
-	loc = prob[0] * el[0].get_location();
-	for (int i = 1; i < el.vertices_size(); i++) {
+template <int Dim, typename T>
+T PDE<Dim, T>::get_random_location(Element<Dim, Dim + 1, T> &el) {
+	vector<double> prob = randomizer.get_convex_coeffs(Dim+1);
+	T loc = prob[0] * el[0].get_location();
+	for (int i = 1; i < Dim + 1; i++) {
 		loc = loc + prob[i] * el[i].get_location();
 	}
 	return loc;

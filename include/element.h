@@ -70,6 +70,7 @@ public:
 	double get_volume() const;
 	T get_avg_location();
 	int vertices_size() const { return vertices.size(); }
+	bool is_boundary_el() { return is_at_boundary; }
     void show() const;
 
 private:
@@ -78,6 +79,7 @@ private:
 	IndexMaps index_maps;
 	VolumeCalculator<Dim, T> volume_calculator;
 	vector<double> f_variations;//Needed for refine algo in mesh!
+	bool is_at_boundary;
 };
 
 
@@ -94,6 +96,7 @@ Element<Dim, N, T>::Element(vector <Vertex <Dim, T>* > vertices_vec, vector <Sim
 	functions = funcs;
 	volume_calculator = VolumeCalculator<Dim, T>();
 	f_variations = vector<double>(N);
+	is_at_boundary = false;
 }
 
 template <int Dim, int N, typename T>
@@ -102,6 +105,7 @@ Element<Dim,N,T>::Element(const Element &el){
     increase_shared_elements();
     functions = el.functions;
 	f_variations = el.f_variations;
+	is_at_boundary = el.is_at_boundary;
 }
 
 template <int Dim, int N, typename T>
@@ -168,6 +172,7 @@ void Element<Dim, N, T>::set_outer_vertex_indices_to(const int index, BoundaryCo
 	for (int i = 0; i < N; i++) {
 		if (conds.cond(vertices[i]->get_location()) == true) {
 			vertices[i]->set_index(index);
+			is_at_boundary = true;
 		}
 	}
 }
