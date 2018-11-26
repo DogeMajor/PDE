@@ -32,6 +32,7 @@ public:
 
 class Randomizer {
 public:
+	Randomizer() {}
 	Randomizer(int seed) { generator = Generator(0, 1, seed); }
 	~Randomizer() {}
 	double prob() { return generator.gen(); }
@@ -93,7 +94,6 @@ public:
 		return chrono::duration_cast<chrono::seconds>(current_time - start_time).count();
 	}
 };
-
 
 
 #endif

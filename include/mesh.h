@@ -43,6 +43,7 @@ public:
 	Element<Dim, N, T> get_top() { return top->data; }
 	Element<Dim, N, T> get_last();
 	Element<Dim, N, T> get_element(int item_no);
+	MeshNode<Element<Dim, N, T> > * get_node(int item_no);
 	void refine();
 	int set_inner_and_init_outer_indices(int index, BoundaryConditions<T> boundaries);
 	int set_outer_indices_and_edge_sharings(int index, BoundaryConditions<T> boundaries);
@@ -168,6 +169,15 @@ Element<Dim, N, T> Mesh<Dim, N, T>::get_element(int item_no) {
 	for (int i = 0; i < item_no; i++) { iter = iter->next; }
 	return iter->data;
 }
+
+
+template <int Dim, int N, typename T>
+MeshNode<Element<Dim, N, T> > *  Mesh<Dim, N, T>::get_node(int item_no) {
+	MeshNode <Element<Dim, N, T> >* iter = top;
+	for (int i = 0; i < item_no; i++) { iter = iter->next; }
+	return iter;
+}
+
 
 template <int Dim, int N, typename T>
 void Mesh<Dim, N, T>::refine() {

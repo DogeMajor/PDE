@@ -80,6 +80,13 @@ TEST_CASE("Test the real Mesh with Elements based on Points") {
 		REQUIRE(el_mesh.get_last() == el1);
 	}
 
+	SECTION("One can access element at arbitrary but allowed index") {//OK
+		el_mesh.get_node(0)->data.show();
+		cout << "compare to el2" << endl;
+		REQUIRE(el_mesh.get_node(0)->data == el2);
+		REQUIRE(el_mesh.get_node(1)->data == el1);
+	}
+
 	SECTION("One can pop and push at the top") {//OK
 		REQUIRE(el_mesh.pop());
 		REQUIRE(el_mesh.get_top() == el1);
