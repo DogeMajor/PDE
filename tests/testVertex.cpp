@@ -6,7 +6,7 @@ using namespace std;
 using namespace Eigen;
 
 
-#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main()
+#define CATCH_CONFIG_MAIN
 #include "../C++ libs/catch/catch.hpp"
 
 
@@ -20,11 +20,11 @@ TEST_CASE( "Test vertex template with 3-D double vector from Eigen lib" ) {
 
 	SECTION("Test default constructor") {
 		Vertex<3, VectorXd> empty_vertex;
-		Vertex<3, VectorXd> empty_vertexs[2];
+		Vertex<3, VectorXd> empty_vertices[2];
 		REQUIRE(empty_vertex.get_shared_elements() == 0);
 		REQUIRE(empty_vertex.get_index() == -1);
 		REQUIRE(empty_vertex.get_location().size() == 0);
-		REQUIRE(empty_vertexs[1].get_index() == -1);
+		REQUIRE(empty_vertices[1].get_index() == -1);
 	}
 	
 	SECTION("Test copy constructor") {

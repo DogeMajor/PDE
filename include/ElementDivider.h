@@ -64,7 +64,8 @@ T ElementDivider<Dim, N, T>::find_surface_point(T old_mid_loc, T avg, double err
 	T loc = old_mid_loc;
 	int n = 1;
 	
-	while (max_error > error_tolerance) {
+	//while (max_error > error_tolerance) {
+	while ((boundaries.cond(loc) == false)) {
 		if (boundaries.is_inside(loc)) {
 			loc = loc + pow(2, -n)*direction;
 		}
@@ -85,7 +86,7 @@ map<array<int, 2>, T> ElementDivider<Dim, N, T>::adjust_midpoints(Element<Dim, N
 	int I, J;
 	T avg = el.get_avg_location();
 	T surface_location;
-	double error_tolerance = boundaries.accuracy / double(20);
+	double error_tolerance = boundaries.accuracy / double(2);
 	for (map<array<int, 2>, T>::const_iterator iter = m_map.begin(); iter != m_map.end(); iter++) {
 		I = iter->first[0];
 		J = iter->first[1];

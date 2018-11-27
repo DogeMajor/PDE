@@ -266,7 +266,7 @@ TEST_CASE("Generating a mesh based on 3-D Element<3,4,Vertex<2, VectorXd> > shou
 	p_element.set_indices(-1);
 	p_element.set_index_maps();
 
-	BoundaryConditions<VectorXd> p_boundaries = { bound_cond, bound_is_inside, bound_val, bound_normal, 0.000001 };
+	BoundaryConditions<VectorXd> p_boundaries = { bound_cond, bound_is_inside, bound_val, bound_normal, 0.01 };
 	ElementDivider <3, 4, VectorXd> p_divider(p_boundaries);
 
 	Mesh<3, 4, VectorXd> p_mesh(p_element);
@@ -288,6 +288,20 @@ TEST_CASE("Generating a mesh based on 3-D Element<3,4,Vertex<2, VectorXd> > shou
 	}
 	map<array<int, 2>, int> p_empty_edges;
 
+	SECTION("Boundary conditions should work well") {
+		p_loc << 0.009, 0, 0;
+		REQUIRE(p_boundaries.cond(p_loc) == true);
+		REQUIRE(p_boundaries.is_inside(p_loc) == false);
+		p_loc << 0.500, 0.5, 0.991;
+		REQUIRE(p_boundaries.cond(p_loc) == true);
+		REQUIRE(p_boundaries.is_inside(p_loc) == false);
+		p_loc << 0.500, 0.5, 0.98;
+		REQUIRE(p_boundaries.cond(p_loc) == false);
+		REQUIRE(p_boundaries.is_inside(p_loc) == true);
+		p_loc << 1.011, 0.5, 0.5;
+		REQUIRE(p_boundaries.cond(p_loc) == false);
+		REQUIRE(p_boundaries.is_inside(p_loc) == false);
+	}
 
 	SECTION("Refining mesh should succeed") {
 		cout << p_mesh.how_many_nodes() << endl;
@@ -295,12 +309,12 @@ TEST_CASE("Generating a mesh based on 3-D Element<3,4,Vertex<2, VectorXd> > shou
 		cout << p_mesh_dao.get_grid_values(&p_mesh) << endl;
 		p_mesh.refine();
 		p_mesh.reset_indices(p_boundaries);
-		cout << p_mesh_dao.get_grid_values(&p_mesh) << endl;
+		p_mesh.refine();
+		p_mesh.reset_indices(p_boundaries);
 		MatrixXd cube_grid = p_mesh_dao.get_grid_values(&p_mesh);
 		p_mesh_dao.save_matrix("cube_grid.txt", cube_grid);
-		cout << p_mesh.get_max_inner_index() << p_mesh.get_max_outer_index() << endl;
-		REQUIRE(p_mesh.get_max_inner_index() == 0);
-		REQUIRE(p_mesh.get_max_outer_index() == 9);
+		REQUIRE(p_mesh.get_max_inner_index() == 10);
+		REQUIRE(p_mesh.get_max_outer_index() == 34);
 	}
 
 }

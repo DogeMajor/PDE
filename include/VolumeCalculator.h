@@ -44,8 +44,8 @@ template <int Dimension, typename T>
 double VolumeCalculator<Dimension, T>::get_volume(vector <Vertex<Dimension, T>* > el_vertices) const {
 	int simplex_order = el_vertices.size() - 1;
 	MatrixXd D = get_distance_squared_matrix(el_vertices);
-	double result = sqrt(abs(D.determinant()*pow(factorial(simplex_order), -2)*pow(2, -simplex_order)));
-	return result;
+
+	return sqrt(abs(D.determinant()*pow(factorial(simplex_order), -2)*pow(2, -simplex_order)));
 }
 
 #endif

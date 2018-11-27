@@ -81,7 +81,7 @@ double error_norm(MatrixXd sol_values) {
 #include "../C++ libs/catch/catch.hpp"
 
 
-/*TEST_CASE("Test Solver with Point -based Mesh") {
+TEST_CASE("Test Solver with Point -based Mesh") {
 	vector <double> vec1 = { 0.0, 0.0 };
 	vector <double> vec2 = { 1.0, 0.0 };
 	vector <double> vec3 = { 1.0, 1.0 };
@@ -141,17 +141,17 @@ double error_norm(MatrixXd sol_values) {
 		cout << ref_values << endl;
 	}
 	
-	SECTION("Getting sparse stiffness matrix should succeed") {
+	SECTION("Getting sparse stiffness matrix in classical way should succeed") {
 		int tot_sz = mesh_ptr->get_max_outer_index() + 1;
-		SparseMatrix<double> test = solver.get_sparse_stiffness_matrix(tot_sz);
+		SparseMatrix<double> test = solver.get_sparse_stiffness_matrix_and_f_vec(tot_sz).first;
 		MatrixXd to_dense = test.toDense();
 		REQUIRE(to_dense == STIFFNESS_MAT);
 	}
 
-	SECTION("Getting sparse stiffness matrix should succeed") {
+	SECTION("Getting sparse stiffness matrix asynchronously should succeed") {
 		solver.refine();
 		int max_outer = mesh.get_max_outer_index()+1;
-		SparseMatrix<double> stiff_base = solver.get_sparse_stiffness_matrix(max_outer);
+		SparseMatrix<double> stiff_base = solver.get_sparse_stiffness_matrix_async(2);
 		MatrixXd tot_stiffness = stiff_base.toDense();
 		REQUIRE(tot_stiffness.coeff(0, 0) == 4);
 		REQUIRE(tot_stiffness.cols() == 9);
@@ -286,7 +286,7 @@ double error_norm(MatrixXd sol_values) {
 			cout << "circle_sol at 0,0.5" << circle_sol(0.5*c_v2.get_location());
 		}
 	}
-}*/
+}
 
 TEST_CASE("solving 3-D poisson should succeed") {
 	VectorXd cube_center(3);
@@ -346,8 +346,9 @@ TEST_CASE("solving 3-D poisson should succeed") {
 		int MAX_OUTER = p_mesh_ptr->get_max_outer_index();
 		int MAX_NODE = p_mesh_ptr->how_many_nodes();
 
-		/*SECTION("Getting sparse matrix in parts should succeed") {
-			SparseMatrix<double> A_tot = p_solver.get_sparse_stiffness_matrix(MAX_OUTER +1);
+
+		SECTION("Getting sparse matrix in parts should succeed") {
+			SparseMatrix<double> A_tot = p_solver.get_sparse_stiffness_matrix_and_f_vec(MAX_OUTER+1).first;
 			
 			SparseMatrix<double> A_part1 = p_solver.get_sparse_stiffness_matrix_part(0, MAX_NODE/2);
 			SparseMatrix<double> A_part2 = p_solver.get_sparse_stiffness_matrix_part(MAX_NODE/2, MAX_NODE +1);
@@ -360,7 +361,7 @@ TEST_CASE("solving 3-D poisson should succeed") {
 		}
 
 		SECTION("Getting sparse matrix in async. way should succeed") {
-			SparseMatrix<double> A_normal = p_solver.get_sparse_stiffness_matrix(MAX_OUTER + 1);
+			SparseMatrix<double> A_normal = p_solver.get_sparse_stiffness_matrix_and_f_vec(MAX_OUTER+1).first;
 
 			SparseMatrix<double> A_async = p_solver.get_sparse_stiffness_matrix_async(2);
 			cout << A_async.rows() << A_async.cols() << endl;
@@ -371,7 +372,7 @@ TEST_CASE("solving 3-D poisson should succeed") {
 		}
 
 		SECTION("Get f_vec should succeed") {
-			VectorXd p_f_vec = p_solver.get_f_vec(MAX_INNER);
+			VectorXd p_f_vec = p_solver.get_sparse_stiffness_matrix_and_f_vec(MAX_OUTER+1).second;
 			//cout << p_f_vec << endl;
 			REQUIRE(p_f_vec.maxCoeff() < 0.022);
 			REQUIRE(p_f_vec.minCoeff() > 0.008);
@@ -388,7 +389,7 @@ TEST_CASE("solving 3-D poisson should succeed") {
 			REQUIRE(f_vec2.maxCoeff() < 0.022);
 			REQUIRE(f_vec2.minCoeff() == 0.0);
 			VectorXd f_vec_tot = f_vec1 + f_vec2;
-			VectorXd difference = f_vec_tot - p_solver.get_f_vec(MAX_INNER);
+			VectorXd difference = f_vec_tot - p_solver.get_sparse_stiffness_matrix_and_f_vec(MAX_OUTER+1).second;
 			//cout << difference << endl;
 			REQUIRE(difference.maxCoeff() < 0.002);
 
@@ -404,14 +405,14 @@ TEST_CASE("solving 3-D poisson should succeed") {
 			REQUIRE(p_f_vec_async.minCoeff() > 0.008);
 			cout << "Max index" << p_mesh_ptr->how_many_nodes() -1 << endl;
 			start_time = timer.get_milliseconds();
-			VectorXd p_f_vec_normal = p_solver.get_f_vec(MAX_INNER);
+			VectorXd p_f_vec_normal = p_solver.get_sparse_stiffness_matrix_and_f_vec(MAX_OUTER+1).second;
 			int t_normal = timer.get_milliseconds() - start_time;
 			cout << "Calculating f_vec normally takes this much time in ms: " << t_normal << endl;
 			cout << p_f_vec_normal << endl;
 			VectorXd async_diff = p_f_vec_normal - p_f_vec_async;
 			REQUIRE(async_diff.maxCoeff() < 0.002);
 			REQUIRE(t_async < 0.6*t_normal);
-		}*/
+		}
 
 		SECTION("Refining and solving should succeed") {
 			p_solver.refine();
@@ -426,15 +427,12 @@ TEST_CASE("solving 3-D poisson should succeed") {
 
 		SECTION("Testing the speed of Solver") {
 			timer.reset();
-			//p_solver.refine();
-			//p_solver.refine();
 			p_solver.refine();
 			cout << p_mesh_ptr->how_many_nodes() << endl;
 			cout << timer.get_milliseconds() << endl;
 			VectorXd p_sol2 = p_solver.solve();
 			cout << timer.get_milliseconds() << endl;
 		}
-
 	}
 
 }

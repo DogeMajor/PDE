@@ -5,7 +5,7 @@
 
 using namespace std;
 
-#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main()
+#define CATCH_CONFIG_MAIN
 #include "../C++ libs/catch/catch.hpp"
 
 
