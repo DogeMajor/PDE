@@ -1,18 +1,11 @@
 #ifndef PDE_H
 #define PDE_H
-#include <iostream>
 #include "../C++ libs/eigen/Eigen/Dense"
-#include "../C++ libs/eigen/Eigen/Sparse"
 #include "../C++ libs/eigen/Eigen/Core"
-#include "../C++ libs/eigen/Eigen/IterativeLinearSolvers"
 #include "Mesh.h"
 #include "Randomizer.h"
 
-using namespace std;
-using namespace Eigen;
-
 typedef double (* Function)(VectorXd x);
-typedef Eigen::Triplet<double, int> Tri;
 
 
 double sum(vector<double> x) {

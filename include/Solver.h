@@ -1,21 +1,13 @@
 #ifndef SOLVER_H
 #define SOLVER_H
-#include <iostream>
 #include "PDE.h"
 #include "Mesh.h"
 #include "MeshFiller.h"
-#include <math.h>
 #include <thread>         // std::thread, std::this_thread::yield
-#include <vector>
 #include <future>
-
 
 #include "../C++ libs/eigen/Eigen/Sparse"
 #include "../C++ libs/eigen/Eigen/IterativeLinearSolvers"
-
-
-using namespace std;
-using namespace Eigen;
 
 
 template <int Dim, typename T>
@@ -39,6 +31,7 @@ public:
 	MatrixXd get_solution_values(VectorXd solution);//In the same order as indexing of nodes
 	MatrixXd get_grid_values();
 	void save_grid(string file_name);
+	void save_solution(string file_name, VectorXd solution);
 	Mesh<Dim, Dim + 1, T> get_mesh() { return *mesh; }
 	void show() const;
 
@@ -46,7 +39,6 @@ private:
 	PDE<Dim, T> pde;
 	Mesh<Dim, Dim + 1, T>* mesh;
 	BoundaryConditions<T> boundaries;
-	MeshFiller<Dim, Dim + 1, T> mesh_filler;
 
 };
 
@@ -71,6 +63,7 @@ void Solver<Dim, T>::refine() {
 
 template<int Dim, typename T>
 void Solver<Dim, T>::fill_mesh_covering_box(T mid_point, VectorXd lengths) {
+	MeshFiller<Dim, Dim + 1, T> mesh_filler = MeshFiller<Dim, Dim + 1, T>();
 	vector <Vertex<Dim, T> *> box_vertices = mesh_filler.build_box_vertices(mid_point, lengths);
 	mesh_filler.build_mesh(box_vertices, mesh, boundaries);
 }
@@ -201,8 +194,8 @@ VectorXd Solver<Dim, T>::get_f_vec_part(int start_ind, int stop_ind) {
 		for (int i = 0; i < Dim + 1; i++) {
 			I = iter->data[i].get_index();
 			fn_i = iter->data.get_function(i);
-				//if (I <= max_index) {f_vec(I) += pde.f(iter->data, fn_i);}
-			if (I <= max_Index) { f_vec(I) += pde.f_monte_carlo(iter->data, fn_i, i, 50); }
+			//if (I <= max_Index) {f_vec(I) += pde.f(iter->data, fn_i);}
+			if (I <= max_Index) { f_vec(I) += pde.f_monte_carlo(iter->data, fn_i, i, 20); }
 		}
 		index++;
 		iter = iter->next;
@@ -270,6 +263,12 @@ template <int Dim, typename T>
 MatrixXd Solver<Dim, T>::get_solution_values(VectorXd solution) {
 	SolverDAO<Dim, Dim + 1, T> solver_dao;
 	return solver_dao.get_solution_values(mesh, solution);
+}
+template <int Dim, typename T>
+void Solver<Dim, T>::save_solution(string file_name, VectorXd solution) {
+	SolverDAO<Dim, Dim + 1, T> solver_dao;
+
+	return solver_dao.save_solution_values(file_name, mesh, solution);
 }
 
 template <int Dim, typename T>

@@ -113,7 +113,7 @@ Element<Dim,N,T>::~Element(){
 	if (vertices[0] != nullptr) {//If the first Vertex is null then all of them are; no methods to instantiate El othoerwise exist!
 		decrease_shared_elements();
 		for (int i = 0; i < vertices.size(); i++) {
-			if (vertices[i]->get_shared_elements() <= 0) { delete vertices[i]; cout << "Vertex no " << i << " destroyed" << endl; }
+			if (vertices[i]->get_shared_elements() <= 0) { delete vertices[i]; }
 		}
 	}
 	vertices.clear();
@@ -256,13 +256,13 @@ T Element<Dim, N, T>::get_avg_location() {
 template <int Dim, int N, typename T>
 void Element<Dim,N,T>::show() const{
     for(int i=0; i<vertices.size(); i++){vertices[i]->show();}
-    /*for(int i=0; i<functions.size(); i++){
+    for(int i=0; i<functions.size(); i++){
         cout << "Function coefficients for Vertex no " << i <<endl;
         for(int j=0; j<functions[i].coeff.rows(); j++){
             cout << functions[i].coeff[j] <<" " <<endl;
         }
         cout << endl;
-    }*/
+    }
 }
 
 #endif

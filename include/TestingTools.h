@@ -3,6 +3,7 @@
 
 #include <map>
 #include <vector>
+#include <math.h>
 #include "../include/Point.h"
 #include "../include/Vertex.h"
 #include "../include/Function.h"

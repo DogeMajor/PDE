@@ -181,5 +181,4 @@ Element<Dim, N, T> ElementDivider<Dim, N, T>::get_inner_element(int I, vector<Ve
 }
 
 
-
 #endif

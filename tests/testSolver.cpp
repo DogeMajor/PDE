@@ -162,26 +162,27 @@ TEST_CASE("Test Solver with Point -based Mesh") {
 		//solver.refine();
 		//solver.refine();
 		Timer timer = Timer();
-		int nanosecs = 0;
+		int millisecs = 0;
 		solver.refine();
 		solver.refine();
-		solver.refine();
-		nanosecs = timer.get_nanoseconds();
-		cout << "Duration in millisecs for refine(): " << timer.get_milliseconds() << endl;
-
+		
+		cout << "Duration in millisecs for refine(): " << timer.get_milliseconds() - millisecs << endl;
+		millisecs = timer.get_milliseconds();
 		VectorXd solution = solver.solve();
-		cout << "Duration in milli secs for solve(): " << timer.get_milliseconds()  << endl;
+		cout << "Duration in milli secs for solve(): " << timer.get_milliseconds() - millisecs << endl;
 
-		cout << solution << endl;
+		//cout << solution << endl;
 		REQUIRE(solution.size() == mesh.get_max_outer_index() + 1);
 		MatrixXd calc_values = solver.get_solution_values(solution);
-		cout << calc_values << endl;
+		//cout << calc_values << endl;
 		cout << "Max:" << solution.maxCoeff() << " Min: " << solution.minCoeff() << endl;
 		double error_squared = error_norm(calc_values);
-		cout << error_squared / calc_values.rows() << endl;
+		
 		double avg = solution.mean();
-		cout << "Avg. relative error norm in" << sqrt(error_squared);
+		cout << "Avg. error norm is " << sqrt(error_squared) << endl;
 		REQUIRE(sqrt(error_squared) < 0.005);
+		cout << "Amount of simplices" << mesh_ptr->how_many_nodes() << endl;
+		solver.save_solution("twoD_poisson.txt", solution);
 		
 	}
 
