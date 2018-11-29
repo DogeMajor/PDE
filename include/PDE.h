@@ -1,18 +1,11 @@
 #ifndef PDE_H
 #define PDE_H
-#include <iostream>
 #include "../C++ libs/eigen/Eigen/Dense"
-#include "../C++ libs/eigen/Eigen/Sparse"
 #include "../C++ libs/eigen/Eigen/Core"
-#include "../C++ libs/eigen/Eigen/IterativeLinearSolvers"
 #include "Mesh.h"
 #include "Randomizer.h"
 
-using namespace std;
-using namespace Eigen;
-
 typedef double (* Function)(VectorXd x);
-typedef Eigen::Triplet<double, int> Tri;
 
 
 double sum(vector<double> x) {
@@ -30,8 +23,7 @@ public:
 		timer = Timer(); randomizer = Randomizer(timer.get_nanoseconds());
 	}
 	void set_timer(Timer t) { timer = t; }
-	const BilinearFunction & get_bilinear_func() const { return A_kernel; }
-    const double A(Element<Dim, Dim+1,T> el, SimplexFunction<T> a, SimplexFunction<T> b) const;//Integrates A_kernel*a*b over Element simplex
+    const double A(Element<Dim, Dim+1,T> &el, SimplexFunction<T> &a, SimplexFunction<T> &b) const;//Integrates A_kernel*a*b over Element simplex
     double f(Element<Dim, Dim+1, T> &el, SimplexFunction<T> a) const;//Integrates f_kernel*a over Element simplex
 	T get_random_location(Element<Dim, Dim + 1, T> &el);
 	double f_monte_carlo(Element<Dim, Dim + 1, T> &el, SimplexFunction<T> a, int fn_index, int n=20);//Integrates f_kernel*a over Element simplex
@@ -57,7 +49,7 @@ PDE<Dim, T>::PDE() {
 }
 
 template <int Dim, typename T>
-const double PDE<Dim, T>::A(Element<Dim, Dim+1, T> el, SimplexFunction<T> a, SimplexFunction<T> b) const{
+const double PDE<Dim, T>::A(Element<Dim, Dim+1, T> &el, SimplexFunction<T> &a, SimplexFunction<T> &b) const{
     VectorXd coords = VectorXd::Zero(Dim);
 	return A_kernel(a.gradient(), b.gradient())*el.get_volume();
 }
@@ -83,7 +75,7 @@ double PDE<Dim, T>::f_monte_carlo(Element<Dim, Dim + 1, T> &el, SimplexFunction<
 	double sum = 0;
 	for (int i = 0; i <n; i++) {
 		loc = get_random_location(el);
-		sum = sum + f_kernel(to_VectorXd(loc))*a(loc);
+		sum += f_kernel(to_VectorXd(loc))*a(loc);
 	}
 	return sum*el.get_volume()*(1/double(n));
 }

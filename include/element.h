@@ -58,35 +58,36 @@ public:
 	double get_avg_f_variation() { return sum<double>(f_variations) / double(N); }
 
 	int how_many() const;
-	vector <Vertex <Dim, T>* > get_vertices();
-    SimplexFunction<T> get_function(int vertex_no);
-    Vertex<Dim,T>& operator[](int i);
+    SimplexFunction<T> get_function(int vertex_no){ return functions[vertex_no]; }
+    Vertex<Dim,T>& operator[](int i){ return *(vertices[i]); }
     Element<Dim,N,T>& operator=(const Element &el);
     bool operator==(const Element &el) const;
     bool operator!=(const Element &el) const;
 
 	map<array<int, 2>, T> get_midpoints_map();
     
-	double get_volume() const;
+	double get_volume() const{ return volume_calculator.get_volume(vertices); }
 	T get_avg_location();
 	int vertices_size() const { return vertices.size(); }
 	bool is_boundary_el() { return is_at_boundary; }
     void show() const;
+	static VolumeCalculator<Dim, T> volume_calculator;
 
 private:
 	vector <Vertex <Dim, T>* > vertices;
     vector <SimplexFunction <T> > functions;
 	IndexMaps index_maps;
-	VolumeCalculator<Dim, T> volume_calculator;
+	
 	vector<double> f_variations;//Needed for refine algo in mesh!
 	bool is_at_boundary;
 };
 
+template <int Dim, int N, typename T>
+VolumeCalculator<Dim, T> Element<Dim, N, T>::volume_calculator = VolumeCalculator<Dim, T>();
 
 template <int Dim, int N, typename T>
 Element<Dim,N,T>::Element()
 	: vertices(N, nullptr), f_variations(N) {
-	volume_calculator = VolumeCalculator<Dim, T>();
 }
 
 template <int Dim, int N, typename T>
@@ -94,7 +95,6 @@ Element<Dim, N, T>::Element(vector <Vertex <Dim, T>* > vertices_vec, vector <Sim
 	vertices = vertices_vec;
 	increase_shared_elements();
 	functions = funcs;
-	volume_calculator = VolumeCalculator<Dim, T>();
 	f_variations = vector<double>(N);
 	is_at_boundary = false;
 }
@@ -113,7 +113,7 @@ Element<Dim,N,T>::~Element(){
 	if (vertices[0] != nullptr) {//If the first Vertex is null then all of them are; no methods to instantiate El othoerwise exist!
 		decrease_shared_elements();
 		for (int i = 0; i < vertices.size(); i++) {
-			if (vertices[i]->get_shared_elements() <= 0) { delete vertices[i]; cout << "Vertex no " << i << " destroyed" << endl; }
+			if (vertices[i]->get_shared_elements() <= 0) { delete vertices[i]; }
 		}
 	}
 	vertices.clear();
@@ -194,21 +194,6 @@ int Element<Dim, N, T>::how_many() const{
 }
 
 template <int Dim, int N, typename T>
-vector <Vertex <Dim, T>* > Element<Dim, N, T>::get_vertices() {
-	return vertices;
-}
-
-template <int Dim, int N, typename T>
-SimplexFunction<T> Element<Dim,N,T>::get_function(int vertex_no){
-     return functions[vertex_no];
-}
-
-template <int Dim, int N, typename T>
-Vertex<Dim,T>& Element<Dim,N,T>::operator[](int i){
-    return *(vertices[i]);
-}
-
-template <int Dim, int N, typename T>
 Element<Dim,N,T>& Element<Dim,N,T>::operator=(const Element &el){
     if(*this != el){
 		decrease_shared_elements();
@@ -222,7 +207,6 @@ Element<Dim,N,T>& Element<Dim,N,T>::operator=(const Element &el){
     functions = el.functions;
 	index_maps = el.index_maps;
 	f_variations = el.f_variations;
-	//volume_calculator = el.volume_calculator;
     return *this;
 }
 
@@ -242,11 +226,6 @@ bool Element<Dim,N,T>::operator==(const Element &el) const{
 template <int Dim, int N, typename T>
 bool Element<Dim,N,T>::operator!=(const Element &el) const{
     return !(*this == el);
-}
-
-template <int Dim, int N, typename T>
-double Element<Dim,N,T>::get_volume() const{
-	return volume_calculator.get_volume(vertices);
 }
 
 template <int Dim, int N, typename T>
@@ -277,13 +256,13 @@ T Element<Dim, N, T>::get_avg_location() {
 template <int Dim, int N, typename T>
 void Element<Dim,N,T>::show() const{
     for(int i=0; i<vertices.size(); i++){vertices[i]->show();}
-    /*for(int i=0; i<functions.size(); i++){
+    for(int i=0; i<functions.size(); i++){
         cout << "Function coefficients for Vertex no " << i <<endl;
         for(int j=0; j<functions[i].coeff.rows(); j++){
             cout << functions[i].coeff[j] <<" " <<endl;
         }
         cout << endl;
-    }*/
+    }
 }
 
 #endif

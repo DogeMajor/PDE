@@ -3,14 +3,12 @@
 #include <iostream>
 #include "../C++ libs/eigen/Eigen/Dense"
 #include "../C++ libs/eigen/Eigen/Core"
-#include "point.h"
+#include "Point.h"
 #include <math.h>
-#include <functional>
-#include <vector>
+
 
 using namespace std;
 using namespace Eigen;
-typedef double (* Function)(VectorXd x);
 
 template <typename T>
 struct SimplexFunction{
@@ -21,7 +19,7 @@ struct SimplexFunction{
     bool operator!=(const SimplexFunction &s) const{
         return (coeff != s.coeff);
     }
-    double operator()(T coords){
+    double operator()(const T &coords){
         double result = 0.0;
         for(int i=0; i<coeff.size()-1; i++){result += coeff[i]*coords[i];}
         return result + double(coeff.tail(1)[0]);
@@ -40,7 +38,7 @@ struct SimplexFunction{
 
 struct BilinearFunction{
     MatrixXd mat;
-    double operator()(VectorXd x, VectorXd y) const{
+    double operator()(VectorXd &x, VectorXd &y) const{
         double result = (x.transpose())*mat*y;
         return result;
         }

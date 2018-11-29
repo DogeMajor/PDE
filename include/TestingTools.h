@@ -3,6 +3,7 @@
 
 #include <map>
 #include <vector>
+#include <math.h>
 #include "../include/Point.h"
 #include "../include/Vertex.h"
 #include "../include/Function.h"
@@ -98,14 +99,14 @@ double p_circle_val(Point<2, double> coords) {
 
 bool bound_cond(VectorXd coords, double acc) {
 	for (int i = 0; i < coords.size(); i++) {
-		if ((abs(coords[i] - 0.0) < acc) || (abs(coords[i] - 1.0) < acc)) { return true; }
+		if ((abs(coords[i] - 0.0) <= acc) || (abs(coords[i] - 1.0) <= acc)) { return true; }
 	}
 	return false;
 }
 
 bool bound_is_inside(VectorXd coords, double acc) {
 	for (int i = 0; i < coords.size(); i++) {
-		if ((coords[i] < 0.0 + acc) || (coords[i] > 1.0 - acc)) { return false; }
+		if ((coords[i] <= 0.0 + acc) || (coords[i] >= 1.0 - acc)) { return false; }
 	}
 	return true;
 }

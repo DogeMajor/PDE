@@ -64,19 +64,12 @@ TEST_CASE( "Test Element template containing vertex template initiated with 2-D 
 
     SECTION( "Test default constructor()" ){
         Element <2, 3, VectorXd> empty_element;
-		vector<Vertex<2, VectorXd> *> empty_vertices = empty_element.get_vertices();
-		REQUIRE(empty_vertices[2] == nullptr);
-		REQUIRE(empty_vertices.size() == 3);
+		Vertex<2, VectorXd>* test_el1 = &empty_element[0];
+		REQUIRE(test_el1 == nullptr);
+		REQUIRE(&empty_element[1] == nullptr);
+		REQUIRE(&empty_element[2] == nullptr);
+		
     }
-	
-	SECTION("Test get_vertices") {
-
-		vector<Vertex<2, VectorXd> *> retrieved_vertices = element.get_vertices();
-		REQUIRE( retrieved_vertices[2]->how_many() == 6 );
-		REQUIRE( retrieved_vertices[2]->get_location() == vertex3.get_location() );
-		REQUIRE( retrieved_vertices[2]->get_index() == vertex3.get_index() );
-		REQUIRE( retrieved_vertices[2]->get_shared_elements() == vertex3.get_shared_elements()+1 );
-	}
 
     SECTION( "Test operator []" ){
         REQUIRE( element[0].get_location() == vertices[0]->get_location() );
@@ -229,7 +222,7 @@ TEST_CASE( "Test Element template containing vertex template initiated with 2-D 
     }
 
     SECTION( "Test get_distance_squared_matrix(T &el)" ){
-        MatrixXd s_mat = volume_calculator.get_distance_squared_matrix(el.get_vertices());
+        MatrixXd s_mat = volume_calculator.get_distance_squared_matrix(vertex_vec);
 		MatrixXd s_mat_should_be(4, 4);
 		s_mat_should_be << 0, 1, 2, 1, 1, 0, 1, 1, 2, 1, 0, 1, 1, 1, 1, 0;
 		REQUIRE( s_mat == s_mat_should_be);

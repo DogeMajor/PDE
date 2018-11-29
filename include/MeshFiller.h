@@ -6,6 +6,7 @@
 #include "Vertex.h"
 #include "Element.h"
 #include "Mesh.h"
+#include "DAO.h"
 
 using namespace Eigen;
 using namespace std;

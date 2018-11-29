@@ -64,7 +64,6 @@ using namespace Eigen;
 	el2.set_index_maps();
 
 	
-
 	map< array<int, 2>, int> MIDPOINTS_MAP;
 	int I = 0;
 	for (int i = 0; i < 3; i++) {
@@ -90,7 +89,6 @@ using namespace Eigen;
 		VectorXd B(3);
 		B << 0.3, 0.2, 0.5;
 		pair<int, double> tiniest = find_smallest<VectorXd>(B, B.size());
-		cout << tiniest.first << endl;
 		REQUIRE(tiniest.first == 1);
 		REQUIRE(tiniest.second == 0.2);
 		vector <double> dists = { 1.62, 0.82, 0.02 };
@@ -127,8 +125,7 @@ using namespace Eigen;
 	SECTION("Adjusting midpoints according to boundary conds should succeed "){
 		PointsMap m_map = element.get_midpoints_map();
 		PointsMap adjusted_midpoints = divider.adjust_midpoints(element, m_map, empty_edges);
-		cout << "Show adjusted mid points" << endl;
-		show_map(adjusted_midpoints);
+		//show_map(adjusted_midpoints);
 		REQUIRE(adjusted_midpoints[{0, 1}] == m_map[{0, 1}]);
 		REQUIRE(adjusted_midpoints[{1, 2}] == m_map[{1, 2}]);
 		
@@ -145,7 +142,7 @@ using namespace Eigen;
 			REQUIRE(bool(iter->first[0] < iter->first[1]) );//For this special case of indexing of vertices, not generally!!!
 			REQUIRE(iter->second->get_location() == points_map[iter->first] );
 		}
-		show_map(m_p_vertex_map);
+		//show_map(m_p_vertex_map);
 		REQUIRE(commons == m_p_vertex_map );//First element, at t_0 commons is empty!!
 		map<array<int, 2>, Point<2, double> > points_map2 = el2.get_midpoints_map();
 		map<array<int, 2>, Vertex<2, Point<2, double> >* > m_p_vertex_map2 = divider.get_mid_vertices_map(el2, commons, empty_edges);
@@ -195,7 +192,6 @@ using namespace Eigen;
 	SECTION("Generating new Elements with boundary adjustments should succeed") {
 		map< array<int, 2>, Vertex<2, Point <2, double> >* >  adj_coms;
 		int vertices_amount = n_1.how_many();
-		cout << "Empty edges size" << empty_edges.size() << endl;
 		vector <Element <2, 3, Point <2, double> >* > adjusted_els = divider.divide(element, adj_coms, empty_edges);
 
 		REQUIRE(adjusted_els.size() == 4);
@@ -209,10 +205,10 @@ using namespace Eigen;
 		
 	}
 
-}*/
+}
 
 
-/*TEST_CASE("Test ElementDivider with Vertex<2, VectorXd>") {
+TEST_CASE("Test ElementDivider with Vertex<2, VectorXd>") {
 
 	VectorXd location(2);
 	location << 0.0, 0.0;
@@ -238,6 +234,8 @@ using namespace Eigen;
 	coeffs << 0, 1, 0;
 	funcs[2].coeff = coeffs;
 	Element <2, 3, VectorXd> element(vertices, funcs);
+	element.set_indices(-1);
+	element.set_index_maps();
 
 	ElementFactory<2, 3, VectorXd> factory;
 	vector<Vertex<2, VectorXd> *> vertices2;//(3, nullptr);
@@ -246,7 +244,7 @@ using namespace Eigen;
 	location << 0.0, 1.0;
 	vertices2.push_back(new Vertex<2, VectorXd >(location));
 	Element<2, 3, VectorXd> el2 = factory.build(vertices2);
-	
+
 	ElementDivider <2, 3, VectorXd> divider;
 
 	map< array<int, 2>, int> MIDPOINTS_MAP;
@@ -259,18 +257,13 @@ using namespace Eigen;
 	}
 
 
-	//cout << MIDPOINTS_MAP[{0, 1}] << endl;
-	//cout << vertices[0]->get_location();
-
-	//show_map(MIDPOINTS_MAP);
-
-	/*SECTION("dist_squared template function should work") {
+	SECTION("dist_squared template function should work") {
 		VectorXd a(3);
 		a << 0, 1, 2;
 		VectorXd b(3);
 		b << 1, 2, 5;
-		REQUIRE(dist_squared<3, VectorXd> (a, b) == 11.0);
-		REQUIRE(dist_squared<3, VectorXd> (a, a) == 0.0);
+		REQUIRE(dist_squared<3, VectorXd>(a, b) == 11.0);
+		REQUIRE(dist_squared<3, VectorXd>(a, a) == 0.0);
 	}
 
 
@@ -278,7 +271,6 @@ using namespace Eigen;
 		VectorXd B(3);
 		B << 0.3, 0.2, 0.5;
 		pair<int, double> tiniest = find_smallest<VectorXd>(B, B.size());
-		cout << tiniest.first << endl;
 		REQUIRE(tiniest.first == 1);
 		REQUIRE(tiniest.second == 0.2);
 		vector <double> dists = { 1.62, 0.82, 0.02 };
@@ -287,11 +279,11 @@ using namespace Eigen;
 		REQUIRE(tiniest.second == 0.02);
 	}
 
-	SECTION( "Test constructing ElementDivider" ) {
+	SECTION("Test constructing ElementDivider") {
 		ElementDivider <2, 3, VectorXd> new_divider;
 	}
 
-	/*SECTION("Generating map of midpoints should succeed") {
+	SECTION("Generating map of midpoints should succeed") {
 		typedef map<array<int, 2>, VectorXd>::const_iterator PointsMapIter;
 		map<array<int, 2>, VectorXd> m_nods_map = element.get_midpoints_map();
 		REQUIRE(m_nods_map.size() == 3);
@@ -301,29 +293,6 @@ using namespace Eigen;
 			REQUIRE(iter->second[0] <= 1);
 		}
 	}
-
-
-	//SECTION("Generating location_map should succeed") {
-		//map<VectorXd, array<int, 2> > location_map = divider.get_locations_map(element);
-		//cout << location_map.size() << endl;
-		//REQUIRE(m_map == MIDPOINTS_MAP);
-	//}
-
-	SECTION("Calculating average location should succeed") {
-		vector <Vertex<2, VectorXd >* > el_vertices = element.get_vertices();
-		VectorXd avg_loc = divider.average_location(el_vertices);
-		REQUIRE(limit_decimals(avg_loc[0],4) == 0.6666);
-		REQUIRE(limit_decimals(avg_loc[1],4) == 0.3333);
-	}
-
-	SECTION("Finding nearest vertex should succeed") {
-		vector <Vertex<2, VectorXd >* > el_vertices = element.get_vertices();
-		VectorXd z(2);
-		z << 0.9, 0.9;
-		Vertex<2, VectorXd > nearest_vertex = divider.nearest_vertex(z, el_vertices);
-		REQUIRE(nearest_vertex.get_location() == el_vertices[2]->get_location());
-	}
-
 
 }*/
 
@@ -384,7 +353,7 @@ TEST_CASE("Dividing elements in 3-D Element<3,4,Vertex<2, VectorXd> > should suc
 	p_element2.set_indices(3);
 	p_element2.set_index_maps();
 
-	BoundaryConditions<VectorXd> p_boundaries = { bound_cond, bound_is_inside, bound_val, bound_normal, 0.0001 };
+	BoundaryConditions<VectorXd> p_boundaries = { bound_cond, bound_is_inside, bound_val, bound_normal, 0.00001 };
 	ElementDivider <3, 4, VectorXd> p_divider(p_boundaries);
 
 	map< array<int, 2>, int> P_EDGES_MAP;
@@ -406,47 +375,33 @@ TEST_CASE("Dividing elements in 3-D Element<3,4,Vertex<2, VectorXd> > should suc
 		REQUIRE(corner0[1] == *p_mid_vertices[0]);
 		REQUIRE(corner0[2] == *p_mid_vertices[1]);
 		REQUIRE(corner0[3] == *p_mid_vertices[2]);
-
-		Element<3, 4, VectorXd> corner3 = p_divider.get_corner_element(3, p_mid_vertices, p_element);
-		//corner3.show();
-		cout << corner3.get_volume() << endl;
-		cout << p_element.get_volume() << endl;
+;
 	}
 
 	SECTION("Generating inner element should succeed") {
 		Element<3, 4, VectorXd> inner0 = p_divider.get_inner_element(0, p_mid_vertices);
-		//REQUIRE(inner0[0] == *p_vertices[0]);
 		Element<3, 4, VectorXd> inner2 = p_divider.get_inner_element(2, p_mid_vertices);
-		//REQUIRE(inner0[0] == *p_vertices[0]);
 		REQUIRE(inner0[3] == inner2[3]);
 	}
 
 	SECTION("Generating mid vertices should succeed") {
 		map<array<int, 2>, Vertex<3, VectorXd>* > p_common_vert;
 		map <array<int, 2>, Vertex<3, VectorXd>* > mid_verts = p_divider.get_mid_vertices_map(p_element, p_common_vert, p_empty_edges);
+		REQUIRE(mid_verts.size() == 1*2*3);
 
-		//REQUIRE(inner0[0] == *p_vertices[0]);
-		cout << mid_verts.size() << endl;
-		for (auto iter = mid_verts.begin(); iter != mid_verts.end(); iter++) {
-			cout << iter->second->get_location() << endl;
-			cout << endl;
-		}
+		REQUIRE(mid_verts[{0, 1}]->get_location() == 0.5*(p_element[0].get_location() + p_element[1].get_location()));
 	}
 
 	SECTION("Dividing element should succeed") {
 		map<array<int, 2>, Vertex<3, VectorXd>* > p_comms;
 		vector<Element<3, 4, VectorXd>* > p_els = p_divider.divide(p_element, p_comms, p_empty_edges);
 		
-		//REQUIRE(inner0[0] == *p_vertices[0]);
 		double vol = 0;
 		VectorXd avg(3);
 		avg << 0, 0, 0;
 		for (int i = 0; i < p_els.size(); i++) {
 			vol += p_els[i]->get_volume();
 			avg = avg + p_els[i]->get_avg_location()*p_els[i]->get_volume();
-			//p_els[i]->show();
-			cout << p_els[i]->get_avg_location() << endl;
-			cout << endl;
 		}
 		avg = avg * (1 / vol);
 		REQUIRE(limit_decimals(p_element.get_volume(), 4) == 0.1666);
@@ -460,24 +415,19 @@ TEST_CASE("Dividing elements in 3-D Element<3,4,Vertex<2, VectorXd> > should suc
 		map<array<int, 2>, Vertex<3, VectorXd>* > p_comm;
 		vector<Element<3, 4, VectorXd>* > adj_p_els = p_divider.divide(p_element2, p_comm, P_EDGES_MAP);
 
-		//REQUIRE(inner0[0] == *p_vertices[0]);
 		double vol = 0;
 		VectorXd avg(3);
 		avg << 0, 0, 0;
 		for (int i = 0; i < adj_p_els.size(); i++) {
 			vol += adj_p_els[i]->get_volume();
 			avg = avg + adj_p_els[i]->get_avg_location()*adj_p_els[i]->get_volume();
-			//p_els[i]->show();
-			cout << (*adj_p_els[i])[3].get_location() << endl;
-			cout << p_boundaries.cond((*adj_p_els[i])[3].get_location()) << endl;
-			cout << endl;
-			//REQUIRE(p_boundaries.cond((*adj_p_els[i])[3].get_location()) == true);
+			REQUIRE(p_boundaries.is_inside((*adj_p_els[i])[3].get_location()) == false);
+			REQUIRE(p_boundaries.cond((*adj_p_els[i])[3].get_location()) == true);
 		}
 		avg = avg * (1 / vol);
-		adj_p_els[2]->show();
-
+		VectorXd avg_diff = avg - p_element2.get_avg_location();
+		REQUIRE(avg_diff.maxCoeff() > 0.05);
+		//acc = 0.0001
 	}
-
-	
 
 }

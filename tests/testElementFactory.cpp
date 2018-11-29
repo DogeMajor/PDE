@@ -1,6 +1,4 @@
 #include "../include/ElementFactory.h"
-//#include "../include/point.h"
-//#include "../include/HelpfulTools.h"
 
 using namespace std;
 
@@ -89,8 +87,7 @@ TEST_CASE( "Test ElementFactory" ) {
 		locs.push_back(vertex2.get_location());
 		locs.push_back(vertex3.get_location());
 		Element <2, 3, VectorXd> el3 = factory.build(locs);
-		el3[0].show();
-		vertex1.show();
+		
 		REQUIRE(el3[0].get_location() == locs[0]);
 		REQUIRE(el3[1].get_location() == locs[1]);
 		REQUIRE(el3[2].get_location() == locs[2]);

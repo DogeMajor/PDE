@@ -1,22 +1,13 @@
 #ifndef SOLVER_H
 #define SOLVER_H
-#include <iostream>
 #include "PDE.h"
 #include "Mesh.h"
 #include "MeshFiller.h"
-#include <math.h>
-#include <atomic>         // std::atomic, std::atomic_flag, ATOMIC_FLAG_INIT
 #include <thread>         // std::thread, std::this_thread::yield
-#include <vector>
 #include <future>
-
 
 #include "../C++ libs/eigen/Eigen/Sparse"
 #include "../C++ libs/eigen/Eigen/IterativeLinearSolvers"
-
-
-using namespace std;
-using namespace Eigen;
 
 
 template <int Dim, typename T>
@@ -29,8 +20,8 @@ public:
 	void fill_mesh_covering_box(T mid_point, VectorXd lenghts);
 	void refine();
 	pair<SparseMatrix<double>, VectorXd> get_sparse_stiffness_matrix_and_f_vec(int sz);
-	SparseMatrix<double> get_sparse_stiffness_matrix(int sz) const;
-	VectorXd get_f_vec(int n);
+	SparseMatrix<double> get_sparse_stiffness_matrix_part(int start_ind, int stop_ind) const;
+	SparseMatrix<double> get_sparse_stiffness_matrix_async(int parts) const;
 	VectorXd get_f_vec_async(int parts);
 	VectorXd get_f_vec_part(int start_ind, int stop_ind);
 	VectorXd get_boundary_coeffs();
@@ -40,6 +31,7 @@ public:
 	MatrixXd get_solution_values(VectorXd solution);//In the same order as indexing of nodes
 	MatrixXd get_grid_values();
 	void save_grid(string file_name);
+	void save_solution(string file_name, VectorXd solution);
 	Mesh<Dim, Dim + 1, T> get_mesh() { return *mesh; }
 	void show() const;
 
@@ -47,7 +39,6 @@ private:
 	PDE<Dim, T> pde;
 	Mesh<Dim, Dim + 1, T>* mesh;
 	BoundaryConditions<T> boundaries;
-	MeshFiller<Dim, Dim + 1, T> mesh_filler;
 
 };
 
@@ -72,6 +63,7 @@ void Solver<Dim, T>::refine() {
 
 template<int Dim, typename T>
 void Solver<Dim, T>::fill_mesh_covering_box(T mid_point, VectorXd lengths) {
+	MeshFiller<Dim, Dim + 1, T> mesh_filler = MeshFiller<Dim, Dim + 1, T>();
 	vector <Vertex<Dim, T> *> box_vertices = mesh_filler.build_box_vertices(mid_point, lengths);
 	mesh_filler.build_mesh(box_vertices, mesh, boundaries);
 }
@@ -110,54 +102,63 @@ pair<SparseMatrix<double>, VectorXd> Solver<Dim, T>::get_sparse_stiffness_matrix
 
 
 template <int Dim, typename T>
-SparseMatrix<double> Solver<Dim, T>::get_sparse_stiffness_matrix(int sz) const{
+SparseMatrix<double> Solver<Dim, T>::get_sparse_stiffness_matrix_part(int start_ind, int stop_ind) const{
 	
+	if (stop_ind > mesh->how_many_nodes()) { stop_ind = mesh->how_many_nodes(); }
+	int sz = mesh->get_max_outer_index() + 1;
 	SparseMatrix<double> stiffness(sz, sz);
 	stiffness.reserve(sz*factorial(Dim + 1));
 
-	MeshNode <Element<Dim, Dim + 1, T> >* iter = mesh->get_top_mesh_node();
+	int index = start_ind;
+	MeshNode <Element<Dim, Dim + 1, T> >* iter = mesh->get_node(index);
 	int I, J;
+	double res;
 	SimplexFunction<T> fn_i, fn_j;
-	while (iter != nullptr) {
+	while (index < stop_ind) {
 		for (int i = 0; i < Dim + 1; i++) {
 			I = iter->data[i].get_index();
 			fn_i = iter->data.get_function(i);
 			for (int j = i; j < Dim + 1; j++) {
 				fn_j = iter->data.get_function(j);
 				J = iter->data[j].get_index();
-				stiffness.coeffRef(I, J) = stiffness.coeffRef(I, J) + pde.A(iter->data, fn_i, fn_j);
+				res = pde.A(iter->data, fn_i, fn_j);
+				stiffness.coeffRef(I, J) += res;
 				if (I != J) {
-					stiffness.coeffRef(J, I) = stiffness.coeffRef(J, I) + pde.A(iter->data, fn_i, fn_j);
+					stiffness.coeffRef(J, I) += res;
 				}
 			}
 		}
+		index++;
 		iter = iter->next;
 	}
-	stiffness.makeCompressed();
 	return stiffness;
 }
 
-
 template <int Dim, typename T>
-VectorXd Solver<Dim, T>::get_f_vec(int n) {
-	MeshNode<Element<Dim, Dim + 1, T> >* iter = mesh->get_top_mesh_node();
-	VectorXd f_vec = VectorXd::Zero(n + 1);
-	int I;
-	int max_index = mesh->get_max_inner_index();
-	SimplexFunction<T> fn_i;
-	while (iter != nullptr) {
-		for (int i = 0; i < Dim + 1; i++) {
-			I = iter->data[i].get_index();
-			fn_i = iter->data.get_function(i);
-			//if (I <= max_index) {f_vec(I) += pde.f(iter->data, fn_i);}
-			if (I <= max_index) { f_vec(I) = f_vec(I) + pde.f_monte_carlo(iter->data, fn_i, i, 50); }
-		}
-		iter = iter->next;
+SparseMatrix<double> Solver<Dim, T>::get_sparse_stiffness_matrix_async(int parts) const {
+	int sz = mesh->get_max_outer_index() + 1;
+	int max_nodes = mesh->how_many_nodes() + 1;
+	SparseMatrix<double> stiffness(sz, sz);
+	stiffness.reserve(sz*factorial(Dim + 1));
+
+	int n_k = max_nodes / parts;
+	vector<std::future<SparseMatrix<double> > > futures;
+
+	int start_ind = 0;
+	int stop_ind = 0;
+	for (int k = 0; k < parts + 1; k++) {
+		start_ind = k * n_k;
+		stop_ind = (k + 1)*n_k;
+		futures.push_back(std::async(&Solver::get_sparse_stiffness_matrix_part, this, start_ind, stop_ind));
 	}
-	return f_vec;
+
+	for (int k = 0; k < parts + 1; k++) {
+		stiffness += futures[k].get();
+	}
+	return stiffness;
 }
 
-template <int Dim, typename T>//To test if parallel computing can be used
+template <int Dim, typename T>
 VectorXd Solver<Dim, T>::get_f_vec_async(int parts) {
 	int max_nodes = mesh->how_many_nodes() + 1;
 	int n_k = max_nodes / parts;
@@ -193,8 +194,8 @@ VectorXd Solver<Dim, T>::get_f_vec_part(int start_ind, int stop_ind) {
 		for (int i = 0; i < Dim + 1; i++) {
 			I = iter->data[i].get_index();
 			fn_i = iter->data.get_function(i);
-				//if (I <= max_index) {f_vec(I) += pde.f(iter->data, fn_i);}
-			if (I <= max_Index) { f_vec(I) = f_vec(I) + pde.f_monte_carlo(iter->data, fn_i, i, 50); }
+			//if (I <= max_Index) {f_vec(I) += pde.f(iter->data, fn_i);}
+			if (I <= max_Index) { f_vec(I) += pde.f_monte_carlo(iter->data, fn_i, i, 20); }
 		}
 		index++;
 		iter = iter->next;
@@ -239,8 +240,7 @@ VectorXd Solver<Dim, T>::solve(int parts) {
 	int inner_size = mesh->get_max_inner_index() + 1;
 	int outer_size = mesh->get_max_outer_index() + 1;
 
-	SparseMatrix<double> total_stiffness = get_sparse_stiffness_matrix(outer_size);
-	//VectorXd f_vec = get_f_vec(inner_size - 1);
+	SparseMatrix<double> total_stiffness = get_sparse_stiffness_matrix_async(parts);
 	VectorXd f_vec = get_f_vec_async(parts);
 	SparseMatrix<double> stiffness = total_stiffness.block(0, 0, inner_size, inner_size);
 	
@@ -263,6 +263,12 @@ template <int Dim, typename T>
 MatrixXd Solver<Dim, T>::get_solution_values(VectorXd solution) {
 	SolverDAO<Dim, Dim + 1, T> solver_dao;
 	return solver_dao.get_solution_values(mesh, solution);
+}
+template <int Dim, typename T>
+void Solver<Dim, T>::save_solution(string file_name, VectorXd solution) {
+	SolverDAO<Dim, Dim + 1, T> solver_dao;
+
+	return solver_dao.save_solution_values(file_name, mesh, solution);
 }
 
 template <int Dim, typename T>

@@ -1,18 +1,16 @@
 #ifndef MESH_H
 #define MESH_H
-#include <iostream>
 #include <string>
+#include "Point.h"
 #include "Vertex.h"
-#include "element.h"
+#include "Element.h"
 #include "ElementFactory.h"
 #include "ElementDivider.h"
-#include "Function.h"
 #include "../C++ libs/eigen/Eigen/Sparse"
 #include "../C++ libs/eigen/Eigen/Dense"
 #include "../C++ libs/eigen/Eigen/Core"
 #include <math.h>
 
-using namespace std;
 using namespace Eigen;
 
 

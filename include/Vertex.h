@@ -11,13 +11,13 @@ class Vertex: Counter<Vertex<Dim, T> >{
 public:
     Vertex();
     Vertex(const T &loc);
-    Vertex(const Vertex &a);//copy constructor
+    Vertex(const Vertex &a);
     ~Vertex();
     void set_index(int ind);
     void set_shared_elements(int shared_els);
-    const T& get_location() const;
-    int get_index() const;
-    int get_shared_elements() const;
+	const T& get_location() const { return location; }
+	int get_index() const { return index; }
+	int get_shared_elements() const { return shared_elements; }
 	int how_many() const;
     Vertex<Dim,T>& operator=(const Vertex &a);
     bool operator==(const Vertex<Dim, T> &a) const;
@@ -39,7 +39,6 @@ Vertex<Dim, T>::Vertex(){
 
 template <int Dim, typename T>
 Vertex<Dim, T>::Vertex(const T &loc){
-	//for (int i = 0; i < Dim; i++) {location[i] = loc[i];}
     location = loc;
     shared_elements = 0;
     index = -1;
@@ -67,21 +66,6 @@ void Vertex<Dim,T>::set_shared_elements(int shared_els){
 }
 
 template <int Dim, typename T>
-const T& Vertex<Dim,T>::get_location() const{
-    return location;
-}
-
-template <int Dim, typename T>
-int Vertex<Dim,T>::get_index() const{
-    return index;
-}
-
-template <int Dim, typename T>
-int Vertex<Dim,T>::get_shared_elements() const{
-    return shared_elements;
-}
-
-template <int Dim, typename T>//Counting alive instances only
 int Vertex<Dim, T>::how_many() const {
 	return objects_alive;
 }
@@ -109,7 +93,7 @@ bool Vertex<Dim,T>::operator!=(const Vertex<Dim, T> &a) const{
     return !(*this==a);
 }
 
-template <int Dim, typename T>//Does not show location when T = VectorXd!!!
+template <int Dim, typename T>
 void Vertex<Dim,T>::show() const{
     cout <<"index: " << index << endl;
     cout <<"location: " << endl;
