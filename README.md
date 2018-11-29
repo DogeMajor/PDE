@@ -3,7 +3,7 @@
 
 # 1. Usage
 
-First, import Solver.h. Then, in order to use PDE Solver, you also need to define the kernel functions of the weak form of the PDE, i.e.the bilinear kernel (==MatrixXd) for the weak differential operator and the inhomogeneous function f on the right side.
+First, import Solver.h. Then, in order to use PDE Solver, you also need to define the kernel functions of the weak form of the PDE, i.e.the bilinear kernel (==MatrixXd) for the weak differential operator and the function f on the right side.
 Furthermore, you need to define the three boundary functions in C++ way too; ConditionFn cond_fn,
 ConditionFn is_inside and ValueFn val. NormalFn normal is currently not needed but available for eventual future work
 with general Robin boundary conditions involving surface integrals.
